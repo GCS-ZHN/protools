@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import logging
 
-from typing import Callable, Iterable, Tuple, Union, overload
+from typing import Callable, Iterable, Tuple, Union
 from Bio.PDB.Residue import Residue
 from Bio.PDB.Chain import Chain
 from Bio.PDB.Model import Model
@@ -18,21 +18,6 @@ from fasta import FASTA
 
 __all__ = ['save_to_pdb', 'download_PDB',
            'async_download_PDB', 'read_pdb_seq', 'pdb2fasta']
-
-
-@overload
-def save_to_pdb(output_path: str, *entities: Model, remarks: Iterable[str] = None) -> None:
-    ...
-
-
-@overload
-def save_to_pdb(output_path: str, *entities: Chain, remarks: Iterable[str] = None) -> None:
-    ...
-
-
-@overload
-def save_to_pdb(output_path: str, *entities: Residue, remarks: Iterable[str] = None) -> None:
-    ...
 
 
 def save_to_pdb(output_path: str, *entities: Union[Model, Chain, Residue], remarks: Iterable[str] = None) -> None:
@@ -229,7 +214,7 @@ def pdb2fasta(
         At least one PDB file should be provided.
 
     multimer_mode : str, optional
-        Mode of the conversion. 'split' for
+        Mode of the conversion. 'seperate' for
         single sequence per entry, 'joint' for
         joint all sequences in a PDB complex file.
 
@@ -251,7 +236,7 @@ def pdb2fasta(
         for pdb_file in pdb_files:
             pdb_id = Path(pdb_file).stem
             seq_iter = read_pdb_seq(pdb_file)
-            if multimer_mode == 'split':
+            if multimer_mode == 'seperate':
                 for model_id, chain_id, seq in seq_iter:
                     seq_id = f"{pdb_id}_{model_id}_{chain_id}"
                     seq_record = SeqRecord(Seq(seq), id=seq_id, description='')
@@ -317,7 +302,7 @@ if __name__ == "__main__":
     pdb2fasta_parser.add_argument(
         "--multimer_mode",
         "-m",
-        choices=["split", "joint"],
+        choices=["seperate", "joint"],
         default="joint",
         help="Mode of the conversion.")
     pdb2fasta_parser.add_argument(
