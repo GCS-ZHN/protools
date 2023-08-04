@@ -1,9 +1,36 @@
 import pandas as pd
-import os
 
 from fasta import FASTA
 from Bio.Seq import Seq 
 from Bio.SeqRecord import SeqRecord
+from pathlib import Path
+from typing import Iterable
+
+
+def save_fasta(seq_data, fasta_file):
+    """
+    Save a fasta file.
+
+    Parameters
+    ----------
+    seq_data : dict or iterable
+        The sequence data to be saved.
+    fasta_file : str
+        The path of the fasta file to be saved.
+    """
+    if isinstance(seq_data, dict):
+        save_fasta(seq_data.items(), fasta_file)
+    
+    elif isinstance(seq_data, Iterable):
+        fasta_file = Path(fasta_file).resolve()
+        if not fasta_file.parent.exists():
+            fasta_file.parent.mkdir(parents=True)
+        with FASTA(str(fasta_file)) as f:
+            for seq_id, seq in seq_data:
+                seq_record = SeqRecord(Seq(seq), id=seq_id, description='')
+                f.add_seq(seq_record)
+    else:
+        raise TypeError('seq_data should be dict or iterable')
 
 
 def df2fasta(df:pd.DataFrame,
@@ -34,20 +61,21 @@ def df2fasta(df:pd.DataFrame,
         The separator of the joint sequence. The default is ''.
         Only works when mode is 'joint'.
     """
-    fasta_file = os.path.abspath(fasta_file)
-    with FASTA(fasta_file) as f:
+    def _iter_seq():
         for _, row in df.iterrows():
             if mode == 'seperate':
                 for seq_col in seq_cols:
                     seq_id = f"{row[id_col]}_{seq_col}"
-                    seq = Seq(row[seq_col])
-                    seq_record = SeqRecord(seq, id=seq_id, description='')
-                    f.add_seq(seq_record)
+                    yield seq_id, row[seq_col]
             elif mode == 'joint':
-                seq = Seq(sep.join([row[seq_col] for seq_col in seq_cols]))
+                seq = sep.join([row[seq_col] for seq_col in seq_cols])
                 seq_id = row[id_col]
-                seq_record = SeqRecord(seq, id=seq_id, description='')
-                f.add_seq(seq_record)
+                yield seq_id, seq
+            else:
+                raise ValueError(f"mode {mode} not supported")
+    
+    save_fasta(_iter_seq(), fasta_file)
+
 
 
 if __name__ == '__main__':
