@@ -2,28 +2,40 @@
 # -*- coding: utf-8 -*-
 import logging
 
-from typing import Callable, Iterable, Union, overload
+from typing import Callable, Iterable, Tuple, Union, overload
 from Bio.PDB.Residue import Residue
 from Bio.PDB.Chain import Chain
 from Bio.PDB.Model import Model
 from Bio.PDB.Structure import Structure
 from Bio.PDB.PDBIO import PDBIO
-from Bio.PDB import PDBList
+from Bio.PDB import PDBList, PDBParser
+from Bio.SeqUtils import IUPACData
+from Bio.SeqRecord import SeqRecord
+from Bio.Seq import Seq
 from pathlib import Path
+from fasta import FASTA
+
+
+__all__ = ['save_to_pdb', 'download_PDB',
+           'async_download_PDB', 'read_pdb_seq', 'pdb2fasta']
+
 
 @overload
-def save_to_pdb(output_path: str, *entities: Model, remarks: Iterable[str]=None) -> None:
+def save_to_pdb(output_path: str, *entities: Model, remarks: Iterable[str] = None) -> None:
     ...
+
 
 @overload
-def save_to_pdb(output_path: str, *entities: Chain, remarks: Iterable[str]=None) -> None:
+def save_to_pdb(output_path: str, *entities: Chain, remarks: Iterable[str] = None) -> None:
     ...
+
 
 @overload
-def save_to_pdb(output_path: str, *entities: Residue, remarks: Iterable[str]=None) -> None:
+def save_to_pdb(output_path: str, *entities: Residue, remarks: Iterable[str] = None) -> None:
     ...
 
-def save_to_pdb(output_path: str, *entities: Union[Model, Chain, Residue], remarks: Iterable[str]=None) -> None:
+
+def save_to_pdb(output_path: str, *entities: Union[Model, Chain, Residue], remarks: Iterable[str] = None) -> None:
     """
     Save entities to a PDB file.
 
@@ -48,14 +60,14 @@ def save_to_pdb(output_path: str, *entities: Union[Model, Chain, Residue], remar
     """
     if len(entities) == 0:
         raise ValueError("No entities to save")
-    
+
     def _loop_type_check(entities, *allowed_types, allow_none=False):
         for entity in entities:
             if not isinstance(entity, allowed_types):
                 if not allow_none or entity is not None:
                     raise ValueError(f"Unsupported type {type(entity)}")
             yield entity
-    
+
     if isinstance(entities[0], Model):
         structure = Structure("pdb")
         for model in _loop_type_check(entities, Model):
@@ -94,7 +106,7 @@ def save_to_pdb(output_path: str, *entities: Union[Model, Chain, Residue], remar
         raise TypeError(f"Unsupported type {type(entities[0])}")
 
 
-def download_PDB(pdb_id: str, target_path: str, server: str='http://ftp.wwpdb.org') -> Path:
+def download_PDB(pdb_id: str, target_path: str, server: str = 'http://ftp.wwpdb.org') -> Path:
     """
     Download a PDB file from the PDB database.
 
@@ -125,7 +137,8 @@ def download_PDB(pdb_id: str, target_path: str, server: str='http://ftp.wwpdb.or
     file = pdbl.retrieve_pdb_file(pdb_id, pdir=target_path, file_format='pdb')
     file = Path(file)
     if not file.is_file():
-        raise FileNotFoundError(f"Could not download PDB {pdb_id} to {target_path}")
+        raise FileNotFoundError(
+            f"Could not download PDB {pdb_id} to {target_path}")
     return file
 
 
@@ -134,7 +147,7 @@ async def async_download_PDB(pdb_id: str, target_path: str, callback: Callable) 
     Asynchronously download a PDB file from the PDB database.
     Downloading is a IO-bound task, so it is suitable to be
     run asynchronously.
-    
+
     Parameters
     ----------
     pdb_id : str
@@ -170,14 +183,102 @@ async def async_download_PDB(pdb_id: str, target_path: str, callback: Callable) 
         logging.error(e)
 
 
+def read_pdb_seq(pdb_file: str) -> Iterable[Tuple[str, str, str]]:
+    """
+    Extract the sequence of a PDB file.
+
+    Parameters
+    ----------
+    pdb_file : str
+        Path to the PDB file.
+
+    Returns
+    ----------
+    seq_iter : Iterable[Tuple[str, str, str]]
+        An iterable of tuples (model_id, chain_id, seq).
+    """
+    pdb_file = Path(pdb_file).resolve()
+    if not pdb_file.exists():
+        raise FileNotFoundError(f"Could not find PDB file {pdb_file}")
+
+    parser = PDBParser(QUIET=True)
+    structure = parser.get_structure("pdb", pdb_file)
+    for model in structure:
+        for chain in model:
+            seq = "".join(IUPACData.protein_letters_3to1[residue.get_resname(
+            ).capitalize()] for residue in chain)
+
+            yield model.id, chain.id, seq
+
+
+def pdb2fasta(
+        fasta_file: str,
+        *pdb_files: str,
+        multimer_mode: str = 'joint',
+        joint_sep: str = ':') -> None:
+    """
+    Convert PDB files to a fasta file.
+
+    Parameters
+    ----------
+    fasta_file : str
+        Path to the output fasta file.
+
+    pdb_files : str
+        Paths to the PDB files to be converted.
+        At least one PDB file should be provided.
+
+    multimer_mode : str, optional
+        Mode of the conversion. 'split' for
+        single sequence per entry, 'joint' for
+        joint all sequences in a PDB complex file.
+
+    joint_sep : str, optional
+        Separator of the joint sequence. The default is ':'.
+        Only works when multimer_mode is 'joint'.
+        Different tools may have different requirements
+        to process the joint sequence.
+
+    """
+    if len(pdb_files) == 0:
+        raise ValueError("No PDB files to convert")
+
+    fasta_file = Path(fasta_file).resolve()
+    if not fasta_file.parent.exists():
+        fasta_file.parent.mkdir(parents=True, exist_ok=True)
+
+    with FASTA(str(fasta_file)) as f:
+        for pdb_file in pdb_files:
+            pdb_id = Path(pdb_file).stem
+            seq_iter = read_pdb_seq(pdb_file)
+            if multimer_mode == 'split':
+                for model_id, chain_id, seq in seq_iter:
+                    seq_id = f"{pdb_id}_{model_id}_{chain_id}"
+                    seq_record = SeqRecord(Seq(seq), id=seq_id, description='')
+                    f.add_seq(seq_record)
+            elif multimer_mode == 'joint':
+                seq = joint_sep.join(seq for _, _, seq in seq_iter)
+                seq_id = pdb_id
+                seq_record = SeqRecord(Seq(seq), id=seq_id, description='')
+                f.add_seq(seq_record)
+            else:
+                raise ValueError(
+                    f"Unsupported multimer mode {multimer_mode}")
+
+
 if __name__ == "__main__":
     import asyncio
     from tqdm.auto import tqdm
     from argparse import ArgumentParser
     parser = ArgumentParser()
+    subparsers = parser.add_subparsers(dest="subcommand")
+
+    # add subcommand 'help'
+    help_parser = subparsers.add_parser("help")
+    help_parser.add_argument(
+        "command", type=str, help="Subcommand to show help for")
 
     # add subcommand 'download'
-    subparsers = parser.add_subparsers(dest="subcommand")
     download_parser = subparsers.add_parser("download")
 
     pdb_id_group = download_parser.add_mutually_exclusive_group(required=True)
@@ -199,41 +300,76 @@ if __name__ == "__main__":
         default=".",
         help="Path to save the downloaded PDB files")
 
-    # add subcommand 'help'
-    help_parser = subparsers.add_parser("help")
-    help_parser.add_argument("command", type=str, help="Subcommand to show help for")
+    # add subcommand 'pdb2fasta'
+    pdb2fasta_parser = subparsers.add_parser("pdb2fasta")
+    pdb2fasta_parser.add_argument(
+        "--fasta_file",
+        "-o",
+        type=str,
+        required=True,
+        help="Path to the output fasta file")
+    pdb2fasta_parser.add_argument(
+        "--pdb_files",
+        "-i",
+        nargs="+",
+        required=True,
+        help="Paths to the PDB files to be converted")
+    pdb2fasta_parser.add_argument(
+        "--multimer_mode",
+        "-m",
+        choices=["split", "joint"],
+        default="joint",
+        help="Mode of the conversion.")
+    pdb2fasta_parser.add_argument(
+        "--joint_sep",
+        "-s",
+        type=str,
+        default=":",
+        help="Separator of the joint sequence.")
 
     args = parser.parse_args()
 
-    if args.subcommand == "download":
+    if args.subcommand == "help":
+        subparsers.choices[args.command].print_help()
+
+    elif args.subcommand == "download":
         if args.pdb_ids is not None:
             pdb_ids = args.pdb_ids
         else:
             with open(args.pdb_id_file, "r") as fp:
                 pdb_ids = [line.strip() for line in fp]
-        
+
         for pid in pdb_ids:
-            if len(pid)!=4:
+            if len(pid) != 4:
                 raise ValueError(f"Invalid pdbid {pid}")
 
         output_path = Path(args.target_path).resolve()
         if not output_path.exists():
             output_path.mkdir(parents=True, exist_ok=True)
         elif not output_path.is_dir():
-            raise FileNotFoundError(f"Target path {args.target_path} is not a directory")
+            raise FileNotFoundError(
+                f"Target path {args.target_path} is not a directory")
 
         process_bar = tqdm(total=len(pdb_ids), desc="Downloading PDB files")
         download_failed = []
+
         def callback(*args):
             if len(args) > 0:
                 download_failed.append(args[0])
             process_bar.update(1)
 
-        tasks = [async_download_PDB(pdb_id, str(output_path), callback) for pdb_id in pdb_ids]
+        tasks = [async_download_PDB(pdb_id, str(
+            output_path), callback) for pdb_id in pdb_ids]
         loop = asyncio.get_event_loop()
         loop.run_until_complete(asyncio.gather(*tasks))
         process_bar.close()
-    elif args.subcommand == "help":
-        subparsers.choices[args.command].print_help()
+
+    elif args.subcommand == "pdb2fasta":
+        pdb2fasta(
+            args.fasta_file,
+            *args.pdb_files,
+            multimer_mode=args.multimer_mode,
+            joint_sep=args.joint_sep)
+
     else:
         parser.print_help()
