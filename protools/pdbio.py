@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import logging
+import pandas as pd
 
 from typing import Callable, Iterable, Tuple, Union
 from Bio.PDB.Residue import Residue
@@ -8,6 +9,7 @@ from Bio.PDB.Chain import Chain
 from Bio.PDB.Model import Model
 from Bio.PDB.Structure import Structure
 from Bio.PDB.PDBIO import PDBIO
+from Bio.PDB.Atom import Atom
 from Bio.PDB import PDBList, PDBParser
 from Bio.SeqUtils import IUPACData
 from Bio.SeqRecord import SeqRecord
@@ -16,8 +18,13 @@ from pathlib import Path
 from fasta import FASTA
 
 
-__all__ = ['save_to_pdb', 'download_PDB',
-           'async_download_PDB', 'read_pdb_seq', 'pdb2fasta']
+__all__ = [
+    'save_to_pdb',
+    'download_PDB',
+    'async_download_PDB',
+    'read_pdb_seq',
+    'pdb2fasta',
+    'pdb2df']
 
 
 def save_to_pdb(output_path: str, *entities: Union[Model, Chain, Residue], remarks: Iterable[str] = None) -> None:
@@ -249,6 +256,47 @@ def pdb2fasta(
             else:
                 raise ValueError(
                     f"Unsupported multimer mode {multimer_mode}")
+
+
+def pdb2df(entity: Union[Structure, Model, Chain, Residue]) -> pd.DataFrame:
+    """
+    Convert an entity to a pandas DataFrame.
+
+    Parameters
+    ----------
+    entity : Union[Structure, Model, Chain, Residue]
+        Entity to be converted.
+
+    Returns
+    ----------
+    df : pd.DataFrame
+        DataFrame of the entity.
+    """
+    def _atom_to_dict(atom:Atom):
+        coord = atom.get_coord()
+        residue = atom.get_parent()
+        resids = residue.get_id()
+        chain = residue.get_parent()
+        model = chain.get_parent()
+        return {
+            'id': atom.get_serial_number(), 
+            'name': atom.get_name(),
+            'resn': residue.get_resname(),
+            'resi': f'{resids[1]}{resids[2]}',
+            'chain': chain.get_id(), 
+            'x': coord[0], 
+            'y': coord[1], 
+            'z': coord[2],
+            'occupancy': atom.get_occupancy(),
+            'bfactor': atom.get_bfactor(),
+            'altloc': atom.get_altloc(),
+            'sigatm': atom.get_sigatm(),
+            'siguij': atom.get_siguij(),
+            'element': atom.element,
+            'model': model.get_id()
+        }
+    
+    return pd.DataFrame(_atom_to_dict(atom) for atom in entity.get_atoms())
 
 
 if __name__ == "__main__":
