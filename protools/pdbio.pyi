@@ -6,6 +6,7 @@ from Bio.PDB.Residue import Residue
 from Bio.PDB.Chain import Chain
 from Bio.PDB.Model import Model
 from Bio.PDB.Structure import Structure
+from Bio.PDB.Entity import Entity
 
 
 @overload
@@ -47,5 +48,5 @@ def pdb2df(entity: Union[Structure, Model, Chain, Residue], *extra_attrs: str) -
     ...
 
 
-def read_residue(pdb_file: Union[Path, str], mode='centroid') -> pd.DataFrame:
+def read_residue(pdb: Union[Path, str, Entity], mode='centroid') -> pd.DataFrame:
     ...

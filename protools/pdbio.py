@@ -8,6 +8,7 @@ from Bio.PDB.Residue import Residue
 from Bio.PDB.Chain import Chain
 from Bio.PDB.Model import Model
 from Bio.PDB.Structure import Structure
+from Bio.PDB.Entity import Entity
 from Bio.PDB.PDBIO import PDBIO
 from Bio.PDB.Atom import Atom
 from Bio.PDB import PDBList, PDBParser
@@ -301,7 +302,7 @@ def pdb2df(entity: Union[Structure, Model, Chain, Residue], *extra_attrs: str) -
     return pd.DataFrame(_atom_to_dict(atom) for atom in entity.get_atoms())
 
 
-def read_residue(pdb_file: Union[Path, str], mode='centroid') -> pd.DataFrame:
+def read_residue(pdb: Union[Path, str, Entity], mode='centroid') -> pd.DataFrame:
     """
     Read a PDB file and return a DataFrame of the residues.
 
@@ -337,13 +338,17 @@ def read_residue(pdb_file: Union[Path, str], mode='centroid') -> pd.DataFrame:
                 103  THR   3.519204 -40.032841  12.495594
                 104  SER   1.635237 -43.545750  14.313151
     """
-
-    pdb_file = Path(pdb_file).resolve().absolute().expanduser()
-    if not pdb_file.exists():
-        raise FileNotFoundError(f"Could not find PDB file {pdb_file}")
-    
-    parser = PDBParser(QUIET=True)
-    structure = parser.get_structure("pdb", pdb_file)
+    if isinstance(pdb, Entity):
+        structure = pdb
+    elif isinstance(pdb, (Path, str)):
+        pdb = Path(pdb).resolve().absolute().expanduser()
+        if not pdb.exists():
+            raise FileNotFoundError(f"Could not find PDB file {pdb}")
+        
+        parser = PDBParser(QUIET=True)
+        structure = parser.get_structure("pdb", pdb)
+    else:
+        raise TypeError(f"Unsupported type {type(pdb)}")
 
     if mode == 'centroid':
         df = pdb2df(structure, 'mass')
