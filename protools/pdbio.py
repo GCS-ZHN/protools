@@ -282,7 +282,7 @@ def pdb2df(entity: Union[Structure, Model, Chain, Residue]) -> pd.DataFrame:
             'id': atom.get_serial_number(), 
             'name': atom.get_name(),
             'resn': residue.get_resname(),
-            'resi': f'{resids[1]}{resids[2]}',
+            'resi': f'{resids[1]}{resids[2]}'.strip(),
             'chain': chain.get_id(), 
             'x': coord[0], 
             'y': coord[1], 
