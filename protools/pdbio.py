@@ -258,7 +258,7 @@ def pdb2fasta(
                     f"Unsupported multimer mode {multimer_mode}")
 
 
-def pdb2df(entity: Union[Structure, Model, Chain, Residue]) -> pd.DataFrame:
+def pdb2df(entity: Union[Structure, Model, Chain, Residue], *extra_attrs: str) -> pd.DataFrame:
     """
     Convert an entity to a pandas DataFrame.
 
@@ -266,6 +266,10 @@ def pdb2df(entity: Union[Structure, Model, Chain, Residue]) -> pd.DataFrame:
     ----------
     entity : Union[Structure, Model, Chain, Residue]
         Entity to be converted.
+
+    extra_attrs : str
+        Extra atom attributes to be added to the DataFrame.
+        For example, 'bfactor', 'occupancy', 'altloc', etc.
 
     Returns
     ----------
@@ -278,7 +282,7 @@ def pdb2df(entity: Union[Structure, Model, Chain, Residue]) -> pd.DataFrame:
         resids = residue.get_id()
         chain = residue.get_parent()
         model = chain.get_parent()
-        return {
+        res = {
             'id': atom.get_serial_number(), 
             'name': atom.get_name(),
             'resn': residue.get_resname(),
@@ -287,16 +291,82 @@ def pdb2df(entity: Union[Structure, Model, Chain, Residue]) -> pd.DataFrame:
             'x': coord[0], 
             'y': coord[1], 
             'z': coord[2],
-            'occupancy': atom.get_occupancy(),
-            'bfactor': atom.get_bfactor(),
-            'altloc': atom.get_altloc(),
-            'sigatm': atom.get_sigatm(),
-            'siguij': atom.get_siguij(),
             'element': atom.element,
             'model': model.get_id()
         }
+        for attr in extra_attrs:
+            res[attr] = getattr(atom, attr)
+        return res
     
     return pd.DataFrame(_atom_to_dict(atom) for atom in entity.get_atoms())
+
+
+def read_residue(pdb_file: Union[Path, str], mode='centroid') -> pd.DataFrame:
+    """
+    Read a PDB file and return a DataFrame of the residues.
+
+    Parameters
+    ----------
+    pdb_file : Union[Path, str]
+        Path to the PDB file.
+
+    mode : str, optional
+        Mode of the residue coordinates. 'centroid' for
+        the centroid center of the residue, 'fuc' for the
+        first atom of the residue, 'CA' for the alpha carbon.
+
+    Returns
+    ----------
+    df : pd.DataFrame
+        DataFrame of the residues.
+
+    Notes
+    ----------
+    Atoms missing in PDB will not included. So please
+    fix the PDB file before using this function.
+
+    Examples
+    ----------
+    >>> df = read_residue('1a12.pdb', mode='centroid')
+    >>> df.head()
+                                  x          y          z
+    model chain resi resn                                
+    0     A     100  GLY   7.494460 -33.223431  16.242475
+                101  ARG   3.844297 -34.536686  13.638067
+                102  ASP   2.507354 -39.138135  16.654611
+                103  THR   3.519204 -40.032841  12.495594
+                104  SER   1.635237 -43.545750  14.313151
+    """
+
+    pdb_file = Path(pdb_file).resolve().absolute().expanduser()
+    if not pdb_file.exists():
+        raise FileNotFoundError(f"Could not find PDB file {pdb_file}")
+    
+    parser = PDBParser(QUIET=True)
+    structure = parser.get_structure("pdb", pdb_file)
+
+    if mode == 'centroid':
+        df = pdb2df(structure, 'mass')
+        df['x'] *= df['mass']
+        df['y'] *= df['mass']
+        df['z'] *= df['mass']
+        df = df.drop(['id', 'name', 'element'], axis=1)
+        df = df.groupby(['model', 'chain', 'resi', 'resn']).sum()
+        df['x'] /= df['mass']
+        df['y'] /= df['mass']
+        df['z'] /= df['mass']
+        df = df.drop('mass', axis=1)
+        return df
+    
+    if mode in ('fuc', 'CA'):
+        df = pdb2df(structure)
+        if mode == 'CA':
+            df = df[df['name'] == 'CA']
+        df = df.drop(['id', 'name', 'element'], axis=1)
+        df = df.groupby(['model', 'chain', 'resi', 'resn']).mean()
+        return df
+    
+    raise ValueError('mode must be one of "centroid", "fuc", "CA"')
 
 
 if __name__ == "__main__":
