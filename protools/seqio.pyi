@@ -1,3 +1,5 @@
+import pandas as pd
+
 from typing import overload, Dict, Iterable, Tuple, Union
 from pathlib import Path
 
