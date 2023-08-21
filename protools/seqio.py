@@ -1,13 +1,16 @@
 import pandas as pd
 
 from fasta import FASTA
+from Bio import SeqIO
 from Bio.Seq import Seq 
 from Bio.SeqRecord import SeqRecord
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Union, Dict
+
+FilePath = Union[str, Path]
 
 
-def save_fasta(seq_data, fasta_file):
+def save_fasta(seq_data: Union[Dict, Iterable], fasta_path: FilePath):
     """
     Save a fasta file.
 
@@ -19,13 +22,13 @@ def save_fasta(seq_data, fasta_file):
         The path of the fasta file to be saved.
     """
     if isinstance(seq_data, dict):
-        save_fasta(seq_data.items(), fasta_file)
+        save_fasta(seq_data.items(), fasta_path)
     
     elif isinstance(seq_data, Iterable):
-        fasta_file = Path(fasta_file).resolve()
-        if not fasta_file.parent.exists():
-            fasta_file.parent.mkdir(parents=True)
-        with FASTA(str(fasta_file)) as f:
+        fasta_path = Path(fasta_path).resolve()
+        if not fasta_path.parent.exists():
+            fasta_path.parent.mkdir(parents=True)
+        with FASTA(str(fasta_path)) as f:
             for seq_id, seq in seq_data:
                 seq_record = SeqRecord(Seq(seq), id=seq_id, description='')
                 f.add_seq(seq_record)
@@ -33,8 +36,27 @@ def save_fasta(seq_data, fasta_file):
         raise TypeError('seq_data should be dict or iterable')
 
 
+def iter_fasta(fasta_path: FilePath) -> Iterable[Dict]:
+    """
+    Iterate fasta sequence record.
+    """
+    fasta_path = Path(fasta_path).expanduser().resolve()
+    for record in SeqIO.parse(fasta_path, 'fasta'):
+        yield {
+            'id': record.id,
+            'seq': str(record.seq),
+            'description': record.description}
+
+
+def read_fasta(fasta_path: FilePath) -> pd.DataFrame:
+    """
+    Read fasta sequence as `pd.DataFrame`.
+    """
+    return pd.DataFrame(iter_fasta(fasta_path))
+
+
 def df2fasta(df:pd.DataFrame,
-             fasta_file:str, 
+             fasta_path: FilePath, 
              id_col: str, 
              seq_cols: list, 
              mode: str = 'seperate', 
@@ -46,7 +68,7 @@ def df2fasta(df:pd.DataFrame,
     ----------
     df : pandas.DataFrame
         The dataframe to be converted.
-    fasta_file : str
+    fasta_path : str or Path
         The path of the fasta file to be saved.
     id_col : str
         The column name of the id.
@@ -74,7 +96,7 @@ def df2fasta(df:pd.DataFrame,
             else:
                 raise ValueError(f"mode {mode} not supported")
     
-    save_fasta(_iter_seq(), fasta_file)
+    save_fasta(_iter_seq(), fasta_path)
 
 
 
