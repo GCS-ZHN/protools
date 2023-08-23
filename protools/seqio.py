@@ -58,7 +58,7 @@ def read_fasta(fasta_path: FilePath) -> pd.DataFrame:
 def df2fasta(df:pd.DataFrame,
              fasta_path: FilePath, 
              id_col: str, 
-             seq_cols: list, 
+             *seq_cols: str, 
              mode: str = 'seperate', 
              sep: str = ''):
     """
@@ -83,6 +83,9 @@ def df2fasta(df:pd.DataFrame,
         The separator of the joint sequence. The default is ''.
         Only works when mode is 'joint'.
     """
+    if len(seq_cols) == 0:
+        raise ValueError('seq_cols should not be empty')
+
     def _iter_seq():
         for _, row in df.iterrows():
             if mode == 'seperate':
