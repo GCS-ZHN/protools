@@ -25,9 +25,9 @@ def read_fasta(fasta_path: FilePath) -> pd.DataFrame:
 
 
 def df2fasta(df:pd.DataFrame,
-             fasta_path: FilePath, 
-             id_col: str, 
-             seq_cols: list, 
+             fasta_path: FilePath,
+             *seq_cols: str,  
+             id_col: str = None,
              mode: str = 'seperate', 
              sep: str = ''):
     ...

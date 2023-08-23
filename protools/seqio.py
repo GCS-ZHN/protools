@@ -48,17 +48,20 @@ def iter_fasta(fasta_path: FilePath) -> Iterable[Dict]:
             'description': record.description}
 
 
-def read_fasta(fasta_path: FilePath) -> pd.DataFrame:
+def read_fasta(fasta_path: FilePath, id_as_index: bool = False) -> pd.DataFrame:
     """
     Read fasta sequence as `pd.DataFrame`.
     """
-    return pd.DataFrame(iter_fasta(fasta_path))
+    df = pd.DataFrame(iter_fasta(fasta_path))
+    if id_as_index:
+        df.set_index('id', inplace=True)
+    return df
 
 
 def df2fasta(df:pd.DataFrame,
              fasta_path: FilePath, 
-             id_col: str, 
              *seq_cols: str, 
+             id_col: str = None, 
              mode: str = 'seperate', 
              sep: str = ''):
     """
@@ -85,16 +88,19 @@ def df2fasta(df:pd.DataFrame,
     """
     if len(seq_cols) == 0:
         raise ValueError('seq_cols should not be empty')
+    elif len(seq_cols) == 1:
+        mode = 'joint'
 
     def _iter_seq():
-        for _, row in df.iterrows():
+        for index, row in df.iterrows():
+            item_id = index if id_col is None else row[id_col]
             if mode == 'seperate':
                 for seq_col in seq_cols:
-                    seq_id = f"{row[id_col]}_{seq_col}"
+                    seq_id = f"{item_id}_{seq_col}"
                     yield seq_id, row[seq_col]
             elif mode == 'joint':
                 seq = sep.join([row[seq_col] for seq_col in seq_cols])
-                seq_id = row[id_col]
+                seq_id = item_id
                 yield seq_id, seq
             else:
                 raise ValueError(f"mode {mode} not supported")
