@@ -20,7 +20,7 @@ def iter_fasta(fasta_path: FilePath) -> Iterable[Dict]:
     ...
 
 
-def read_fasta(fasta_path: FilePath) -> pd.DataFrame:
+def read_fasta(fasta_path: FilePath, id_as_index: bool = False) -> pd.DataFrame:
     ...
 
 
