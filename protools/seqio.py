@@ -1,61 +1,67 @@
 import pandas as pd
 
-from fasta import FASTA
 from Bio import SeqIO
 from Bio.Seq import Seq 
 from Bio.SeqRecord import SeqRecord
 from pathlib import Path
 from typing import Iterable, Union, Dict
+from collections import OrderedDict
 
-FilePath = Union[str, Path]
+from .utils import FilePath, ensure_path
 
+class Fasta(OrderedDict):
 
-def save_fasta(seq_data: Union[Dict, Iterable], fasta_path: FilePath):
-    """
-    Save a fasta file.
+    def __init__(self, data: Iterable[SeqRecord]) -> None:
+        data = map(self.__value_check, data)
+        super().__init__(map(lambda x: (x.id, x), data))
 
-    Parameters
-    ----------
-    seq_data : dict or iterable
-        The sequence data to be saved.
-    fasta_file : str
-        The path of the fasta file to be saved.
-    """
-    if isinstance(seq_data, dict):
-        save_fasta(seq_data.items(), fasta_path)
+    def __getitem__(self, __key: str) -> SeqRecord:
+        return super().__getitem__(__key)
+
+    def __setitem__(self, __key: str, __value: SeqRecord) -> None:
+        return super().__setitem__(__key, __value)
+
+    def __value_check(self, value: SeqRecord) -> SeqRecord:
+        if not isinstance(value, SeqRecord):
+            raise ValueError(f"Invalid record: {value}")
+        return value
+
+    def to_dict(self) -> Iterable[Dict]:
+        """
+        Iterate fasta sequence record.
+        """
+        for rid, record in self.items():
+            yield {
+                'id': rid,
+                'seq': str(record.seq),
+                'description': record.description}
     
-    elif isinstance(seq_data, Iterable):
-        fasta_path = Path(fasta_path).resolve()
-        if not fasta_path.parent.exists():
-            fasta_path.parent.mkdir(parents=True)
-        with FASTA(str(fasta_path)) as f:
-            for seq_id, seq in seq_data:
-                seq_record = SeqRecord(Seq(seq), id=seq_id, description='')
-                f.add_seq(seq_record)
-    else:
-        raise TypeError('seq_data should be dict or iterable')
+    def to_dataframe(self, id_as_index: bool = False) -> pd.DataFrame:
+        """
+        Read fasta sequence as `pd.DataFrame`.
+        """
+        df = pd.DataFrame(self.to_dict())
+        if id_as_index:
+            df.set_index('id', inplace=True)
+        return df
+    
+    def to_fasta(self, path: FilePath, mkdir: bool = False):
+        save_fasta(self.values(), path=path, mkdir=mkdir)
 
 
-def iter_fasta(fasta_path: FilePath) -> Iterable[Dict]:
-    """
-    Iterate fasta sequence record.
-    """
-    fasta_path = Path(fasta_path).expanduser().resolve()
-    for record in SeqIO.parse(fasta_path, 'fasta'):
-        yield {
-            'id': record.id,
-            'seq': str(record.seq),
-            'description': record.description}
+def read_fasta(path: FilePath) -> Fasta:
+    if not isinstance(path, Path):
+        path = Path(path)
+    path = path.resolve().expanduser().absolute()
+    return Fasta(SeqIO.parse(path, 'fasta'))
 
 
-def read_fasta(fasta_path: FilePath, id_as_index: bool = False) -> pd.DataFrame:
-    """
-    Read fasta sequence as `pd.DataFrame`.
-    """
-    df = pd.DataFrame(iter_fasta(fasta_path))
-    if id_as_index:
-        df.set_index('id', inplace=True)
-    return df
+def save_fasta(sequences: Iterable[SeqRecord], path: FilePath, mkdir: bool = False):
+    path = ensure_path(path)
+    if mkdir:
+        path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, 'w') as f:
+        SeqIO.write(sequences, f, 'fasta')
 
 
 def df2fasta(df:pd.DataFrame,
@@ -97,11 +103,11 @@ def df2fasta(df:pd.DataFrame,
             if mode == 'seperate':
                 for seq_col in seq_cols:
                     seq_id = f"{item_id}_{seq_col}"
-                    yield seq_id, row[seq_col]
+                    yield SeqRecord(Seq(row[seq_col]), id=seq_id, description='')
             elif mode == 'joint':
                 seq = sep.join([row[seq_col] for seq_col in seq_cols])
                 seq_id = item_id
-                yield seq_id, seq
+                yield SeqRecord(Seq(seq), id=seq_id, description='')
             else:
                 raise ValueError(f"mode {mode} not supported")
     

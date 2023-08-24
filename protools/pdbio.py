@@ -16,8 +16,8 @@ from Bio.SeqUtils import IUPACData
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
 from pathlib import Path
-from fasta import FASTA
-
+from .utils import ensure_path, FilePath
+from seqio import save_fasta
 
 __all__ = [
     'save_to_pdb',
@@ -205,7 +205,7 @@ def read_pdb_seq(pdb_file: str) -> Iterable[Tuple[str, str, str]]:
 
 
 def pdb2fasta(
-        fasta_file: str,
+        fasta_path: str,
         *pdb_files: str,
         multimer_mode: str = 'joint',
         joint_sep: str = ':') -> None:
@@ -236,27 +236,26 @@ def pdb2fasta(
     if len(pdb_files) == 0:
         raise ValueError("No PDB files to convert")
 
-    fasta_file = Path(fasta_file).resolve()
-    if not fasta_file.parent.exists():
-        fasta_file.parent.mkdir(parents=True, exist_ok=True)
+    fasta_path = Path(fasta_path).resolve()
 
-    with FASTA(str(fasta_file)) as f:
+    def _iter():
         for pdb_file in pdb_files:
             pdb_id = Path(pdb_file).stem
             seq_iter = read_pdb_seq(pdb_file)
             if multimer_mode == 'seperate':
                 for model_id, chain_id, seq in seq_iter:
                     seq_id = f"{pdb_id}_{model_id}_{chain_id}"
-                    seq_record = SeqRecord(Seq(seq), id=seq_id, description='')
-                    f.add_seq(seq_record)
+                    yield SeqRecord(Seq(seq), id=seq_id, description='')
+
             elif multimer_mode == 'joint':
                 seq = joint_sep.join(seq for _, _, seq in seq_iter)
                 seq_id = pdb_id
-                seq_record = SeqRecord(Seq(seq), id=seq_id, description='')
-                f.add_seq(seq_record)
+                yield SeqRecord(Seq(seq), id=seq_id, description='')
+
             else:
                 raise ValueError(
                     f"Unsupported multimer mode {multimer_mode}")
+        save_fasta(_iter(), fasta_path, mkdir=True)
 
 
 def pdb2df(entity: Union[Structure, Model, Chain, Residue], *extra_attrs: str) -> pd.DataFrame:
