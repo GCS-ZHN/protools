@@ -147,7 +147,6 @@ def df2fasta(df:pd.DataFrame,
     save_fasta(_iter_seq(), fasta_path)
 
 
-
 if __name__ == '__main__':
     from argparse import ArgumentParser
     parser = ArgumentParser()
@@ -182,4 +181,4 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     df = pd.read_csv(args.input)
-    df2fasta(df, args.output, args.id_col, args.seq_cols, args.mode, args.sep)
+    df2fasta(df, args.output, args.id_col, *args.seq_cols, args.mode, args.sep)
