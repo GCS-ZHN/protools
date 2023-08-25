@@ -6,13 +6,18 @@ from Bio.SeqRecord import SeqRecord
 from pathlib import Path
 from typing import Iterable, Union, Dict
 from collections import OrderedDict
+from itertools import starmap
 
 from .utils import FilePath, ensure_path
 
+
+SeqLike = Union[str, Seq, SeqRecord]
+
 class Fasta(OrderedDict):
 
-    def __init__(self, data: Iterable[SeqRecord]) -> None:
-        data = map(self.__value_check, data)
+    def __init__(self, data: Iterable[SeqLike], id_prefix:str = '') -> None:
+        self.id_prefix = id_prefix
+        data = starmap(self.__value_check, enumerate(data))
         super().__init__(map(lambda x: (x.id, x), data))
 
     def __getitem__(self, __key: str) -> SeqRecord:
@@ -21,10 +26,19 @@ class Fasta(OrderedDict):
     def __setitem__(self, __key: str, __value: SeqRecord) -> None:
         return super().__setitem__(__key, __value)
 
-    def __value_check(self, value: SeqRecord) -> SeqRecord:
-        if not isinstance(value, SeqRecord):
-            raise ValueError(f"Invalid record: {value}")
-        return value
+    def __value_check(self, idx: int, seq: SeqLike) -> SeqRecord:
+        if isinstance(seq, str):
+            seq = Seq(seq)
+        if isinstance(seq, Seq):
+            seq = SeqRecord(
+                seq,
+                id=f'{idx}',
+                description=''
+            )
+        if isinstance(seq, SeqRecord):
+            seq.id = f'{self.id_prefix}{seq.id}'
+            return seq
+        raise ValueError('Element should be str, Seq or SeqRecord')
 
     def to_dict(self) -> Iterable[Dict]:
         """
