@@ -1,4 +1,5 @@
 import pandas as pd
+import csv
 
 from Bio import SeqIO
 from Bio.Seq import Seq 
@@ -60,7 +61,25 @@ class Fasta(OrderedDict):
         return df
     
     def to_fasta(self, path: FilePath, mkdir: bool = False):
+        """
+        Save as FASTA format.
+        """
         save_fasta(self.values(), path=path, mkdir=mkdir)
+
+    def to_csv(self, path: FilePath, mkdir: bool = False):
+        """
+        Save as CSV format.
+        """
+        path = ensure_path(path)
+        if mkdir:
+            path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, 'w') as f:
+            writer = csv.DictWriter(
+                f, 
+                fieldnames=['id', 'seq', 'description'],
+                lineterminator='\n')
+            writer.writeheader()
+            writer.writerows(self.to_dict())
 
 
 def read_fasta(path: FilePath) -> Fasta:
