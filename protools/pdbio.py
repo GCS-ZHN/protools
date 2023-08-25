@@ -17,7 +17,7 @@ from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
 from pathlib import Path
 from .utils import ensure_path, FilePath
-from seqio import save_fasta
+from .seqio import save_fasta
 
 __all__ = [
     'save_to_pdb',
@@ -28,7 +28,7 @@ __all__ = [
     'pdb2df']
 
 
-def save_to_pdb(output_path: str, *entities: Union[Model, Chain, Residue], remarks: Iterable[str] = None) -> None:
+def save_to_pdb(output_path: FilePath, *entities: Union[Model, Chain, Residue], remarks: Iterable[str] = None) -> None:
     """
     Save entities to a PDB file.
 
@@ -53,6 +53,8 @@ def save_to_pdb(output_path: str, *entities: Union[Model, Chain, Residue], remar
     """
     if len(entities) == 0:
         raise ValueError("No entities to save")
+    
+    output_path = ensure_path(output_path)
 
     def _loop_type_check(entities, *allowed_types, allow_none=False):
         for entity in entities:
@@ -99,7 +101,7 @@ def save_to_pdb(output_path: str, *entities: Union[Model, Chain, Residue], remar
         raise TypeError(f"Unsupported type {type(entities[0])}")
 
 
-def download_PDB(pdb_id: str, target_path: str, server: str = 'http://ftp.wwpdb.org') -> Path:
+def download_PDB(pdb_id: str, target_path: FilePath, server: str = 'http://ftp.wwpdb.org') -> Path:
     """
     Download a PDB file from the PDB database.
 
@@ -127,6 +129,7 @@ def download_PDB(pdb_id: str, target_path: str, server: str = 'http://ftp.wwpdb.
         If the PDB file could not be downloaded.
     """
     pdbl = PDBList(server=server, verbose=False)
+    target_path = ensure_path(target_path)
     file = pdbl.retrieve_pdb_file(pdb_id, pdir=target_path, file_format='pdb')
     file = Path(file)
     if not file.is_file():
@@ -135,7 +138,7 @@ def download_PDB(pdb_id: str, target_path: str, server: str = 'http://ftp.wwpdb.
     return file
 
 
-async def async_download_PDB(pdb_id: str, target_path: str, callback: Callable) -> Path:
+async def async_download_PDB(pdb_id: str, target_path: FilePath, callback: Callable) -> Path:
     """
     Asynchronously download a PDB file from the PDB database.
     Downloading is a IO-bound task, so it is suitable to be
@@ -176,7 +179,7 @@ async def async_download_PDB(pdb_id: str, target_path: str, callback: Callable) 
         logging.error(e)
 
 
-def read_pdb_seq(pdb_file: str) -> Iterable[Tuple[str, str, str]]:
+def read_pdb_seq(pdb_file: FilePath) -> Iterable[Tuple[str, str, str]]:
     """
     Extract the sequence of a PDB file.
 
@@ -190,7 +193,7 @@ def read_pdb_seq(pdb_file: str) -> Iterable[Tuple[str, str, str]]:
     seq_iter : Iterable[Tuple[str, str, str]]
         An iterable of tuples (model_id, chain_id, seq).
     """
-    pdb_file = Path(pdb_file).resolve()
+    pdb_file = ensure_path(pdb_file)
     if not pdb_file.exists():
         raise FileNotFoundError(f"Could not find PDB file {pdb_file}")
 
@@ -236,7 +239,7 @@ def pdb2fasta(
     if len(pdb_files) == 0:
         raise ValueError("No PDB files to convert")
 
-    fasta_path = Path(fasta_path).resolve()
+    fasta_path = ensure_path(fasta_path)
 
     def _iter():
         for pdb_file in pdb_files:
@@ -301,7 +304,7 @@ def pdb2df(entity: Union[Structure, Model, Chain, Residue], *extra_attrs: str) -
     return pd.DataFrame(_atom_to_dict(atom) for atom in entity.get_atoms())
 
 
-def read_residue(pdb: Union[Path, str, Entity], mode='centroid') -> pd.DataFrame:
+def read_residue(pdb: Union[FilePath, str, Entity], mode='centroid') -> pd.DataFrame:
     """
     Read a PDB file and return a DataFrame of the residues.
 
@@ -339,8 +342,8 @@ def read_residue(pdb: Union[Path, str, Entity], mode='centroid') -> pd.DataFrame
     """
     if isinstance(pdb, Entity):
         structure = pdb
-    elif isinstance(pdb, (Path, str)):
-        pdb = Path(pdb).resolve().absolute().expanduser()
+    elif isinstance(pdb, FilePath):
+        pdb = ensure_path(pdb)
         if not pdb.exists():
             raise FileNotFoundError(f"Could not find PDB file {pdb}")
         
@@ -450,7 +453,7 @@ if __name__ == "__main__":
             if len(pid) != 4:
                 raise ValueError(f"Invalid pdbid {pid}")
 
-        output_path = Path(args.target_path).resolve()
+        output_path = ensure_path(args.target_path)
         if not output_path.exists():
             output_path.mkdir(parents=True, exist_ok=True)
         elif not output_path.is_dir():
