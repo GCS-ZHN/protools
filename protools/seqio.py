@@ -106,7 +106,7 @@ def df2fasta(df:pd.DataFrame,
                     yield SeqRecord(Seq(row[seq_col]), id=seq_id, description='')
             elif mode == 'joint':
                 seq = sep.join([row[seq_col] for seq_col in seq_cols])
-                seq_id = item_id
+                seq_id = str(item_id)
                 yield SeqRecord(Seq(seq), id=seq_id, description='')
             else:
                 raise ValueError(f"mode {mode} not supported")
