@@ -28,3 +28,15 @@ def max_retry(max=3, err_types=(RuntimeError,), interval=1):
             raise RuntimeError(f'Failed after {max} retries') from current_err
         return wrapper
     return decorator
+
+
+def catch_error(logger, err_types=(RuntimeError,)):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except err_types as e:
+                logger.error(e)
+        return wrapper
+    return decorator
