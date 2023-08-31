@@ -45,6 +45,8 @@ def extract_features(record: SwissProt.Record):
 @catch_error(loger, err_types=(Exception,))
 @max_retry(max=5)
 def fetch_uniprot_features(accession_id: str, output_path: FilePath, skip_exist: bool = False):
+    if not accession_id.isalnum():
+        raise ValueError(f'Invalid accession id: "{accession_id}"')
     output_path = ensure_path(output_path)
     output_path.mkdir(exist_ok=True, parents=True)
     output_file = output_path / f'{accession_id}_features.txt'
