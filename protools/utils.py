@@ -37,6 +37,6 @@ def catch_error(logger, err_types=(RuntimeError,)):
             try:
                 return func(*args, **kwargs)
             except err_types as e:
-                logger.error(e)
+                logger.error(f'{e.__class__.__name__}: {e}')
         return wrapper
     return decorator
