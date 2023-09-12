@@ -1,4 +1,3 @@
-import logging
 import warnings
 
 from .pdbio import save_to_pdb
@@ -75,9 +74,14 @@ def renumber_residue(
     for chain_id in chain_order:
         for residue in model[chain_id]:
             old_id = residue.id
-            residue.id = (' ', start + i, ' ')
+            residue.id = (' ', start + i, 'TMP')
             i += 1
-            logging.info(f"Renumbered residue {old_id} to {residue.id}")
+    
+    # loop twice to avoid duplicate residue id
+    for chain_id in chain_order:
+        for residue in model[chain_id]:
+            old_id = residue.id
+            residue.id = (' ', old_id[1], ' ')
 
     if out_file is None:
         out_file = pdb_file.parent / f"{pdb_file.stem}_renumbered{pdb_file.suffix}" 
