@@ -258,7 +258,7 @@ def pdb2fasta(
             else:
                 raise ValueError(
                     f"Unsupported multimer mode {multimer_mode}")
-        save_fasta(_iter(), fasta_path, mkdir=True)
+    save_fasta(_iter(), fasta_path, mkdir=True)
 
 
 def pdb2df(entity: Union[Structure, Model, Chain, Residue], *extra_attrs: str) -> pd.DataFrame:
