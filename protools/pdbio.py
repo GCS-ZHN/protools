@@ -342,7 +342,7 @@ def read_residue(pdb: Union[FilePath, str, Entity], mode='centroid') -> pd.DataF
     """
     if isinstance(pdb, Entity):
         structure = pdb
-    elif isinstance(pdb, FilePath):
+    elif isinstance(pdb, (str, Path)):
         pdb = ensure_path(pdb)
         if not pdb.exists():
             raise FileNotFoundError(f"Could not find PDB file {pdb}")
