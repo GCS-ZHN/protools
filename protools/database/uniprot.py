@@ -81,4 +81,4 @@ if __name__ == '__main__':
             p.starmap(fetch_uniprot_features, schedules)
 
     else:
-        starmap(fetch_uniprot_features, schedules)
+        list(starmap(fetch_uniprot_features, schedules))
