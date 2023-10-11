@@ -48,7 +48,7 @@ class Fasta(OrderedDict):
         for rid, record in self.items():
             yield {
                 'id': rid,
-                'seq': str(record.seq),
+                'sequence': str(record.seq),
                 'description': record.description}
     
     def to_dataframe(self, id_as_index: bool = False) -> pd.DataFrame:
@@ -76,7 +76,7 @@ class Fasta(OrderedDict):
         with open(path, 'w') as f:
             writer = csv.DictWriter(
                 f, 
-                fieldnames=['id', 'seq', 'description'],
+                fieldnames=['id', 'sequence', 'description'],
                 lineterminator='\n')
             writer.writeheader()
             writer.writerows(self.to_dict())
@@ -150,35 +150,59 @@ def df2fasta(df:pd.DataFrame,
 if __name__ == '__main__':
     from argparse import ArgumentParser
     parser = ArgumentParser()
-    parser.add_argument(
+    subparsers = parser.add_subparsers(dest="subcommand")
+    csv2fasta_parser = subparsers.add_parser('csv2fasta')
+    csv2fasta_parser.add_argument(
         '-i', '--input',
         required=True,
+        type=Path,
         help='input csv file')
-    parser.add_argument(
+    csv2fasta_parser.add_argument(
         '-o', '--output',
         required=True,
+        type=Path,
         help='output fasta file')
-    parser.add_argument(
+    csv2fasta_parser.add_argument(
         '-c', '--id_col',
         required=True,
         help='column name of the id')
-    parser.add_argument(
+    csv2fasta_parser.add_argument(
         '-s', '--seq_cols',
         required=True,
         nargs='+',
         help='column names of the sequences')
-    parser.add_argument(
+    csv2fasta_parser.add_argument(
         '--mode',
         default='seperate',
         choices=['seperate', 'joint'],
         help='mode of the conversion, \
         s means single sequence per entry, \
         j means joint sequence per entry')
-    parser.add_argument(
+    csv2fasta_parser.add_argument(
         '--sep',
         default='',
         help='separator of the joint sequence')
+    
+    fasta2csv_parser = subparsers.add_parser('fasta2csv')
+    fasta2csv_parser.add_argument(
+        '-i', '--input',
+        required=True,
+        type=Path,
+        help='input fasta file')
+    fasta2csv_parser.add_argument(
+        '-o', '--output',
+        required=True,
+        type=Path,
+        help='output csv file')
     args = parser.parse_args()
 
-    df = pd.read_csv(args.input)
-    df2fasta(df, args.output, args.id_col, *args.seq_cols, args.mode, args.sep)
+    if args.subcommand == 'csv2fasta':
+        df = pd.read_csv(args.input)
+        df2fasta(df, args.output, args.id_col, *args.seq_cols, args.mode, args.sep)
+
+    elif args.subcommand == 'fasta2csv':
+        fasta = read_fasta(args.input)
+        fasta.to_csv(args.output)
+
+    else:
+        raise ValueError(f"subcommand {args.subcommand} not supported")
