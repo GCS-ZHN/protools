@@ -211,6 +211,7 @@ def pdb2fasta(
         fasta_path: str,
         *pdb_files: str,
         multimer_mode: str = 'joint',
+        selected_chains: str = None,
         joint_sep: str = ':') -> None:
     """
     Convert PDB files to a fasta file.
@@ -229,6 +230,10 @@ def pdb2fasta(
         single sequence per entry, 'joint' for
         joint all sequences in a PDB complex file.
 
+    selected_chains: str, optional
+        If provided, only selected chain will be
+        included.
+
     joint_sep : str, optional
         Separator of the joint sequence. The default is ':'.
         Only works when multimer_mode is 'joint'.
@@ -245,6 +250,7 @@ def pdb2fasta(
         for pdb_file in pdb_files:
             pdb_id = Path(pdb_file).stem
             seq_iter = read_pdb_seq(pdb_file)
+            seq_iter = filter(lambda x: selected_chains is None or x[1] in selected_chains, seq_iter)
             if multimer_mode == 'seperate':
                 for model_id, chain_id, seq in seq_iter:
                     seq_id = f"{pdb_id}_{model_id}_{chain_id}"
@@ -431,6 +437,11 @@ if __name__ == "__main__":
         default="joint",
         help="Mode of the conversion.")
     pdb2fasta_parser.add_argument(
+        "--chain-ids",
+        "-c",
+        help="Selected chains will be extracted."
+    )
+    pdb2fasta_parser.add_argument(
         "--joint_sep",
         "-s",
         type=str,
@@ -479,6 +490,7 @@ if __name__ == "__main__":
             args.fasta_file,
             *args.pdb_files,
             multimer_mode=args.multimer_mode,
+            selected_chains=args.chain_ids,
             joint_sep=args.joint_sep)
 
     else:
