@@ -387,6 +387,31 @@ def read_residue(pdb: Union[FilePath, str, Entity], mode='centroid') -> pd.DataF
     raise ValueError('mode must be one of "centroid", "fuc", "CA"')
 
 
+def get_pdb_remarks(pdb_file: FilePath) -> Iterable[str]:
+    """
+    Get the remarks of a PDB file.
+
+    Parameters
+    ----------
+    pdb_file : str
+        Path to the PDB file.
+
+    Returns
+    ----------
+    remarks : Iterable[str]
+        remarks.
+    """
+    pdb_file = ensure_path(pdb_file)
+    if not pdb_file.exists():
+        raise FileNotFoundError(f"Could not find PDB file {pdb_file}")
+
+    with open(pdb_file, "r") as fp:
+        for line in fp:
+            if line.startswith("REMARK"):
+                yield line.replace("REMARK", "").strip()
+
+
+
 if __name__ == "__main__":
     import asyncio
     from tqdm.auto import tqdm
