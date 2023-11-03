@@ -2,11 +2,17 @@ import pandas as pd
 
 from pathlib import Path
 from typing import Callable, overload, Union, Tuple, Iterable
+from Bio.PDB.Structure import Structure
 from Bio.PDB.Residue import Residue
 from Bio.PDB.Chain import Chain
 from Bio.PDB.Model import Model
 from Bio.PDB.Structure import Structure
 from Bio.PDB.Entity import Entity
+
+
+@overload
+def save_to_pdb(output_path: str, *entities: Structure, remarks: Iterable[str] = None) -> None:
+    ...
 
 
 @overload
