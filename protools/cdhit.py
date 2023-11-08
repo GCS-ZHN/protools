@@ -1,79 +1,33 @@
-import os
 import re
-import shutil
-import subprocess
-from typing import Iterable
+import tempfile
 import pandas as pd
 
-class CmdNotFoundError(RuntimeError):
-    
-    def __init__(self, cmd: str):
-        super().__init__(f'Command {cmd} not found.')
-
-
-class CmdWrapperBase(object):
-
-    def _check_mod(self, cmd) -> str:
-        if not os.path.exists(cmd):
-            raise FileNotFoundError(f'{cmd} not existed.')
-        if not os.access(cmd, os.X_OK):
-            raise PermissionError(f'{cmd} not executable.')
-        return cmd
-
-    def find_command(self, cmd) -> str:
-        """
-        Tries to find the full path to a command.
-
-        Parameters
-        ----------
-        cmd : str
-            The command to be found.
-
-        Returns
-        -------
-        str
-            The full path to the command.
-        """
-        try:
-            if os.path.sep in cmd:
-                return self._check_mod(cmd)
-            
-            if f'{cmd.upper()}_PATH' in os.environ:
-                return self._check_mod(os.environ[f'{cmd.upper()}_PATH'])
-
-        except (FileNotFoundError, PermissionError) as e:
-            raise CmdNotFoundError(cmd) from e
-        
-        cmd_path = shutil.which(cmd)
-        if cmd_path is None:
-            raise CmdNotFoundError(cmd)
-        return cmd_path
-
+from pathlib import Path
+from typing import Iterable
+from .utils import CmdWrapperBase
+from .seqio import read_fasta, save_fasta, temp_fasta
 
 class CdHit(CmdWrapperBase):
     
     def __init__(self, cmd: str = 'cd-hit'):
-        self.cmd = self.find_command(cmd)
+        super().__init__(cmd)
     
     def __call__(self, 
-            input_file: str,
-            output_file: str,
+            input_file: Path,
+            output_file: Path,
             cutoff: float = 0.9,
             num_threads: int = 1,
             word_length: int = 5,
             memory: int = 800,
             *args, **kwargs):
-        cmds = [
-            self.cmd,
-            '-i', input_file,
-            '-o', output_file,
-            '-c', cutoff,
-            '-n', word_length,
-            '-M', memory,
-            '-T', num_threads
-        ]
-        cmds.extend(args)
-        return subprocess.run(cmds, **kwargs)
+        return super().__call__(
+            i=input_file,
+            o=output_file,
+            c=cutoff,
+            n=word_length,
+            M=memory,
+            T=num_threads,
+            *args, **kwargs)
     
     @staticmethod
     def _iter_cluster(cluster_file: str) -> Iterable[dict]:
@@ -109,5 +63,42 @@ class CdHit(CmdWrapperBase):
                             raise ValueError(f'Unrecognized line: {line}')
 
     @staticmethod
-    def parse_cluster(cluster_file: str) -> pd.DataFrame:
+    def parse_cluster(cluster_file: Path) -> pd.DataFrame:
         return pd.DataFrame(CdHit._iter_cluster(cluster_file))
+
+
+def unique_fasta(fasta_file: Path, output_file: Path, *args, **kwargs):
+    cdhit = CdHit()
+    output_file.parent.mkdir(parents=True, exist_ok=True)
+    temp_output = tempfile.NamedTemporaryFile(
+        prefix='cdhit-',
+        dir=output_file.parent)
+    temp_input, id_map = temp_fasta(fasta_file)
+    cdhit(temp_input.name, temp_output.name, *args, **kwargs)
+    cluster = cdhit.parse_cluster(temp_output.name + '.clstr')
+    cluster['sequence_id'] = cluster['sequence_id'].apply(lambda x: id_map[x])
+    cluster.to_csv(output_file.with_suffix('.cluster.csv'), index=False)
+    cluster = cluster[cluster['representative']]
+    fasta = read_fasta(fasta_file)
+    uniqued = (fasta[seq_id] for seq_id in cluster['sequence_id'])
+    save_fasta(uniqued, output_file)
+    Path(temp_output.name + '.clstr').unlink()
+
+
+if __name__ == '__main__':
+    from argparse import ArgumentParser
+    parser = ArgumentParser()
+    subparsers = parser.add_subparsers(dest='command')
+    unique_parser = subparsers.add_parser('unique')
+    unique_parser.add_argument('--fasta_file', '-i', type=Path, required=True)
+    unique_parser.add_argument('--output_file', '-o', type=Path, required=True)
+    unique_parser.add_argument('--cutoff', '-c', type=float, default=0.9)
+    unique_parser.add_argument('--num_threads', '-t', type=int, default=1)
+
+    args = parser.parse_args()
+
+    unique_fasta(
+        args.fasta_file,
+        args.output_file,
+        cutoff=args.cutoff,
+        num_threads=args.num_threads)
