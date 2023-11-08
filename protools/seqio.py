@@ -1,4 +1,5 @@
 import pandas as pd
+import tempfile
 import csv
 
 from Bio import SeqIO
@@ -145,6 +146,26 @@ def df2fasta(df:pd.DataFrame,
                 raise ValueError(f"mode {mode} not supported")
     
     save_fasta(_iter_seq(), fasta_path)
+
+
+def temp_fasta(path: FilePath):
+    path = ensure_path(path)
+    fasta = read_fasta(path)
+    id_map = dict()
+    def _iter_seq():
+        for i, (key, record) in enumerate(fasta.items()):
+            record.id = f'{i}'
+            record.description = ''
+            record.name = record.id
+            id_map[record.id] = key
+            yield record
+    
+    temp_file = tempfile.NamedTemporaryFile(
+        prefix='temp_',
+        suffix='.fasta',
+        dir=path.parent)
+    save_fasta(_iter_seq(), temp_file.name)
+    return temp_file, id_map
 
 
 if __name__ == '__main__':
