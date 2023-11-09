@@ -141,6 +141,7 @@ if __name__ == '__main__':
     common_parser.add_argument('--output_file', '-o', type=Path, required=True)
     common_parser.add_argument('--cutoff', '-c', type=float, default=0.9)
     common_parser.add_argument('--num_threads', '-t', type=int, default=1)
+    common_parser.add_argument('--word_length', '-n', type=int, default=5)
     subparsers = parser.add_subparsers(dest='command')
     unique_parser = subparsers.add_parser('unique', parents=[common_parser])
     unique2d_parser = subparsers.add_parser('unique2d', parents=[common_parser])
@@ -153,7 +154,8 @@ if __name__ == '__main__':
             args.input_file,
             args.output_file,
             cutoff=args.cutoff,
-            num_threads=args.num_threads)
+            num_threads=args.num_threads,
+            word_length=args.word_length)
         
     elif args.command == 'unique2d':
         unique_fasta_2d(
@@ -161,5 +163,6 @@ if __name__ == '__main__':
             args.target_file,
             args.output_file,
             cutoff=args.cutoff,
-            num_threads=args.num_threads)
+            num_threads=args.num_threads,
+            word_length=args.word_length)
 
