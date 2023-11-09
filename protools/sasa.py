@@ -46,7 +46,7 @@ def calc_sasa_from_list(
     schedules = product(pdb_dir.glob('*.pdb'), [output_dir], [model_idx])
 
     if num_worker == 1:
-        starmap(calc_sasa, schedules)
+        list(starmap(calc_sasa, schedules))
 
     elif num_worker > 1:
         with Pool(num_worker) as p:
