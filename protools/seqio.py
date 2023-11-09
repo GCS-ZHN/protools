@@ -6,14 +6,14 @@ from Bio import SeqIO
 from Bio.Seq import Seq 
 from Bio.SeqRecord import SeqRecord
 from pathlib import Path
-from typing import Iterable, Union, Dict
+from typing import Iterable, Union, Dict, Tuple, Any
 from collections import OrderedDict
 from itertools import starmap
 
 from .utils import FilePath, ensure_path
 
 
-SeqLike = Union[str, Seq, SeqRecord]
+SeqLike = Union[str, Seq, SeqRecord, Tuple[str, str]]
 
 class Fasta(OrderedDict):
 
@@ -28,7 +28,14 @@ class Fasta(OrderedDict):
     def __setitem__(self, __key: str, __value: SeqRecord) -> None:
         return super().__setitem__(__key, __value)
 
-    def __value_check(self, idx: int, seq: SeqLike) -> SeqRecord:
+    def __value_check(self, idx: Any, seq: SeqLike) -> SeqRecord:
+        if isinstance(seq, tuple):
+            if len(seq) != 2:
+                raise ValueError('Tuple should have 2 elements')
+            if not all(isinstance(x, str) for x in seq):
+                raise ValueError('Tuple should have 2 str elements')
+            idx = seq[0]
+            seq = seq[1]
         if isinstance(seq, str):
             seq = Seq(seq)
         if isinstance(seq, Seq):
@@ -148,13 +155,13 @@ def df2fasta(df:pd.DataFrame,
     save_fasta(_iter_seq(), fasta_path)
 
 
-def temp_fasta(path: FilePath):
+def temp_fasta(path: FilePath, id_prefix: str = ''):
     path = ensure_path(path)
     fasta = read_fasta(path)
     id_map = dict()
     def _iter_seq():
         for i, (key, record) in enumerate(fasta.items()):
-            record.id = f'{i}'
+            record.id = f'{id_prefix}{i}'
             record.description = ''
             record.name = record.id
             id_map[record.id] = key
