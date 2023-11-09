@@ -8,7 +8,7 @@ from Bio.SeqRecord import SeqRecord
 from pathlib import Path
 from typing import Iterable, Union, Dict, Tuple, Any
 from collections import OrderedDict
-from itertools import starmap
+from itertools import starmap, product
 
 from .utils import FilePath, ensure_path
 
@@ -175,6 +175,33 @@ def temp_fasta(path: FilePath, id_prefix: str = ''):
     return temp_file, id_map
 
 
+def create_complex_seq(
+        seq_id: str,
+        *seqs: str,
+        seq_description: str = '',
+        linker: str = ':') -> SeqRecord:
+    complex_seq = linker.join(seqs)
+    return SeqRecord(
+        Seq(complex_seq),
+        id = seq_id,
+        description=seq_description
+    )
+
+
+def cross_create(
+        seq_records1: Iterable[SeqRecord],
+        seq_records2: Iterable[SeqRecord],
+        linker: str = ':'
+) -> Iterable[SeqRecord]:
+    for seq1, seq2 in product(seq_records1, seq_records2):
+        complex_id = f'{seq1.id}-{seq2.id}_complex'
+        yield create_complex_seq(
+            complex_id,
+            str(seq1.seq),
+            str(seq2.seq),
+            linker=linker)
+
+
 if __name__ == '__main__':
     from argparse import ArgumentParser
     parser = ArgumentParser()
@@ -222,6 +249,13 @@ if __name__ == '__main__':
         required=True,
         type=Path,
         help='output csv file')
+
+    complex_parser = subparsers.add_parser('complex')
+    complex_parser.add_argument('--seqs1', '-i1', type=Path, required=True)
+    complex_parser.add_argument('--seqs2', '-i2', type=Path, required=True)
+    complex_parser.add_argument('--output', '-o', type=Path, required=True)
+    complex_parser.add_argument('--linker', '-l', default='')
+
     args = parser.parse_args()
 
     if args.subcommand == 'csv2fasta':
@@ -231,6 +265,14 @@ if __name__ == '__main__':
     elif args.subcommand == 'fasta2csv':
         fasta = read_fasta(args.input)
         fasta.to_csv(args.output)
+
+    elif args.subcommand == 'complex':
+        seqs1 = read_fasta(args.seqs1)
+        seqs2 = read_fasta(args.seqs2)
+
+        save_fasta(
+            cross_create(seqs1.values(), seqs2.values(), args.linker),
+            args.output)
 
     else:
         raise ValueError(f"subcommand {args.subcommand} not supported")
