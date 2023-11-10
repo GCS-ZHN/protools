@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import logging
 import pandas as pd
+import warnings
 
 from typing import Callable, Iterable, Tuple, Union
 from Bio.PDB.Residue import Residue
@@ -184,7 +185,7 @@ async def async_download_PDB(pdb_id: str, target_path: FilePath, callback: Calla
         logging.error(e)
 
 
-def read_pdb_seq(pdb_file: FilePath) -> Iterable[Tuple[str, str, str]]:
+def read_pdb_seq(pdb_file: FilePath, ignore_unknown_aa: bool = True) -> Iterable[Tuple[str, str, str]]:
     """
     Extract the sequence of a PDB file.
 
@@ -204,10 +205,21 @@ def read_pdb_seq(pdb_file: FilePath) -> Iterable[Tuple[str, str, str]]:
 
     parser = PDBParser(QUIET=True)
     structure = parser.get_structure("pdb", pdb_file)
+    aa_dict = IUPACData.protein_letters_3to1
     for model in structure:
         for chain in model:
-            seq = "".join(IUPACData.protein_letters_3to1[residue.get_resname(
-            ).capitalize()] for residue in chain)
+            aa_iter = (residue.get_resname().capitalize() for residue in chain)
+            
+            def _filter(aa):
+                if aa in aa_dict:
+                    return True
+                if ignore_unknown_aa:
+                    warnings.warn(f"Ignore unkown aa: {aa.upper()}")
+                    return False
+                raise ValueError(f"Unkown aa: {aa.upper()}")
+            
+            aa_iter = filter(_filter, aa_iter)
+            seq = "".join(aa_dict[aa] for aa in aa_iter)
 
             yield model.id, chain.id, seq
 
