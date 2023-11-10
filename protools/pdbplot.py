@@ -1,26 +1,15 @@
 try:
     from pymol import cmd
-    PYMOL_AVAILABLE = True
 except ImportError:
-    PYMOL_AVAILABLE = False
-
-from functools import wraps
+    pass
+from .utils import require_package
 from pathlib import Path
 import logging
 
 logger = logging.getLogger(__name__)
 
-def require_pymol(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        if not PYMOL_AVAILABLE:
-            raise ImportError("Pymol is not available.")
-        return func(*args, **kwargs)
 
-    return wrapper
-
-
-@require_pymol
+@require_package("pymol")
 def align_all_designs(
     pdb_dir: Path, 
     output_name: Path,

@@ -101,3 +101,16 @@ class CmdWrapperBase(object):
                 cmds.append(f'--{k}')
             cmds.append(str(v))
         return subprocess.run(cmds)
+
+
+def require_package(package_name: str):
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                __import__(package_name)
+            except ImportError as e:
+                raise RuntimeError(f'Package {package_name} is required.') from e
+            return func(*args, **kwargs)
+        return wrapper
+    return decorator
