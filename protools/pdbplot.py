@@ -1,15 +1,17 @@
-try:
-    from pymol import cmd
-except ImportError:
-    pass
 from .utils import require_package
 from pathlib import Path
 import logging
 
+try:
+    require_pymol = require_package("pymol", "conda install -c schrodinger pymol")
+    from pymol import cmd
+except ImportError:
+    pass
+
 logger = logging.getLogger(__name__)
 
 
-@require_package("pymol")
+@require_pymol
 def align_all_designs(
     pdb_dir: Path, 
     output_name: Path,

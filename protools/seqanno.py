@@ -4,12 +4,13 @@ from .utils import require_package
 from .seqio import read_fasta, df2fasta
 from pathlib import Path
 try:
+    require_abnumber = require_package("abnumber",  "conda install -c bioconda abnumber")
     from abnumber import Chain, ChainParseError
 except ImportError:
     pass
 
 
-@require_package("abnumber")
+@require_abnumber
 def remove_constant_region(fasta_file: Path, strict: bool = False, ignore_error: bool = False):
     fasta = read_fasta(fasta_file)
 
@@ -31,7 +32,7 @@ def remove_constant_region(fasta_file: Path, strict: bool = False, ignore_error:
                 raise RuntimeError(f"Error parsing {seq_id}: {e}") from e
 
 
-@require_package("abnumber")
+@require_abnumber
 def annotate_chain_type(fasta_file: Path):
     fasta = read_fasta(fasta_file)
     for seq_id, seq in fasta.items():

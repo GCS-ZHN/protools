@@ -103,14 +103,17 @@ class CmdWrapperBase(object):
         return subprocess.run(cmds)
 
 
-def require_package(package_name: str):
+def require_package(package_name: str, install_cmd: str = None):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             try:
                 __import__(package_name)
             except ImportError as e:
-                raise RuntimeError(f'Package {package_name} is required.') from e
+                msg = f'Package {package_name} is required.'
+                if install_cmd:
+                    msg += f" You can install it by `{install_cmd}`."
+                raise RuntimeError(msg) from e
             return func(*args, **kwargs)
         return wrapper
     return decorator
