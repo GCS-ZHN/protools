@@ -17,8 +17,10 @@ SeqLike = Union[str, Seq, SeqRecord, Tuple[str, str]]
 
 class Fasta(OrderedDict):
 
-    def __init__(self, data: Iterable[SeqLike], id_prefix:str = '') -> None:
+    def __init__(self, data: Iterable[SeqLike] = None, id_prefix:str = '') -> None:
         self.id_prefix = id_prefix
+        if data is None:
+            data = []
         data = starmap(self.__value_check, enumerate(data))
         super().__init__(map(lambda x: (x.id, x), data))
 
@@ -89,6 +91,14 @@ class Fasta(OrderedDict):
             writer.writeheader()
             writer.writerows(self.to_dict())
 
+    def __add__(self, other: 'Fasta') -> 'Fasta':
+        """
+        Concatenate two fasta objects.
+        """
+        new = self.copy()
+        new.update(other)
+        return new
+
 
 def read_fasta(path: FilePath) -> Fasta:
     if not isinstance(path, Path):
@@ -141,9 +151,10 @@ def df2fasta(df:pd.DataFrame,
     def _iter_seq():
         for index, row in df.iterrows():
             item_id = index if id_col is None else row[id_col]
-            item_id = item_id.replace(' ', '_')
-            item_id = item_id.replace('/', '_')
-            item_id = item_id.replace(',', '_')
+            if isinstance(item_id, str):
+                item_id = item_id.replace(' ', '_')
+                item_id = item_id.replace('/', '_')
+                item_id = item_id.replace(',', '_')
             if mode == 'seperate':
                 for seq_col in seq_cols:
                     seq_id = f"{item_id}_{seq_col}"
