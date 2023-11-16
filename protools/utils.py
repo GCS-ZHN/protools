@@ -5,7 +5,7 @@ import subprocess
 import functools
 
 from pathlib import Path
-from typing import Union
+from typing import Any, Union
 
 FilePath = Union[Path, str]
 
@@ -92,6 +92,9 @@ class CmdWrapperBase(object):
         return cmd_path
     
     def __call__(self, *args, **kwargs):
+        """
+        Run the command.
+        """
         cmds = [self.cmd]
         cmds.extend(map(str, args))
         for k, v in kwargs.items():
@@ -101,6 +104,14 @@ class CmdWrapperBase(object):
                 cmds.append(f'--{k}')
             cmds.append(str(v))
         return subprocess.run(cmds)
+    
+    def __getattr__(self, name):
+        """
+        Create a subcommand wrapper.
+        """
+        def wrapper(*args, **kwargs):
+            return self(name, *args, **kwargs)
+        return wrapper
 
 
 def require_package(package_name: str, install_cmd: str = None):
