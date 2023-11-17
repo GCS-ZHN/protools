@@ -21,12 +21,35 @@ from .utils import ensure_path, FilePath
 from .seqio import save_fasta
 
 __all__ = [
+    'get_structure',
     'save_to_pdb',
     'download_PDB',
     'async_download_PDB',
     'read_pdb_seq',
     'pdb2fasta',
     'pdb2df']
+
+
+def get_structure(pdb_file: FilePath) -> Structure:
+    """
+    Get the structure of a PDB file.
+
+    Parameters
+    ----------
+    pdb_file : str
+        Path to the PDB file.
+
+    Returns
+    ----------
+    structure : Structure
+        Structure of the PDB file.
+    """
+    pdb_file = ensure_path(pdb_file)
+    if not pdb_file.exists():
+        raise FileNotFoundError(f"Could not find PDB file {pdb_file}")
+
+    parser = PDBParser(QUIET=True)
+    return parser.get_structure("pdb", pdb_file)
 
 
 def save_to_pdb(output_path: FilePath, *entities: Union[Structure, Model, Chain, Residue], remarks: Iterable[str] = None) -> None:
@@ -203,8 +226,7 @@ def read_pdb_seq(pdb_file: FilePath, ignore_unknown_aa: bool = True) -> Iterable
     if not pdb_file.exists():
         raise FileNotFoundError(f"Could not find PDB file {pdb_file}")
 
-    parser = PDBParser(QUIET=True)
-    structure = parser.get_structure("pdb", pdb_file)
+    structure = get_structure(pdb_file)
     aa_dict = IUPACData.protein_letters_3to1
     for model in structure:
         for chain in model:
@@ -366,12 +388,7 @@ def read_residue(pdb: Union[FilePath, str, Entity], mode='centroid') -> pd.DataF
     if isinstance(pdb, Entity):
         structure = pdb
     elif isinstance(pdb, (str, Path)):
-        pdb = ensure_path(pdb)
-        if not pdb.exists():
-            raise FileNotFoundError(f"Could not find PDB file {pdb}")
-        
-        parser = PDBParser(QUIET=True)
-        structure = parser.get_structure("pdb", pdb)
+        structure = get_structure(pdb)
     else:
         raise TypeError(f"Unsupported type {type(pdb)}")
 
@@ -421,7 +438,6 @@ def get_pdb_remarks(pdb_file: FilePath) -> Iterable[str]:
         for line in fp:
             if line.startswith("REMARK"):
                 yield line.replace("REMARK", "").strip()
-
 
 
 if __name__ == "__main__":
