@@ -20,8 +20,9 @@ class DockBase(object, metaclass=abc.ABCMeta):
 
 class HDock(DockBase):
 
-    hdock_bin = CmdWrapperBase("hdock")
-    hdock_create_bin = CmdWrapperBase("createpl")
+    def __init__(self) -> None:
+        self.hdock_bin = CmdWrapperBase("hdock")
+        self.hdock_create_bin = CmdWrapperBase("createpl")
 
     def _filter_dockout(
             self, 
