@@ -58,7 +58,6 @@ class HDock(DockBase):
              angle: int = 15) -> Path:
         ligand_pdb = ensure_path(ligand_pdb)
         receptor_pdb = ensure_path(receptor_pdb)
-        output = ensure_path(output)
         ligand_temp_pdb = tempfile.NamedTemporaryFile(
             dir=".", prefix="Hdock-ligand-", suffix=".pdb")
         ligand_temp_pdb = Path(ligand_temp_pdb.name)
@@ -95,6 +94,7 @@ class HDock(DockBase):
             raise RuntimeError(f"HDock failed with exit code {process.returncode}.")
 
         if output is not None:
+            output = ensure_path(output)
             output.parent.mkdir(parents=True, exist_ok=True)
             shutil.move(temp_out.name, output)
         else:
@@ -163,3 +163,33 @@ class HDock(DockBase):
 
         if outpath != cwd:
             os.chdir(cwd)
+
+
+if __name__ == '__main__':
+    from argparse import ArgumentParser
+
+    parser = ArgumentParser()
+    subparsers = parser.add_subparsers(dest="cmd")
+
+    hdock_parser = subparsers.add_parser('hdock')
+    hdock_parser.add_argument("--receptor", "-r", type=Path, required=True)
+    hdock_parser.add_argument("--ligand", "-l", type=Path, required=True)
+    hdock_parser.add_argument("--output", "-o", type=Path, required=True)
+    hdock_parser.add_argument("--model-num", "-n", type=int, default=1)
+
+    args = parser.parse_args()
+    if args.cmd == "hdock":
+        hdock = HDock()
+        dockout = hdock.dock(
+            ligand_pdb=args.ligand,
+            receptor_pdb=args.receptor,
+            output=args.output.with_suffix(".dockout")
+        )
+        hdock.create_complex(
+            dockout,
+            pdb_name=args.output.name,
+            model_num=args.model_num,
+            complex=True
+        )
+    else:
+        raise RuntimeError(f"Unknown subcommand: {args.cmd}")
