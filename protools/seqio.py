@@ -24,8 +24,15 @@ class Fasta(OrderedDict):
         data = starmap(self.__value_check, enumerate(data))
         super().__init__(map(lambda x: (x.id, x), data))
 
-    def __getitem__(self, __key: str) -> SeqRecord:
-        return super().__getitem__(__key)
+    def __getitem__(self, __key: Union[str, Iterable[str]]) -> Union[SeqRecord, 'Fasta']:
+        try:
+            return super().__getitem__(__key)
+        except TypeError as e:
+            if isinstance(__key, Iterable):
+                sub_fasta = Fasta()
+                sub_fasta.update(map(lambda x: (x, self[x]), __key))
+                return sub_fasta
+            raise e
 
     def __setitem__(self, __key: str, __value: SeqRecord) -> None:
         return super().__setitem__(__key, __value)
