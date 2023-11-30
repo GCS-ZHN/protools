@@ -115,7 +115,7 @@ class HDock(DockBase):
                        rmsd: float = 5.0,
                        complex: bool = False,
                        models: bool = False,
-                       chid: bool = None):
+                       chid: bool = False):
         dock_result = ensure_path(dock_result)
         outpath = dock_result.parent
         cwd = os.getcwd()
