@@ -6,23 +6,42 @@ from Bio import SeqIO
 from Bio.Seq import Seq 
 from Bio.SeqRecord import SeqRecord
 from pathlib import Path
-from typing import Iterable, Union, Dict, Tuple, Any
+from typing import Iterable, Union, Dict, Tuple
 from collections import OrderedDict
-from itertools import starmap, product
+from itertools import product
 
 from .utils import FilePath, ensure_path
 
 
-SeqLike = Union[str, Seq, SeqRecord, Tuple[str, str]]
+SeqLike = Union[str, Seq, SeqRecord]
 
 class Fasta(OrderedDict):
+    """
+    Sequence record dictionary
+    and FASTA format processor.
+    
+    Parameters
+    ----------
+    data : Iterable[Tuple[str, SeqLike]], optional
+        The initial data of the Fasta object.
+        The default is None.
+    **kwargs : Dict[str, SeqLike]
+        The initial data of the Fasta object.
+        The default is None.
 
-    def __init__(self, data: Iterable[SeqLike] = None, id_prefix:str = '') -> None:
-        self.id_prefix = id_prefix
+    Examples
+    ----------
+    >>> from protools.seqio import Fasta
+    >>> fasta = Fasta([('seq1', 'ATCG'), ('seq2', 'ATCG')])
+    >>> fasta['seq1']
+    SeqRecord(seq=Seq('ATCG'), id='seq1', name='seq1', description='', dbxrefs=[])
+    """
+    def __init__(self, 
+                 data: Iterable[Tuple[str, SeqLike]] = None, 
+                 **kwargs: Dict[str, SeqLike]) -> None:
         if data is None:
             data = []
-        data = starmap(self.__value_check, enumerate(data))
-        super().__init__(map(lambda x: (x.id, x), data))
+        super().__init__(data, **kwargs)
 
     def __getitem__(self, __key: Union[str, Iterable[str]]) -> Union[SeqRecord, 'Fasta']:
         try:
@@ -34,29 +53,22 @@ class Fasta(OrderedDict):
                 return sub_fasta
             raise e
 
-    def __setitem__(self, __key: str, __value: SeqRecord) -> None:
-        return super().__setitem__(__key, __value)
-
-    def __value_check(self, idx: Any, seq: SeqLike) -> SeqRecord:
-        if isinstance(seq, tuple):
-            if len(seq) != 2:
-                raise ValueError('Tuple should have 2 elements')
-            if not all(isinstance(x, str) for x in seq):
-                raise ValueError('Tuple should have 2 str elements')
-            idx = seq[0]
-            seq = seq[1]
-        if isinstance(seq, str):
-            seq = Seq(seq)
-        if isinstance(seq, Seq):
-            seq = SeqRecord(
-                seq,
-                id=f'{idx}',
-                description=''
+    def __setitem__(self, __key: str, __value: SeqLike) -> None:
+        __key = str(__key)
+        if isinstance(__value, str):
+            __value = Seq(__value)
+        if isinstance(__value, Seq):
+            __value = SeqRecord(
+                __value,
+                id=__key,
+                description='',
+                name=__key
             )
-        if isinstance(seq, SeqRecord):
-            seq.id = f'{self.id_prefix}{seq.id}'
-            return seq
+        if isinstance(__value, SeqRecord):
+            assert __value.id == __key, f"Mismatch id and SeqRecord: {__key} != {__value.id}"
+            return super().__setitem__(__key, __value)
         raise ValueError('Element should be str, Seq or SeqRecord')
+        
 
     def to_dict(self) -> Iterable[Dict]:
         """
@@ -108,13 +120,37 @@ class Fasta(OrderedDict):
 
 
 def read_fasta(path: FilePath) -> Fasta:
+    """
+    Read fasta file as `Fasta` object.
+    
+    Parameters
+    ----------
+    path : str or Path
+        The path of the fasta file.
+
+    Returns
+    ----------
+    Fasta object.
+    """
     if not isinstance(path, Path):
         path = Path(path)
     path = path.resolve().expanduser().absolute()
-    return Fasta(SeqIO.parse(path, 'fasta'))
+    return Fasta(map(lambda x: (x.id, x), SeqIO.parse(path, 'fasta')))
 
 
 def save_fasta(sequences: Iterable[SeqRecord], path: FilePath, mkdir: bool = False):
+    """
+    Save fasta file.
+
+    Parameters
+    ----------
+    sequences : Iterable[SeqRecord]
+        The sequences to be saved.
+    path : str or Path
+        The path of the fasta file to be saved.
+    mkdir : bool, optional
+        Whether to make the directory. The default is False.
+    """
     path = ensure_path(path)
     if mkdir:
         path.parent.mkdir(parents=True, exist_ok=True)
