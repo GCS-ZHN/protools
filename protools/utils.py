@@ -46,12 +46,22 @@ def catch_error(logger, err_types=(RuntimeError,)):
 
 
 class CmdNotFoundError(RuntimeError):
-    
+    """
+    Raised when the command is not found.
+    """
     def __init__(self, cmd: str):
         super().__init__(f'Command {cmd} not found.')
 
 
 class CmdWrapperBase(object):
+    """
+    A base class for wrapping a command.
+
+    Parameters
+    ----------
+    cmd : str
+        The command to be wrapped.
+    """
     def __init__(self, cmd: str):
         self.cmd = self.find_command(cmd)
 
@@ -115,6 +125,18 @@ class CmdWrapperBase(object):
 
 
 def require_package(package_name: str, install_cmd: Optional[str] = None):
+    """
+    A decorator to check if a package is installed.
+    Some functions may require a package to be installed.
+
+    Parameters
+    ----------
+    package_name : str
+        The name of the package.
+    install_cmd : str, optional
+        The command to install the package, it will be shown
+        when the package is not installed if provided.
+    """
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
