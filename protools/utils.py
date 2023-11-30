@@ -5,7 +5,7 @@ import subprocess
 import functools
 
 from pathlib import Path
-from typing import Any, Union
+from typing import Optional, Union
 
 FilePath = Union[Path, str]
 
@@ -114,7 +114,7 @@ class CmdWrapperBase(object):
         return wrapper
 
 
-def require_package(package_name: str, install_cmd: str = None):
+def require_package(package_name: str, install_cmd: Optional[str] = None):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):

@@ -6,6 +6,7 @@ import re
 
 from .utils import CmdWrapperBase, ensure_path
 from pathlib import Path
+from typing import Optional
 
 
 class DockBase(object, metaclass=abc.ABCMeta):
@@ -51,10 +52,10 @@ class HDock(DockBase):
     def dock(self,
              ligand_pdb: Path,
              receptor_pdb: Path,
-             output: Path = None,
+             output: Optional[Path] = None,
              itscore: bool = True,
-             rsite: Path = None,
-             lsite: Path = None,
+             rsite: Optional[Path] = None,
+             lsite: Optional[Path] = None,
              angle: int = 15) -> Path:
         ligand_pdb = ensure_path(ligand_pdb)
         receptor_pdb = ensure_path(receptor_pdb)

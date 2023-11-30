@@ -1,5 +1,6 @@
 from .utils import require_package
 from pathlib import Path
+from typing import Optional
 import logging
 
 try:
@@ -15,8 +16,8 @@ logger = logging.getLogger(__name__)
 def align_all_designs(
     pdb_dir: Path, 
     output_name: Path,
-    receptor_chain: str = None, 
-    ref_pdb: Path = None):
+    receptor_chain: Optional[str] = None, 
+    ref_pdb: Optional[Path] = None):
 
     pdbs = pdb_dir.glob("*.pdb")
     remove_ref = True

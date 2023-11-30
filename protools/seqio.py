@@ -6,7 +6,7 @@ from Bio import SeqIO
 from Bio.Seq import Seq 
 from Bio.SeqRecord import SeqRecord
 from pathlib import Path
-from typing import Iterable, Union, Dict, Tuple
+from typing import Iterable, Union, Dict, Tuple, Optional
 from collections import OrderedDict
 from itertools import product
 
@@ -37,7 +37,7 @@ class Fasta(OrderedDict):
     SeqRecord(seq=Seq('ATCG'), id='seq1', name='seq1', description='', dbxrefs=[])
     """
     def __init__(self, 
-                 data: Iterable[Tuple[str, SeqLike]] = None, 
+                 data: Optional[Iterable[Tuple[str, SeqLike]]] = None, 
                  **kwargs: Dict[str, SeqLike]) -> None:
         if data is None:
             data = []
@@ -161,7 +161,7 @@ def save_fasta(sequences: Iterable[SeqRecord], path: FilePath, mkdir: bool = Fal
 def df2fasta(df:pd.DataFrame,
              fasta_path: FilePath, 
              *seq_cols: str, 
-             id_col: str = None, 
+             id_col: Optional[str] = None, 
              mode: str = 'seperate', 
              sep: str = ''):
     """

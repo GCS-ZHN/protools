@@ -4,7 +4,7 @@ import logging
 import pandas as pd
 import warnings
 
-from typing import Callable, Iterable, Tuple, Union
+from typing import Callable, Iterable, Tuple, Union, Optional
 from Bio.PDB.Residue import Residue
 from Bio.PDB.Chain import Chain
 from Bio.PDB.Model import Model
@@ -52,7 +52,7 @@ def get_structure(pdb_file: FilePath) -> Structure:
     return parser.get_structure("pdb", pdb_file)
 
 
-def save_to_pdb(output_path: FilePath, *entities: Union[Structure, Model, Chain, Residue], remarks: Iterable[str] = None) -> None:
+def save_to_pdb(output_path: FilePath, *entities: Union[Structure, Model, Chain, Residue], remarks: Optional[Iterable[str]] = None) -> None:
     """
     Save entities to a PDB file.
 
@@ -250,7 +250,7 @@ def pdb2fasta(
         fasta_path: str,
         *pdb_files: str,
         multimer_mode: str = 'joint',
-        selected_chains: str = None,
+        selected_chains: Optional[str] = None,
         joint_sep: str = ':') -> None:
     """
     Convert PDB files to a fasta file.

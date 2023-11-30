@@ -5,15 +5,15 @@ from .pdbio import save_to_pdb
 from pathlib import Path
 from Bio.PDB import PDBParser
 from Bio import BiopythonWarning
-
+from typing import Optional
 warnings.simplefilter('ignore', BiopythonWarning)
 
 
 def renumber_residue(
         pdb_file: str, 
-        out_file: str = None,
+        out_file: Optional[str] = None,
         model_idx: int = 0, 
-        chain_order: list = None, 
+        chain_order: Optional[list] = None, 
         start: int = 1):
     pdb_file = Path(pdb_file).resolve()
     """
