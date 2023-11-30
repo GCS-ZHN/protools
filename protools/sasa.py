@@ -4,7 +4,7 @@ from multiprocessing import Pool
 from pathlib import Path
 from itertools import product, starmap
 from Bio.PDB.SASA import ShrakeRupley
-from Bio.PDB import PDBParser
+from .pdbio import get_structure
 from .utils import ensure_path, FilePath
 
 
@@ -19,8 +19,7 @@ def calc_sasa(pdb_file: FilePath, output_dir: FilePath, model_idx: int = 0):
     output_dir.mkdir(parents=True, exist_ok=True)
     output_file = output_dir / f"{pdb_file.stem}.csv"
     loger.debug(f"reading pdb file")
-    parser = PDBParser(QUIET=True)
-    struct = parser.get_structure("pdb", pdb_file)
+    struct = get_structure(pdb_file)
     loger.debug(f"calculating sasa")
     sasa_calculator = ShrakeRupley()
     model = struct[model_idx]

@@ -3,9 +3,10 @@ import os
 import shutil
 import subprocess
 import functools
+import logging
 
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional, Union, Tuple
 
 FilePath = Union[Path, str]
 
@@ -16,7 +17,7 @@ def ensure_path(path: FilePath) -> Path:
     return path
 
 
-def max_retry(max=3, err_types=(RuntimeError,), interval=1):
+def max_retry(max: int = 3, err_types: Exception =(RuntimeError,), interval: int = 1):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
@@ -33,7 +34,7 @@ def max_retry(max=3, err_types=(RuntimeError,), interval=1):
     return decorator
 
 
-def catch_error(logger, err_types=(RuntimeError,)):
+def catch_error(logger: logging.Logger, err_types: Exception=(RuntimeError,)):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
