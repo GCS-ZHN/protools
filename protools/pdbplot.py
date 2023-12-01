@@ -56,7 +56,7 @@ if __name__ == '__main__':
     from argparse import ArgumentParser
 
     parser = ArgumentParser()
-    subparsers = parser.add_subparsers(dest="subcommand")
+    subparsers = parser.add_subparsers(dest="cmd")
     design_align_parser = subparsers.add_parser("align")
     design_align_parser.add_argument("--pdb_dir" ,'-i', type=Path, required=True)
     design_align_parser.add_argument("--output_name" , '-o', type=Path, required=True)
@@ -67,7 +67,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, 
                         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
-    if args.subcommand == "align":
+    if args.cmd == "align":
         align_all_designs(
             args.pdb_dir, 
             args.output_name, 
@@ -76,4 +76,4 @@ if __name__ == '__main__':
         )
 
     else:
-        raise ValueError(f"Unknown subcommand: {args.subcommand}")
+        raise ValueError(f"Unknown subcommand: {args.cmd}")

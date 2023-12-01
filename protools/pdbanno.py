@@ -1,15 +1,20 @@
-import pandas as pd
-
-from Bio.PDB import PDBParser
-from Bio.PDB.Structure import Structure
-from Bio.PDB.SASA import ShrakeRupley
-from Bio.SeqUtils import IUPACData
+import logging
+from itertools import product, starmap
+from multiprocessing import Pool
 from pathlib import Path
-from scipy.spatial import distance
 from typing import Union
 
-from . import pdbio
+import pandas as pd
+from Bio.PDB.SASA import ShrakeRupley
+from Bio.PDB.Structure import Structure
+from Bio.SeqUtils import IUPACData
+from scipy.spatial import distance
 
+from . import pdbio
+from .typedef import FilePathType, StructureFragmentType
+from .utils import ensure_path
+
+_LOGGER = logging.getLogger(__name__)
 
 def neighbor_water_count(
         pdb: Union[Path, str, Structure], 
@@ -53,12 +58,10 @@ def neighbor_water_count(
                   99    ARG     0
     Length: 3953, dtype: int64
     """
-    parser = PDBParser(QUIET=True)
     if isinstance(pdb, Structure):
         structure = pdb
     elif isinstance(pdb, (str, Path)):
-        pdb = Path(pdb).absolute().resolve().expanduser()
-        structure = parser.get_structure("pdb", pdb)
+        structure = pdbio.get_structure(pdb)
     else:
         raise TypeError(f"Unknown type: {type(pdb)}")
 
@@ -93,15 +96,19 @@ def neighbor_water_count(
     return dist.groupby(level_columns).any().sum(axis=1)
 
 
-def calc_sasa(pdb: Structure, radius: float = 1.4, standard: bool = True) -> pd.Series:
+def calc_sasa(
+        entity: StructureFragmentType, 
+        radius: float = 1.4, 
+        standard: bool = True) -> pd.Series:
     """
     calculate the solvent accessible surface area (SASA) of each residue
-    in a PDB file.
+    in a structure fragment.
 
     Parameters
     ----------
-    pdb : Structure
-        The PDB structure.
+    entity : StructureFragmentType
+        A Bio.PDB.Structure.Structure, Bio.PDB.Model.Model,
+        Bio.PDB.Chain.Chain or Bio.PDB.Residue.Residue object.
     radius : float, optional
         The probe radius, by default 1.4.
     standard : bool, optional
@@ -113,20 +120,171 @@ def calc_sasa(pdb: Structure, radius: float = 1.4, standard: bool = True) -> pd.
     pd.Series
         The SASA of each residue.
         The index is a tuple of (model, chain, resi, resn).
+
+    Examples
+    ----------
+    >>> from protools import pdbanno
+    >>> pdb = pdbio.get_structure('3inj.pdb')
+    >>> pdbanno.calc_sasa(pdb[0])
+    model  chain  resi  resn
+    0      A      7     ALA     139.496754
+                  8     VAL      24.683581
+                  9     PRO      49.398717
+                  10    ALA      63.504719
+                  11    PRO       4.285836
+                                ...    
+           H      496   PRO      38.512169
+                  497   GLN       0.000000
+                  498   LYS       0.000000
+                  499   ASN       0.000000
+                  500   SER       0.000000
+    Length: 3953, dtype: float64
+    >>> pdbanno.calc_sasa(pdb[0]['H'])
+    model  chain  resi  resn
+    0      H      6     GLN     142.226811
+                  7     ALA      64.825545
+                  8     VAL      35.011793
+                  9     PRO      30.076666
+                  10    ALA      72.322366
+                                 ...    
+                  496   PRO     101.058627
+                  497   GLN      52.869222
+                  498   LYS      40.743604
+                  499   ASN      93.610187
+                  500   SER     129.328349
+    Length: 495, dtype: float64
+    >>> pdbanno.calc_sasa(pdb[0]['H'][6])
+    model  chain  resi  resn
+    0      H      6     GLN     285.154046
+    dtype: float64
+
+    Notes
+    ----------
+    the sasa of a residue is dependent on the full input
+    fragment, not just the residue itself. So, if you 
+    provide a residue, a chain or a model, the sasa of
+    the same residue may be different.
     """
+    if entity.level == 'R':
+        residues = [entity]
+    elif entity.level in ('C', 'M', 'S'):
+        residues = list(entity.get_residues())
+    else:
+        raise ValueError(f"Unknown entity level: {entity.level}")
+
     sasa_calc = ShrakeRupley(probe_radius=radius)
-    sasa_calc.compute(pdb, level='R')
+    sasa_calc.compute(entity, level='R')
     result = dict()
-    for model in pdb:
-        for chain in model:
-            for res in chain:
-                if standard and res.resname.capitalize() not in IUPACData.protein_letters_3to1:
-                    continue
 
-                if res.resname == 'HOH':
-                    continue
+    for res in residues:
+        if standard and res.resname.capitalize() not in IUPACData.protein_letters_3to1:
+            continue
 
-                resid = f'{res.id[1]}{res.id[2]}'.strip()
-                index = (model.id, chain.id, resid, res.resname)
-                result[index] = res.sasa
-    return pd.Series(result)
+        if res.resname == 'HOH':
+            continue
+        
+        chain = res.get_parent()
+        chain_id = chain.get_id() if chain else 'A'
+        model = chain.get_parent() if chain else None
+        model_id = model.get_id() if model else 0
+        resid = ''.join(map(str, res.get_id())).strip()
+        index = (model_id, chain_id, resid, res.resname)
+        result[index] = res.sasa
+    res = pd.Series(result)
+    res.index.set_names(['model', 'chain', 'resi', 'resn'], inplace=True)
+    return res
+
+
+def _calc_sasa_from_pdb(
+        pdb_file: FilePathType,
+        output_dir: FilePathType,
+        model_idx: int = 0):
+    """
+    A wrapper for calc_sasa. just
+    used for `calc_sasa_from_pdbs`.
+
+    Parameters
+    ----------
+    pdb_file : FilePathType
+        Path to the PDB file.
+    output_dir : FilePathType
+        Path to the output directory.
+    model_idx : int, optional
+        The index of the model to be used, by default 0.
+    """
+    _LOGGER.info(f"calculating sasa for {pdb_file}")
+    pdb_file = ensure_path(pdb_file)
+    output_dir = ensure_path(output_dir)
+    structure = pdbio.get_structure(pdb_file)
+    sasa = calc_sasa(structure[model_idx])
+    output_file = output_dir / f"{pdb_file.stem}.csv"
+    sasa.to_csv(output_file)
+    _LOGGER.info(f"done: {output_file}")
+
+
+def calc_sasa_from_pdbs(
+        pdb_dir: FilePathType, 
+        output_dir: FilePathType, 
+        model_idx: int = 0, 
+        num_worker: int = 1):
+    """
+    SASA batch calculation for PDB files.
+
+    Parameters
+    ----------
+    pdb_dir : FilePathType
+        Path to the directory containing PDB files.
+    output_dir : FilePathType
+        Path to the output directory.
+    model_idx : int, optional
+        The index of the model to be used, by default 0.
+    num_worker : int, optional
+        Number of workers, by default 1.
+    """
+    pdb_dir = ensure_path(pdb_dir)
+    output_dir = ensure_path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    schedules = product(pdb_dir.glob('*.pdb'), [output_dir], [model_idx])
+
+    if num_worker == 1:
+        list(starmap(_calc_sasa_from_pdb, schedules))
+
+    elif num_worker > 1:
+        with Pool(num_worker) as p:
+            p.starmap(_calc_sasa_from_pdb, schedules)
+
+    else:
+        raise ValueError("num_worker must be greater than 0")
+    
+    _LOGGER.info("all done")
+
+
+if __name__ == '__main__':
+    from argparse import ArgumentParser
+
+    common_parser = ArgumentParser(add_help=False)
+    common_parser.add_argument("--pdbfile", "-i", type=Path, required=True)
+    common_parser.add_argument("--output", "-o", type=Path, required=True)
+    common_parser.add_argument("--model_idx", type=int, default=0)
+    common_parser.add_argument("--log_level", "-l", type=str, default="INFO")
+
+    parser = ArgumentParser()
+    subparsers = parser.add_subparsers(dest='cmd')
+
+    sasa_parser = subparsers.add_parser('sasa', parents=[common_parser])
+    sasa_parser.add_argument("--num_worker", "-n", type=int, default=1)
+    args = parser.parse_args()
+
+    logging.basicConfig(
+        level=logging.getLevelName(args.log_level),
+        format='%(process)d-%(asctime)s-%(levelname)s-%(message)s')
+    
+    if args.cmd == 'sasa':
+        calc_sasa_from_pdbs(
+            args.pdb_dir, 
+            args.output_dir, 
+            args.model_idx, 
+            args.num_worker)
+        
+    else:
+        raise ValueError(f"Unknown subcommand: {args.cmd}")

@@ -1,9 +1,10 @@
 from .seqio import read_fasta, save_fasta
-from .utils import FilePath, ensure_path
+from .utils import ensure_path
+from .typedef import FilePathType
 from pathlib import Path
 
 
-def deduplicated_seq(data: FilePath):
+def deduplicated_seq(data: FilePathType):
     """
     Remove duplicated sequence by remaining the
     first record.
@@ -23,7 +24,7 @@ def deduplicated_seq(data: FilePath):
     print(f"Total seqs: {len(fasta)}, unique seqs: {len(seqs)}")
 
 
-def split(data: FilePath, n: int):
+def split(data: FilePathType, n: int):
     """
     Split sequences into `n` fasta file.
     """
@@ -52,8 +53,10 @@ if __name__ == '__main__':
         deduplicated_seq(
             args.data
         )
-    if args.cmd == 'split':
+    elif args.cmd == 'split':
         split(
             args.data,
             args.num
         )
+    else:
+        raise ValueError(f"Unknown subcommand: {args.cmd}")

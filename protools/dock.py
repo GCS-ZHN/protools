@@ -1,12 +1,12 @@
 import abc
-import shutil
-import tempfile
 import os
 import re
-
-from .utils import CmdWrapperBase, ensure_path
+import shutil
+import tempfile
 from pathlib import Path
 from typing import Optional
+
+from .utils import CmdWrapperBase, ensure_path
 
 
 class DockBase(object, metaclass=abc.ABCMeta):
@@ -20,7 +20,10 @@ class DockBase(object, metaclass=abc.ABCMeta):
 
 
 class HDock(DockBase):
-
+    """
+    HDock wrapper. See
+    more details at http://hdock.phys.hust.edu.cn/.
+    """
     def __init__(self) -> None:
         self.hdock_bin = CmdWrapperBase("hdock")
         self.hdock_create_bin = CmdWrapperBase("createpl")

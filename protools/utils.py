@@ -6,12 +6,10 @@ import functools
 import logging
 
 from pathlib import Path
-from typing import Optional, Union, Tuple
+from typing import Optional
+from .typedef import FilePathType
 
-FilePath = Union[Path, str]
-
-
-def ensure_path(path: FilePath) -> Path:
+def ensure_path(path: FilePathType) -> Path:
     if not isinstance(path, Path):
         path = Path(path).expanduser().resolve().absolute()
     return path

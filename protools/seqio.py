@@ -10,10 +10,9 @@ from typing import Iterable, Union, Dict, Tuple, Optional
 from collections import OrderedDict
 from itertools import product
 
-from .utils import FilePath, ensure_path
+from .utils import ensure_path
+from .typedef import FilePathType, SeqLikeType
 
-
-SeqLike = Union[str, Seq, SeqRecord]
 
 class Fasta(OrderedDict):
     """
@@ -37,8 +36,8 @@ class Fasta(OrderedDict):
     SeqRecord(seq=Seq('ATCG'), id='seq1', name='seq1', description='', dbxrefs=[])
     """
     def __init__(self, 
-                 data: Optional[Iterable[Tuple[str, SeqLike]]] = None, 
-                 **kwargs: Dict[str, SeqLike]) -> None:
+                 data: Optional[Iterable[Tuple[str, SeqLikeType]]] = None, 
+                 **kwargs: Dict[str, SeqLikeType]) -> None:
         if data is None:
             data = []
         super().__init__(data, **kwargs)
@@ -53,7 +52,7 @@ class Fasta(OrderedDict):
                 return sub_fasta
             raise e
 
-    def __setitem__(self, __key: str, __value: SeqLike) -> None:
+    def __setitem__(self, __key: str, __value: SeqLikeType) -> None:
         __key = str(__key)
         if isinstance(__value, str):
             __value = Seq(__value)
@@ -89,13 +88,13 @@ class Fasta(OrderedDict):
             df.set_index('id', inplace=True)
         return df
     
-    def to_fasta(self, path: FilePath, mkdir: bool = False):
+    def to_fasta(self, path: FilePathType, mkdir: bool = False):
         """
         Save as FASTA format.
         """
         save_fasta(self.values(), path=path, mkdir=mkdir)
 
-    def to_csv(self, path: FilePath, mkdir: bool = False):
+    def to_csv(self, path: FilePathType, mkdir: bool = False):
         """
         Save as CSV format.
         """
@@ -119,7 +118,7 @@ class Fasta(OrderedDict):
         return new
 
 
-def read_fasta(path: FilePath) -> Fasta:
+def read_fasta(path: FilePathType) -> Fasta:
     """
     Read fasta file as `Fasta` object.
     
@@ -138,7 +137,7 @@ def read_fasta(path: FilePath) -> Fasta:
     return Fasta(map(lambda x: (x.id, x), SeqIO.parse(path, 'fasta')))
 
 
-def save_fasta(sequences: Iterable[SeqRecord], path: FilePath, mkdir: bool = False):
+def save_fasta(sequences: Iterable[SeqRecord], path: FilePathType, mkdir: bool = False):
     """
     Save fasta file.
 
@@ -159,7 +158,7 @@ def save_fasta(sequences: Iterable[SeqRecord], path: FilePath, mkdir: bool = Fal
 
 
 def df2fasta(df:pd.DataFrame,
-             fasta_path: FilePath, 
+             fasta_path: FilePathType, 
              *seq_cols: str, 
              id_col: Optional[str] = None, 
              mode: str = 'seperate', 
@@ -214,7 +213,7 @@ def df2fasta(df:pd.DataFrame,
     save_fasta(_iter_seq(), fasta_path)
 
 
-def temp_fasta(path: FilePath, id_prefix: str = ''):
+def temp_fasta(path: FilePathType, id_prefix: str = ''):
     path = ensure_path(path)
     fasta = read_fasta(path)
     id_map = dict()
@@ -264,7 +263,7 @@ def cross_create(
 if __name__ == '__main__':
     from argparse import ArgumentParser
     parser = ArgumentParser()
-    subparsers = parser.add_subparsers(dest="subcommand")
+    subparsers = parser.add_subparsers(dest="cmd")
     csv2fasta_parser = subparsers.add_parser('csv2fasta')
     csv2fasta_parser.add_argument(
         '-i', '--input',
@@ -317,15 +316,15 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    if args.subcommand == 'csv2fasta':
+    if args.cmd == 'csv2fasta':
         df = pd.read_csv(args.input)
         df2fasta(df, args.output, args.id_col, *args.seq_cols, args.mode, args.sep)
 
-    elif args.subcommand == 'fasta2csv':
+    elif args.cmd == 'fasta2csv':
         fasta = read_fasta(args.input)
         fasta.to_csv(args.output)
 
-    elif args.subcommand == 'complex':
+    elif args.cmd == 'complex':
         seqs1 = read_fasta(args.seqs1)
         seqs2 = read_fasta(args.seqs2)
 
@@ -334,4 +333,4 @@ if __name__ == '__main__':
             args.output)
 
     else:
-        raise ValueError(f"subcommand {args.subcommand} not supported")
+        raise ValueError(f"Unknown subcommand: {args.cmd}")

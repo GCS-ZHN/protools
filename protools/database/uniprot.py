@@ -5,7 +5,7 @@ import logging
 from Bio import ExPASy, SwissProt
 from Bio.Seq import Seq
 from pathlib import Path
-from ..utils import max_retry, FilePath, ensure_path, catch_error
+from ..utils import max_retry, FilePathType, ensure_path, catch_error
 from multiprocessing import Pool
 from itertools import starmap, product
 from Bio.SeqFeature import ExactPosition
@@ -44,7 +44,7 @@ def extract_features(record: SwissProt.Record):
 
 @catch_error(loger, err_types=(Exception,))
 @max_retry(max=5)
-def fetch_uniprot_features(accession_id: str, output_path: FilePath, skip_exist: bool = False):
+def fetch_uniprot_features(accession_id: str, output_path: FilePathType, skip_exist: bool = False):
     main_id = accession_id.split('-')[0]
     isoform = accession_id.split('-')[1] if len(accession_id.split('-')) > 1 else ''
     if not main_id.isalnum():

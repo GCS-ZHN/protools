@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from pathlib import Path
-from .pdbio import get_structure, Structure, save_to_pdb
-from .utils import ensure_path, FilePath
-
-from typing import Iterable, Tuple
 from multiprocessing import Pool
+from pathlib import Path
+from typing import Iterable, Tuple
+
+from .pdbio import Structure, get_structure, save_to_pdb
+from .typedef import FilePathType
+from .utils import ensure_path
 
 
 def parser_resi(resi: str) -> Iterable[Tuple]:
@@ -39,7 +40,13 @@ def parser_resi(resi: str) -> Iterable[Tuple]:
         yield chain_id, (start, end)
 
 
-def build_residue_dict(structure: Structure, model_id: int = 0) -> Tuple[dict, dict]:
+def _build_residue_dict(
+        structure: Structure, 
+        model_id: int = 0) -> Tuple[dict, dict]:
+    """
+    Internal function to build a dict of residue index to residue object
+    and a dict of residue object to residue index.
+    """
     resi2idx = {}
     idx2res = []
     model = structure[model_id]
@@ -52,18 +59,34 @@ def build_residue_dict(structure: Structure, model_id: int = 0) -> Tuple[dict, d
 
 
 def extract(
-        pdb_file: FilePath, 
-        out_file: FilePath,
+        pdb_file: FilePathType, 
+        out_file: FilePathType,
         resi_selection: str, 
-        remain: bool = False,
+        remain: bool = True,
         model_id: int = 0):
     """
     Extract residues from pdb file.
+
+    Parameters
+    ----------
+    pdb_file : FilePathType
+        Path to the pdb file.
+    out_file : FilePathType
+        Path to the output pdb file.
+    resi_selection : str
+        A string of residue selection. different range
+        should be separated by comma. Each range should
+        be start with a chain id.
+    remain : bool, optional
+        Whether to remain the selected residues or not,
+        by default True.
+    model_id : int, optional
+        The index of the model to be used, by default 0.
     """
     pdb_file = ensure_path(pdb_file)
     out_file = ensure_path(out_file)
     structure = get_structure(pdb_file)
-    resi2idx, idx2res = build_residue_dict(structure, model_id)
+    resi2idx, idx2res = _build_residue_dict(structure, model_id)
     idx_mask = [not remain] * len(idx2res)
     for chain_id, (start, end) in parser_resi(resi_selection):
         start = resi2idx[(chain_id, start)]
@@ -85,8 +108,8 @@ def extract(
 
 
 def batch_extract(
-        pdb_files: Iterable[FilePath], 
-        out_dir: FilePath,
+        pdb_files: Iterable[FilePathType], 
+        out_dir: FilePathType,
         resi_selection: str, 
         remain: bool = True,
         model_id: int = 0,

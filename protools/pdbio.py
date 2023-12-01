@@ -1,24 +1,26 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import logging
-import pandas as pd
 import warnings
-
-from typing import Callable, Iterable, Tuple, Union, Optional
-from Bio.PDB.Residue import Residue
-from Bio.PDB.Chain import Chain
-from Bio.PDB.Model import Model
-from Bio.PDB.Structure import Structure
-from Bio.PDB.Entity import Entity
-from Bio.PDB.PDBIO import PDBIO
-from Bio.PDB.Atom import Atom
-from Bio.PDB import PDBList, PDBParser
-from Bio.SeqUtils import IUPACData
-from Bio.SeqRecord import SeqRecord
-from Bio.Seq import Seq
 from pathlib import Path
-from .utils import ensure_path, FilePath
+from typing import Callable, Iterable, Optional, Tuple, Union
+
+import pandas as pd
+from Bio.PDB import PDBList, PDBParser
+from Bio.PDB.Atom import Atom
+from Bio.PDB.Chain import Chain
+from Bio.PDB.Entity import Entity
+from Bio.PDB.Model import Model
+from Bio.PDB.PDBIO import PDBIO
+from Bio.PDB.Residue import Residue
+from Bio.PDB.Structure import Structure
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
+from Bio.SeqUtils import IUPACData
+
 from .seqio import save_fasta
+from .typedef import FilePathType, StructureFragmentType
+from .utils import ensure_path
 
 __all__ = [
     'get_structure',
@@ -30,7 +32,7 @@ __all__ = [
     'pdb2df']
 
 
-def get_structure(pdb_file: FilePath) -> Structure:
+def get_structure(pdb_file: FilePathType, structure_id: str = 'pdb') -> Structure:
     """
     Get the structure of a PDB file.
 
@@ -38,6 +40,8 @@ def get_structure(pdb_file: FilePath) -> Structure:
     ----------
     pdb_file : str
         Path to the PDB file.
+    structure_id : str, optional
+        ID of the structure, by default 'pdb'.
 
     Returns
     ----------
@@ -49,10 +53,10 @@ def get_structure(pdb_file: FilePath) -> Structure:
         raise FileNotFoundError(f"Could not find PDB file {pdb_file}")
 
     parser = PDBParser(QUIET=True)
-    return parser.get_structure("pdb", pdb_file)
+    return parser.get_structure(structure_id, pdb_file)
 
 
-def save_to_pdb(output_path: FilePath, *entities: Union[Structure, Model, Chain, Residue], remarks: Optional[Iterable[str]] = None) -> None:
+def save_to_pdb(output_path: FilePathType, *entities: StructureFragmentType, remarks: Optional[Iterable[str]] = None) -> None:
     """
     Save entities to a PDB file.
 
@@ -130,7 +134,7 @@ def save_to_pdb(output_path: FilePath, *entities: Union[Structure, Model, Chain,
         raise TypeError(f"Unsupported type {type(entities[0])}")
 
 
-def download_PDB(pdb_id: str, target_path: FilePath, server: str = 'http://ftp.wwpdb.org') -> Path:
+def download_PDB(pdb_id: str, target_path: FilePathType, server: str = 'http://ftp.wwpdb.org') -> Path:
     """
     Download a PDB file from the PDB database.
 
@@ -167,7 +171,7 @@ def download_PDB(pdb_id: str, target_path: FilePath, server: str = 'http://ftp.w
     return file
 
 
-async def async_download_PDB(pdb_id: str, target_path: FilePath, callback: Callable) -> Path:
+async def async_download_PDB(pdb_id: str, target_path: FilePathType, callback: Callable) -> Path:
     """
     Asynchronously download a PDB file from the PDB database.
     Downloading is a IO-bound task, so it is suitable to be
@@ -208,7 +212,7 @@ async def async_download_PDB(pdb_id: str, target_path: FilePath, callback: Calla
         logging.error(e)
 
 
-def read_pdb_seq(pdb_file: FilePath, ignore_unknown_aa: bool = True) -> Iterable[Tuple[str, str, str]]:
+def read_pdb_seq(pdb_file: FilePathType, ignore_unknown_aa: bool = True) -> Iterable[Tuple[str, str, str]]:
     """
     Extract the sequence of a PDB file.
 
@@ -349,7 +353,7 @@ def pdb2df(entity: Union[Structure, Model, Chain, Residue], *extra_attrs: str) -
     return pd.DataFrame(_atom_to_dict(atom) for atom in entity.get_atoms())
 
 
-def read_residue(pdb: Union[FilePath, str, Entity], mode='centroid') -> pd.DataFrame:
+def read_residue(pdb: Union[FilePathType, str, Entity], mode='centroid') -> pd.DataFrame:
     """
     Read a PDB file and return a DataFrame of the residues.
 
@@ -416,7 +420,7 @@ def read_residue(pdb: Union[FilePath, str, Entity], mode='centroid') -> pd.DataF
     raise ValueError('mode must be one of "centroid", "fuc", "CA"')
 
 
-def get_pdb_remarks(pdb_file: FilePath) -> Iterable[str]:
+def get_pdb_remarks(pdb_file: FilePathType) -> Iterable[str]:
     """
     Get the remarks of a PDB file.
 
@@ -442,10 +446,11 @@ def get_pdb_remarks(pdb_file: FilePath) -> Iterable[str]:
 
 if __name__ == "__main__":
     import asyncio
-    from tqdm.auto import tqdm
     from argparse import ArgumentParser
+
+    from tqdm.auto import tqdm
     parser = ArgumentParser()
-    subparsers = parser.add_subparsers(dest="subcommand")
+    subparsers = parser.add_subparsers(dest="cmd")
 
     # add subcommand 'help'
     help_parser = subparsers.add_parser("help")
@@ -508,10 +513,10 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if args.subcommand == "help":
+    if args.cmd == "help":
         subparsers.choices[args.command].print_help()
 
-    elif args.subcommand == "download":
+    elif args.cmd == "download":
         if args.pdb_ids is not None:
             pdb_ids = args.pdb_ids
         else:
@@ -543,7 +548,7 @@ if __name__ == "__main__":
         loop.run_until_complete(asyncio.gather(*tasks))
         process_bar.close()
 
-    elif args.subcommand == "pdb2fasta":
+    elif args.cmd == "pdb2fasta":
         pdb2fasta(
             args.fasta_file,
             *args.pdb_files,
@@ -552,4 +557,4 @@ if __name__ == "__main__":
             joint_sep=args.joint_sep)
 
     else:
-        parser.print_help()
+        raise ValueError(f"Unknown subcommand: {args.cmd}")

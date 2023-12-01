@@ -1,11 +1,12 @@
 import re
 import tempfile
-import pandas as pd
-
 from pathlib import Path
 from typing import Iterable
-from .utils import CmdWrapperBase
+
+import pandas as pd
+
 from .seqio import read_fasta, save_fasta, temp_fasta
+from .utils import CmdWrapperBase
 
 
 def _iter_cluster(cluster_file: str) -> Iterable[dict]:
@@ -142,14 +143,14 @@ if __name__ == '__main__':
     common_parser.add_argument('--cutoff', '-c', type=float, default=0.9)
     common_parser.add_argument('--num_threads', '-t', type=int, default=1)
     common_parser.add_argument('--word_length', '-n', type=int, default=5)
-    subparsers = parser.add_subparsers(dest='command')
+    subparsers = parser.add_subparsers(dest='cmd')
     unique_parser = subparsers.add_parser('unique', parents=[common_parser])
     unique2d_parser = subparsers.add_parser('unique2d', parents=[common_parser])
     unique2d_parser.add_argument('--target_file', '-i2', type=Path, required=True)
 
     args = parser.parse_args()
 
-    if args.command == 'unique':
+    if args.cmd == 'unique':
         unique_fasta(
             args.input_file,
             args.output_file,
@@ -157,7 +158,7 @@ if __name__ == '__main__':
             num_threads=args.num_threads,
             word_length=args.word_length)
         
-    elif args.command == 'unique2d':
+    elif args.cmd == 'unique2d':
         unique_fasta_2d(
             args.input_file,
             args.target_file,
@@ -165,4 +166,5 @@ if __name__ == '__main__':
             cutoff=args.cutoff,
             num_threads=args.num_threads,
             word_length=args.word_length)
-
+    else:
+        raise ValueError(f"Unknown subcommand: {args.cmd}")

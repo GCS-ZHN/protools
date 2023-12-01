@@ -47,7 +47,7 @@ def annotate_chain_type(fasta_file: Path):
 if __name__ == "__main__":
     from argparse import ArgumentParser
     parser = ArgumentParser()
-    subparsers = parser.add_subparsers(dest="subcommand")
+    subparsers = parser.add_subparsers(dest="cmd")
 
     remove_constant_region_parser = subparsers.add_parser("rm_const")
     remove_constant_region_parser.add_argument("--fasta", "-i", type=Path, required=True)
@@ -61,11 +61,11 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if args.subcommand == "rm_const":
+    if args.cmd == "rm_const":
         df = pd.DataFrame(remove_constant_region(args.fasta, args.strict, args.ignore_error))
         df2fasta(df, args.output, 'seq', id_col='id')
-    elif args.subcommand == "anno_chain":
+    elif args.cmd == "anno_chain":
         df = pd.DataFrame(annotate_chain_type(args.fasta))
         df.to_csv(args.output, index=False)
     else:
-        raise RuntimeError(f"Unknown subcommand {args.subcommand}")
+        raise ValueError(f"Unknown subcommand: {args.cmd}")

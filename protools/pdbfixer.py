@@ -1,11 +1,11 @@
 import warnings
-
-from .pdbio import save_to_pdb
-
-from pathlib import Path
-from Bio.PDB import PDBParser
-from Bio import BiopythonWarning
 from typing import Optional
+
+from Bio import BiopythonWarning
+
+from .pdbio import save_to_pdb, get_structure
+from .utils import ensure_path
+
 warnings.simplefilter('ignore', BiopythonWarning)
 
 
@@ -15,7 +15,6 @@ def renumber_residue(
         model_idx: int = 0, 
         chain_order: Optional[list] = None, 
         start: int = 1):
-    pdb_file = Path(pdb_file).resolve()
     """
     Renumber the residue index (resi) of a pdb file
     with continuous numbers (start from `start`)
@@ -52,11 +51,8 @@ def renumber_residue(
     ----------
     Renumbering will remove the insertion code of the residues!
     """
-    if not pdb_file.exists():
-        raise FileNotFoundError(f"{pdb_file} does not exist")
-    
-    parser = PDBParser(QUIET=True)
-    structure = parser.get_structure('pdb', str(pdb_file))
+    pdb_file = ensure_path(pdb_file)
+    structure = get_structure(pdb_file)
     model = structure[model_idx]
 
     old_chain_order = [chain.id for chain in model]
@@ -93,7 +89,7 @@ if __name__ == '__main__':
 
     from argparse import ArgumentParser
     parser = ArgumentParser()
-    subparsers = parser.add_subparsers(dest='subcommand')
+    subparsers = parser.add_subparsers(dest='cmd')
 
     # renumber residue
     parser_renres = subparsers.add_parser('renres')
@@ -105,7 +101,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    if args.subcommand == 'renres':
+    if args.cmd == 'renres':
         renumber_residue(args.pdb_file, args.out_file, args.model, args.chain_order, args.start)
     else:
-        parser.print_help()
+        raise ValueError(f"Unknown subcommand: {args.cmd}")
