@@ -281,8 +281,8 @@ if __name__ == '__main__':
     
     if args.cmd == 'sasa':
         calc_sasa_from_pdbs(
-            args.pdb_dir, 
-            args.output_dir, 
+            args.pdbfile, 
+            args.output, 
             args.model_idx, 
             args.num_worker)
         
