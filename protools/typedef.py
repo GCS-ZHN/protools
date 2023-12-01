@@ -10,5 +10,6 @@ from Bio.SeqRecord import SeqRecord
 
 # Type definitions
 FilePathType = Union[Path, str]
-StructureFragmentType = Union[Structure, Model, Chain, Residue]
+StructureFragmentType = Union[Structure, Model, Chain]
+StructureFragmentAAType =Union[Structure, Model, Chain, Residue]
 SeqLikeType = Union[str, Seq, SeqRecord]

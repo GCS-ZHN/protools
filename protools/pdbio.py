@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Callable, Iterable, Optional, Tuple, Union
 
 import pandas as pd
-from Bio.PDB import PDBList, PDBParser
+from Bio.PDB import PDBList, PDBParser, PPBuilder
 from Bio.PDB.Atom import Atom
 from Bio.PDB.Chain import Chain
 from Bio.PDB.Entity import Entity
@@ -16,10 +16,9 @@ from Bio.PDB.Residue import Residue
 from Bio.PDB.Structure import Structure
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
-from Bio.SeqUtils import IUPACData
 
 from .seqio import save_fasta
-from .typedef import FilePathType, StructureFragmentType
+from .typedef import FilePathType, StructureFragmentAAType, StructureFragmentType
 from .utils import ensure_path
 
 __all__ = [
@@ -56,7 +55,7 @@ def get_structure(pdb_file: FilePathType, structure_id: str = 'pdb') -> Structur
     return parser.get_structure(structure_id, pdb_file)
 
 
-def save_to_pdb(output_path: FilePathType, *entities: StructureFragmentType, remarks: Optional[Iterable[str]] = None) -> None:
+def save_to_pdb(output_path: FilePathType, *entities: StructureFragmentAAType, remarks: Optional[Iterable[str]] = None) -> None:
     """
     Save entities to a PDB file.
 
@@ -212,42 +211,34 @@ async def async_download_PDB(pdb_id: str, target_path: FilePathType, callback: C
         logging.error(e)
 
 
-def read_pdb_seq(pdb_file: FilePathType, ignore_unknown_aa: bool = True) -> Iterable[Tuple[str, str, str]]:
+def read_pdb_seq(entity: StructureFragmentType) -> Iterable[Tuple[str, str, Seq]]:
     """
-    Extract the sequence of a PDB file.
+    Extract the sequence of a S.
 
     Parameters
     ----------
-    pdb_file : str
-        Path to the PDB file.
+    entity : StructureFragmentType
+        Structure, Model or Chain object.
 
     Returns
     ----------
-    seq_iter : Iterable[Tuple[str, str, str]]
+    seq_iter : Iterable[Tuple[str, str, Seq]]
         An iterable of tuples (model_id, chain_id, seq).
     """
-    pdb_file = ensure_path(pdb_file)
-    if not pdb_file.exists():
-        raise FileNotFoundError(f"Could not find PDB file {pdb_file}")
-
-    structure = get_structure(pdb_file)
-    aa_dict = IUPACData.protein_letters_3to1
-    for model in structure:
-        for chain in model:
-            aa_iter = (residue.get_resname().capitalize() for residue in chain)
-            
-            def _filter(aa):
-                if aa in aa_dict:
-                    return True
-                if ignore_unknown_aa:
-                    warnings.warn(f"Ignore unkown aa: {aa.upper()}")
-                    return False
-                raise ValueError(f"Unkown aa: {aa.upper()}")
-            
-            aa_iter = filter(_filter, aa_iter)
-            seq = "".join(aa_dict[aa] for aa in aa_iter)
-
-            yield model.id, chain.id, seq
+    if entity.level not in ['S', 'M', 'C']:
+        raise ValueError("Require Structure, Model or Chain object")
+    
+    if entity.level == 'C':
+        chains = [entity]
+    else:
+        chains = entity.get_chains()
+    
+    ppbuilder = PPBuilder()
+    for chain, pp in zip(chains, ppbuilder.build_peptides(entity)):
+        model = chain.get_parent()
+        model_id = model.get_id() if model else 0
+        seq = pp.get_sequence()
+        yield model_id, chain.get_id(), seq
 
 
 def pdb2fasta(
@@ -292,15 +283,15 @@ def pdb2fasta(
     def _iter():
         for pdb_file in pdb_files:
             pdb_id = Path(pdb_file).stem
-            seq_iter = read_pdb_seq(pdb_file)
+            seq_iter = read_pdb_seq(get_structure(pdb_file))
             seq_iter = filter(lambda x: selected_chains is None or x[1] in selected_chains, seq_iter)
             if multimer_mode == 'seperate':
                 for model_id, chain_id, seq in seq_iter:
                     seq_id = f"{pdb_id}_{model_id}_{chain_id}"
-                    yield SeqRecord(Seq(seq), id=seq_id, description='')
+                    yield SeqRecord(seq, id=seq_id, description='')
 
             elif multimer_mode == 'joint':
-                seq = joint_sep.join(seq for _, _, seq in seq_iter)
+                seq = joint_sep.join(str(seq) for _, _, seq in seq_iter)
                 seq_id = pdb_id
                 yield SeqRecord(Seq(seq), id=seq_id, description='')
 

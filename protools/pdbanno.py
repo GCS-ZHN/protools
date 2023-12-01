@@ -7,6 +7,7 @@ from typing import Union
 import pandas as pd
 from Bio.PDB.SASA import ShrakeRupley
 from Bio.PDB.Structure import Structure
+from Bio.PDB.Residue import Residue
 from Bio.SeqUtils import IUPACData
 from scipy.spatial import distance
 
@@ -15,6 +16,7 @@ from .typedef import FilePathType, StructureFragmentType
 from .utils import ensure_path
 
 _LOGGER = logging.getLogger(__name__)
+
 
 def neighbor_water_count(
         pdb: Union[Path, str, Structure], 
@@ -97,7 +99,7 @@ def neighbor_water_count(
 
 
 def calc_sasa(
-        entity: StructureFragmentType, 
+        entity: Union[StructureFragmentType, Residue], 
         radius: float = 1.4, 
         standard: bool = True) -> pd.Series:
     """
@@ -106,7 +108,7 @@ def calc_sasa(
 
     Parameters
     ----------
-    entity : StructureFragmentType
+    entity : StructureFragmentType or Residue
         A Bio.PDB.Structure.Structure, Bio.PDB.Model.Model,
         Bio.PDB.Chain.Chain or Bio.PDB.Residue.Residue object.
     radius : float, optional
