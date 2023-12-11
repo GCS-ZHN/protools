@@ -112,7 +112,9 @@ class CmdWrapperBase(object):
             else:
                 cmds.append(f'--{k}')
             cmds.append(str(v))
-        return subprocess.run(cmds)
+        process = subprocess.run(cmds)
+        process.check_returncode()
+        return process
     
     def __getattr__(self, name):
         """
