@@ -318,7 +318,9 @@ if __name__ == '__main__':
 
     if args.cmd == 'csv2fasta':
         df = pd.read_csv(args.input)
-        df2fasta(df, args.output, args.id_col, *args.seq_cols, args.mode, args.sep)
+        df2fasta(df, args.output, *args.seq_cols, 
+                 id_col=args.id_col,
+                 mode=args.mode, sep=args.sep)
 
     elif args.cmd == 'fasta2csv':
         fasta = read_fasta(args.input)
