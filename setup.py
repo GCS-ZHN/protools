@@ -8,7 +8,7 @@ install_requires = Path("requirements.txt").read_text().split("\n")
 setup(
     package_dir = {"": PACKAGE_DIR},
     install_requires = install_requires,
-    packages = find_packages(where=PACKAGE_DIR),
+    packages = find_packages(where=PACKAGE_DIR, exclude=['test', 'test.*']),
     include_package_data=True,
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass()
