@@ -130,7 +130,7 @@ def reverse_translate(
 
 def optimize_dna(
         input_fasta: Fasta,
-        species: str = None,
+        species: str,
         codon_table: str = 'Standard',
         avoid_patterns: list = None,
         inplace: bool = False) -> Fasta:
