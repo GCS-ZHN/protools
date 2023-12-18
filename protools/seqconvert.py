@@ -2,21 +2,27 @@
 A module for converting between different sequence type.
 """
 
-from .seqio import read_fasta, save_fasta
+from .seqio import Fasta
 from Bio.Data import CodonTable
-from pathlib import Path
 from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
+from dnachisel import DnaOptimizationProblem, AvoidPattern, EnforceGCContent, EnforceTranslation, CodonOptimize
 
 
-def _back_translate(seq: Seq, codon_table: CodonTable.CodonTable) -> Seq:
+def _reverse_translate(seq: Seq, codon_table: CodonTable.CodonTable) -> Seq:
     """Back translate a protein sequence to a DNA/RNA sequence.
 
-    Args:
-        seq: Protein sequence.
-        codon_table: Codon table to use for translation.
+    Parameters
+    ----------
+    seq : Seq
+        Protein sequence to back translate.
+    codon_table : CodonTable.CodonTable
+        Codon table to use for back translation.
 
-    Returns:
-        DNA/RNA sequence.
+    Returns
+    ----------
+    Seq
+        Back translated DNA/RNA sequence.
     """
     result = ''
     for aa in seq:
@@ -24,24 +30,32 @@ def _back_translate(seq: Seq, codon_table: CodonTable.CodonTable) -> Seq:
             result += '*'
         else:
             result += codon_table.back_table[aa]
-    return Seq(result, codon_table.nucleotide_alphabet)
-
+    return Seq(result.lower())
 
 
 def translate(
-        input_fasta: Path,
-        output_fasta: Path,
-        codon_table: str,
-        nucleotide_type: str = 'dna'):
+        input_fasta: Fasta,
+        codon_table: str = 'Standard',
+        nucleotide_type: str = 'dna', 
+        inplace: bool = False) -> Fasta:
     """Translate a DNA/RNA fasta file to amino acid fasta file.
 
-    Args:
-        input_fasta: Path to input fasta file.
-        output_fasta: Path to output fasta file.
-        codon_table: Codon table to use for translation.
+    Parameters
+    ----------
+    input_fasta : Fasta
+        Input fasta object.
+    codon_table : str
+        Codon table to use for translation.
+    nucleotide_type : str
+        Type of nucleotide to translate.
+    inplace : bool
+        Whether to modify the input fasta object in place.
+
+    Returns
+    ----------
+    Fasta
+        Translated fasta object.
     """
-    # Read input fasta file
-    seqs = read_fasta(input_fasta)
     # Create codon table
     if nucleotide_type == 'rna':
         codon_table = CodonTable.unambiguous_rna_by_name[codon_table]
@@ -50,28 +64,46 @@ def translate(
     else:
         raise ValueError(f'Invalid nucleotide type: {nucleotide_type}')
     # Translate sequences
-    results = []
-    for seq_record in seqs.values():
+    results = input_fasta if inplace else Fasta()
+    for seq_record in input_fasta.values():
+        if not inplace:
+            seq_record = SeqRecord(
+                seq=seq_record.seq,
+                id=seq_record.id,
+                description='',
+                name='')
         seq_record.id = seq_record.id + '_translated'
+        seq_record.description = ''
         seq_record.seq = seq_record.seq.translate(table=codon_table, stop_symbol='')
-        results.append(seq_record)
-    save_fasta(results, output_fasta)
+        if not inplace:
+            results[seq_record.id] = seq_record
+
+    return results
 
 
-def back_translate(
-        input_fasta: Path,
-        output_fasta: Path,
-        codon_table: str,
-        nucleotide_type: str = 'dna'):
+def reverse_translate(
+        input_fasta: Fasta,
+        codon_table: str = 'Standard',
+        nucleotide_type: str = 'dna',
+        inplace: bool = False) -> Fasta:
     """Reverse translate an amino acid fasta file to DNA/RNA fasta file.
 
-    Args:
-        input_fasta: Path to input fasta file.
-        output_fasta: Path to output fasta file.
-        codon_table: Codon table to use for translation.
+    Parameters
+    ----------
+    input_fasta : Fasta
+        Input fasta object.
+    codon_table : str
+        Codon table to use for translation.
+    nucleotide_type : str
+        Type of nucleotide to translate.
+    inplace : bool
+        Whether to modify the input fasta object in place.
+
+    Returns
+    ----------
+    Fasta
+        Translated fasta object.
     """
-    # Read input fasta file
-    seqs = read_fasta(input_fasta)
     # Create codon table
     if nucleotide_type == 'rna':
         codon_table = CodonTable.unambiguous_rna_by_name[codon_table]
@@ -80,10 +112,75 @@ def back_translate(
     else:
         raise ValueError(f'Invalid nucleotide type: {nucleotide_type}')
     # Translate sequences
-    results = []
-    
-    for seq_record in seqs.values():
+    results = input_fasta if inplace else Fasta()
+    for seq_record in input_fasta.values():
+        if not inplace:
+            seq_record = SeqRecord(
+                seq=seq_record.seq,
+                id=seq_record.id,
+                description='',
+                name='')
         seq_record.id = seq_record.id + '_reverse_translated'
-        seq_record.seq = _back_translate(seq_record.seq, codon_table)
-        results.append(seq_record)
-    save_fasta(results, output_fasta)
+        seq_record.description = ''
+        seq_record.seq = _reverse_translate(seq_record.seq, codon_table)
+        if not inplace:
+            results[seq_record.id] = seq_record
+    return results
+
+
+def optimize_dna(
+        input_fasta: Fasta,
+        species: str = None,
+        codon_table: str = 'Standard',
+        avoid_patterns: list = None,
+        inplace: bool = False) -> Fasta:
+    """Optimize a DNA fasta file to maximize expression.
+
+    Parameters
+    ----------
+    input_fasta : Fasta
+        Input fasta object.
+    species : str
+        Species to optimize for.
+    codon_table : str
+        Codon table to use for translation.
+    avoid_patterns : list
+        List of patterns to avoid.
+    inplace : bool
+        Whether to modify the input fasta object in place.
+
+    Returns
+    ----------
+    Fasta
+        Optimized fasta object.
+    """
+    # Read input fasta file
+    results = input_fasta if inplace else Fasta()
+    constraints = [
+        EnforceGCContent(mini=0.3, maxi=0.7, window=50),
+        EnforceTranslation(genetic_table=codon_table)
+    ]
+    if avoid_patterns is not None:
+        constraints += [AvoidPattern(pattern=pattern) for pattern in avoid_patterns]
+    for seq_record in input_fasta.values():
+        if not inplace:
+            seq_record = SeqRecord(
+                seq=seq_record.seq,
+                id=seq_record.id,
+                description='',
+                name='')
+        seq_record.id = seq_record.id + '_optimized'
+        seq_record.description = ''
+        problem = DnaOptimizationProblem(
+            sequence=str(seq_record.seq),
+            constraints=constraints,
+            objectives=[CodonOptimize(species=species)]
+        )
+        problem.resolve_constraints()
+        new_seq = Seq(problem.sequence.lower())
+        assert new_seq.translate(table=codon_table) == seq_record.seq.translate(table=codon_table), \
+            f'Optimization failed for {seq_record.id}'
+        seq_record.seq = new_seq
+        if not inplace:
+            results[seq_record.id] = seq_record
+    return results

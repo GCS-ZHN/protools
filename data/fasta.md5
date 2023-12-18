@@ -1,0 +1,8 @@
+a2eb6a3c7025c4440194dd190fba38ab  data/test_dna.fasta
+1a2f6ea07ccb65760a3aaa0e2604ed42  data/test_dna.optimized.fasta
+093e3f40428c88f7629f1dcfe3bd1b23  data/test_dna.protein.standard.fasta
+f905beb77901a82fb4628bc6015a0374  data/test_protein.dna.standard.fasta
+e97efaf49ac30d53d5267d58f0be7d41  data/test_protein.fasta
+5573fc2e28931803b6b7bacaa576a004  data/test_protein.rna.standard.fasta
+6d21e456d20f2461339e62a22adfaf74  data/test_rna.fasta
+c3d53f7293115ea301378ee28afbdd2b  data/test_rna.protein.standard.fasta

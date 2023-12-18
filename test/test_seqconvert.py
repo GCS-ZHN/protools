@@ -1,83 +1,65 @@
 from pathlib import Path
+from protools import seqio
 from protools import seqconvert
 from .tools import md5_equal
 
 
-def test_translate_from_rna():
-    rna_fasta = Path("data/test_rna.fasta")
-    protein_fasta = rna_fasta.with_suffix(".protein.standard.fasta")
-    seqconvert.translate(
-        rna_fasta,
-        protein_fasta,
-        "Standard",
-        nucleotide_type="rna")
-    expected_md5 = "84ab7b2a20cad2e319fca14bae504f8a"
-    assert md5_equal(protein_fasta, expected_md5)
-    protein_fasta = rna_fasta.with_suffix(".protein.yeast.fasta")
-    seqconvert.translate(
-        rna_fasta,
-        protein_fasta,
-        "Yeast Mitochondrial",
-        nucleotide_type="rna")
-    expected_md5 = "2abf78a63dd9fdb3ab47d020f60b08c4"
-    assert md5_equal(protein_fasta, expected_md5)
+MD5_DICT = dict()
+with Path('data/fasta.md5').open() as f:
+    for line in f:
+        md5, filename = line.strip().split()
+        filename = Path(filename)
+        MD5_DICT[filename] = md5
 
+
+def test_translate_from_rna():
+    rna_fasta_file = Path("data/test_rna.fasta")
+    rna_fasta = seqio.read_fasta(rna_fasta_file)
+    protein_fasta_file = rna_fasta_file.with_suffix(".protein.standard.fasta")
+    seqconvert.translate(
+        rna_fasta,
+        "Standard",
+        nucleotide_type="rna").to_fasta(protein_fasta_file)
+    assert md5_equal(protein_fasta_file, MD5_DICT[protein_fasta_file])
 
 def test_translate_from_dna():
-    rna_fasta = Path("data/test_dna.fasta")
-    protein_fasta = rna_fasta.with_suffix(".protein.standard.fasta")
+    dna_fasta_file = Path("data/test_dna.fasta")
+    dna_fasta = seqio.read_fasta(dna_fasta_file)
+    protein_fasta_file = dna_fasta_file.with_suffix(".protein.standard.fasta")
     seqconvert.translate(
-        rna_fasta,
-        protein_fasta,
+        dna_fasta,
         "Standard",
-        nucleotide_type="dna")
-    expected_md5 = "fa6f3ea2e2f4201c2513669e17a6650d"
-    assert md5_equal(protein_fasta, expected_md5)
-    protein_fasta = rna_fasta.with_suffix(".protein.yeast.fasta")
-    seqconvert.translate(
-        rna_fasta,
-        protein_fasta,
-        "Yeast Mitochondrial",
-        nucleotide_type="dna")
-    expected_md5 = "1734be71daa8ec519a409d8deebeb718"
-    assert md5_equal(protein_fasta, expected_md5)
+        nucleotide_type="dna").to_fasta(protein_fasta_file)
+    assert md5_equal(protein_fasta_file, MD5_DICT[protein_fasta_file])
 
 
 def test_back_translate_to_rna():
-    protein_fasta = Path("data/test_protein.fasta")
-    rna_fasta = protein_fasta.with_suffix(".rna.standard.fasta")
-    seqconvert.back_translate(
+    protein_fasta_file = Path("data/test_protein.fasta")
+    protein_fasta = seqio.read_fasta(protein_fasta_file)
+    rna_fasta_file = protein_fasta_file.with_suffix(".rna.standard.fasta")
+    seqconvert.reverse_translate(
         protein_fasta,
-        rna_fasta,
         "Standard",
-        nucleotide_type="rna")
-    expected_md5 = "e73aa4dde269996948e4221a6d86536f"
-    assert md5_equal(rna_fasta, expected_md5)
-    rna_fasta = protein_fasta.with_suffix(".rna.yeast.fasta")
-    seqconvert.back_translate(
-        protein_fasta,
-        rna_fasta,
-        "Yeast Mitochondrial",
-        nucleotide_type="rna")
-    expected_md5 = "93aa63ba0c15f1ba7f2d0ef241471828"
-    assert md5_equal(rna_fasta, expected_md5)
+        nucleotide_type="rna").to_fasta(rna_fasta_file)
+    assert md5_equal(rna_fasta_file, MD5_DICT[rna_fasta_file])
 
 
 def test_back_translate_to_dna():
-    protein_fasta = Path("data/test_protein.fasta")
-    rna_fasta = protein_fasta.with_suffix(".dna.standard.fasta")
-    seqconvert.back_translate(
+    protein_fasta_file = Path("data/test_protein.fasta")
+    protein_fasta = seqio.read_fasta(protein_fasta_file)
+    rna_fasta_file = protein_fasta_file.with_suffix(".dna.standard.fasta")
+    seqconvert.reverse_translate(
         protein_fasta,
-        rna_fasta,
         "Standard",
-        nucleotide_type="dna")
-    expected_md5 = "2976f4323e08c2d8038d2a1564573ec7"
-    assert md5_equal(rna_fasta, expected_md5)
-    rna_fasta = protein_fasta.with_suffix(".dna.yeast.fasta")
-    seqconvert.back_translate(
-        protein_fasta,
-        rna_fasta,
-        "Yeast Mitochondrial",
-        nucleotide_type="dna")
-    expected_md5 = "ee778dc154934e476da2a8db640a7be0"
-    assert md5_equal(rna_fasta, expected_md5)
+        nucleotide_type="dna").to_fasta(rna_fasta_file)
+    assert md5_equal(rna_fasta_file, MD5_DICT[rna_fasta_file])
+
+
+def test_dna_optimizer():
+    dna_fasta_file = Path("data/test_dna.fasta")
+    dna_fasta = seqio.read_fasta(dna_fasta_file)
+    optimized_dna_fasta_file = dna_fasta_file.with_suffix(".optimized.fasta")
+    seqconvert.optimize_dna(
+        dna_fasta,
+        species="s_cerevisiae",
+        avoid_patterns=["BsaI_site"]).to_fasta(optimized_dna_fasta_file)

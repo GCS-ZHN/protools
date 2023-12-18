@@ -2,3 +2,4 @@ biopython
 pandas
 tqdm
 scipy
+dnachisel
