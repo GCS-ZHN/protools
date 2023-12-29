@@ -2,10 +2,13 @@
 A module for converting between different sequence type.
 """
 
-from .seqio import Fasta
+from .seqio import Fasta, read_fasta, save_fasta
 from Bio.Data import CodonTable
 from Bio.Seq import Seq
+from .typedef import FilePathType
+from .utils import ensure_path
 from Bio.SeqRecord import SeqRecord
+from collections import OrderedDict
 from dnachisel import DnaOptimizationProblem, AvoidPattern, EnforceGCContent, EnforceTranslation, CodonOptimize
 
 
@@ -184,3 +187,106 @@ def optimize_dna(
         if not inplace:
             results[seq_record.id] = seq_record
     return results
+
+
+class ComplexFasta(OrderedDict):
+    """
+    A class for handling fasta files with multiple sequences per record.
+    """
+        
+    @staticmethod
+    def read_colabfold(source: FilePathType) -> 'ComplexFasta':
+        """Read a fasta file in colabfold format.
+
+        Parameters
+        ----------
+        source : FilePathType
+            Path to fasta file.
+
+        Returns
+        ----------
+        ComplexFasta
+            Fasta object.
+        """
+        source = ensure_path(source)
+        results = ComplexFasta()
+        raw_fasta = read_fasta(source)
+        for seq_id, seq_record in raw_fasta.items():
+            complex_seqs = str(seq_record.seq).split(':')
+            results[seq_id] = Fasta((f'{seq_id}_{i}', seq) for i, seq in enumerate(complex_seqs))
+        return results
+
+    @staticmethod
+    def read_rosettafold(source: FilePathType) -> 'ComplexFasta':
+        """Read a fasta file in rosettafold format.
+
+        Parameters
+        ----------
+        source : FilePathType
+            Path to fasta directory.
+
+        Returns
+        ----------
+        ComplexFasta
+            Fasta object.
+        """
+        source = ensure_path(source)
+        if not source.is_dir():
+            raise ValueError(f'{source} is not a directory.')
+        results = ComplexFasta()
+        for fasta_file in source.glob('*.fasta'):
+            seq_id = fasta_file.stem
+            results[seq_id] = read_fasta(fasta_file)
+        return results
+        
+    def _write_by_sep(self, target: FilePathType, sep: str) -> None:
+        records = (SeqRecord(
+            seq=Seq(sep.join(str(seq_record.seq) for seq_record in fasta.values())),
+            id=seq_id,
+            description='',
+            name=''
+        ) for seq_id, fasta in self.items())
+        save_fasta(records, target)
+
+    def write_colabfold(self, target: FilePathType) -> None:
+        """Write complex in colabfold format.
+
+        Parameters
+        ----------
+        target : FilePathType
+            Path to fasta file.
+        """
+        self._write_by_sep(target, ':')
+
+    def write_af2rank(self, target: FilePathType) -> None:
+        """Write complex in af2rank format.
+
+        Parameters
+        ----------
+        target : FilePathType
+            Path to fasta file.
+        """
+        self._write_by_sep(target, '')
+
+    def write_rosettafold(self, target: FilePathType) -> None:
+        """Write complex in rosettafold format.
+
+        Parameters
+        ----------
+        target : FilePathType
+            Path to fasta directory.
+        """
+        target = ensure_path(target)
+        target.mkdir(parents=True)
+        for seq_id, fasta in self.items():
+            fasta.to_fasta(target / f'{seq_id}.fasta')
+    
+    def __setitem__(self, __key: str, __value: Fasta) -> None:
+        if not isinstance(__value, Fasta):
+            raise ValueError(f'Value must be a Fasta object, got {type(__value)}')
+        if __key in self:
+            raise ValueError(f'Key {__key} already exists')
+        return super().__setitem__(__key, __value)
+    
+    def __getitem__(self, __key: str) -> Fasta:
+        return super().__getitem__(__key)
