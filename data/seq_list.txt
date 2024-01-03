@@ -1,0 +1,1169 @@
+SEQUENCE LISTING
+
+<110> AGENSYS, INC.
+      KANNER, Steven B.
+      JAKOBOVITS, Aya
+      GUDAS, Jean
+      RAITANO, Arthur B.
+      MORRISON, Robert Kendall
+      CHALLITA-EID, Pia M.
+      JIA, Xiao-chi
+
+<120> ANTIBODIES AND RELATED MOLECULES THAT
+      BIND TO 58P1D12 PROTEINS
+
+<130> 511582002082
+
+<140> Not Yet Assigned          
+<141> Concurrently Herewith 
+
+<150> 61/207,862          
+<151> 2008-08-20 
+
+<150> 61/153,225
+<151> 2009-02-17      
+
+<160> 19
+
+<170> FastSEQ for Windows Version 4.0
+
+<210> 1
+<211> 2550
+<212> DNA
+<213> Homo sapiens
+
+<220> 
+<221> CDS            
+<222> (380)...(1201)
+
+<400> 1
+atccaggacc agggcgcacc ggctcagcct ctcacttgtc agaggccggg gaagagaagc 60
+aaagcgcaac ggtgtggtcc aagccggggc ttctgcttcg cctctaggac atacacggga 120
+ccccctaact tcagtccccc aaacgcgcac cctcgaagtc ttgaactcca gccccgcaca 180
+tccacgcgcg gcacaggcgc ggcaggcggc aggtcccggc cgaaggcgat gcgcgcaggg 240
+ggtcgggcag ctgggctcgg gcggcgggag tagggcccgg cagggaggca gggaggctgc 300
+agagtcagag tcgcgggctg cgccctgggc agaggccgcc ctcgctccac gcaacacctg 360
+ctgctgccac cgcgccgcg atg agc cgc gtg gtc tcg ctg ctg ctg ggc gcc  412
+                     Met Ser Arg Val Val Ser Leu Leu Leu Gly Ala
+                      1               5                   10
+ 
+gcg ctg ctc tgc ggc cac gga gcc ttc tgc cgc cgc gtg gtc agc ggc   460
+Ala Leu Leu Cys Gly His Gly Ala Phe Cys Arg Arg Val Val Ser Gly
+             15                  20                  25
+ 
+caa aag gtg tgt ttt gct gac ttc aag cat ccc tgc tac aaa atg gcc   508
+Gln Lys Val Cys Phe Ala Asp Phe Lys His Pro Cys Tyr Lys Met Ala
+         30                  35                  40
+ 
+tac ttc cat gaa ctg tcc agc cga gtg agc ttt cag gag gca cgc ctg   556
+Tyr Phe His Glu Leu Ser Ser Arg Val Ser Phe Gln Glu Ala Arg Leu
+     45                  50                  55
+ 
+gct tgt gag agt gag gga gga gtc ctc ctc agc ctt gag aat gaa gca   604
+Ala Cys Glu Ser Glu Gly Gly Val Leu Leu Ser Leu Glu Asn Glu Ala
+ 60                  65                  70                  75
+ 
+gaa cag aag tta ata gag agc atg ttg caa aac ctg aca aaa ccc ggg   652
+Glu Gln Lys Leu Ile Glu Ser Met Leu Gln Asn Leu Thr Lys Pro Gly
+                 80                  85                  90
+ 
+aca ggg att tct gat ggt gat ttc tgg ata ggg ctt tgg agg aat gga   700
+Thr Gly Ile Ser Asp Gly Asp Phe Trp Ile Gly Leu Trp Arg Asn Gly
+             95                 100                 105
+ 
+gat ggg caa aca tct ggt gcc tgc cca gat ctc tac cag tgg tct gat   748
+Asp Gly Gln Thr Ser Gly Ala Cys Pro Asp Leu Tyr Gln Trp Ser Asp
+        110                 115                 120
+ 
+gga agc aat tcc cag tac cga aac tgg tac aca gat gaa cct tcc tgc   796
+Gly Ser Asn Ser Gln Tyr Arg Asn Trp Tyr Thr Asp Glu Pro Ser Cys
+    125                 130                 135
+ 
+gga agt gaa aag tgt gtt gtg atg tat cac caa cca act gcc aat cct   844
+Gly Ser Glu Lys Cys Val Val Met Tyr His Gln Pro Thr Ala Asn Pro
+140                 145                 150                 155
+ 
+ggc ctt ggg ggt ccc tac ctt tac cag tgg aat gat gac agg tgt aac   892
+Gly Leu Gly Gly Pro Tyr Leu Tyr Gln Trp Asn Asp Asp Arg Cys Asn
+                160                 165                 170
+ 
+atg aag cac aat tat att tgc aag tat gaa cca gag att aat cca aca   940
+Met Lys His Asn Tyr Ile Cys Lys Tyr Glu Pro Glu Ile Asn Pro Thr
+            175                 180                 185
+ 
+gcc cct gta gaa aag cct tat ctt aca aat caa cca gga gac acc cat   988
+Ala Pro Val Glu Lys Pro Tyr Leu Thr Asn Gln Pro Gly Asp Thr His
+        190                 195                 200
+ 
+cag aat gtg gtt gtt act gaa gca ggt ata att ccc aat cta att tat   1036
+Gln Asn Val Val Val Thr Glu Ala Gly Ile Ile Pro Asn Leu Ile Tyr
+    205                 210                 215
+ 
+gtt gtt ata cca aca ata ccc ctg ctc tta ctg ata ctg gtt gct ttt   1084
+Val Val Ile Pro Thr Ile Pro Leu Leu Leu Leu Ile Leu Val Ala Phe
+220                 225                 230                 235
+ 
+gga acc tgt tgt ttc cag atg ctg cat aaa agt aaa gga aga aca aaa   1132
+Gly Thr Cys Cys Phe Gln Met Leu His Lys Ser Lys Gly Arg Thr Lys
+                240                 245                 250
+ 
+act agt cca aac cag tct aca ctg tgg att tca aag agt acc aga aaa   1180
+Thr Ser Pro Asn Gln Ser Thr Leu Trp Ile Ser Lys Ser Thr Arg Lys
+            255                 260                 265
+ 
+gaa agt ggc atg gaa gta taa taactcattg acttggttcc agaattttgt      1231
+Glu Ser Gly Met Glu Val  *
+        270
+ 
+aattctggat ctgtataagg aatggcatca gaacaatagc ttggaatggc ttgaaatcac 1291
+aaaggatctg caagatgaac tgtaagctcc cccttgaggc aaatattaaa gtaattttta 1351
+tatgtctatt atttcattta aagaatatgc tgtgctaata atggagtgag acatgcttat 1411
+tttgctaaag gatgcaccca aacttcaaac ttcaagcaaa tgaaatggac aatgcagata 1471
+aagttgttat caacacgtcg ggagtatgtg tgttagaagc aattcctttt atttctttca 1531
+cctttcataa gttgttatct agtcaatgta atgtatattg tattgaaatt tacagtgtgc 1591
+aaaagtattt tacctttgca taagtgtttg ataaaaatga actgttctaa tatttatttt 1651
+tatggcatct catttttcaa tacatgctct tttgattaaa gaaacttatt actgttgtca 1711
+actgaattca cacacacaca aatatagtac catagaaaaa gtttgttttc tcgaaataat 1771
+tcatctttca gcttctctgc ttttggtcaa tgtctaggaa atctcttcag aaataagaag 1831
+ctatttcatt aagtgtgata taaacctcct caaacatttt acttagaggc aaggattgtc 1891
+taatttcaat tgtgcaagac atgtgcctta taattatttt tagcttaaaa ttaaacagat 1951
+tttgtaataa tgtaactttg ttaataggtg cataaacact aatgcagtca atttgaacaa 2011
+aagaagtgac atacacaata taaatcatat gtcttcacac gttgcctata taatgagaag 2071
+cagctctctg agggttctga aatcaatgtg gtccctctct tgcccactaa acaaagatgg 2131
+ttgttcgggg tttgggattg acactggagg cagatagttg caaagttagt ctaaggtttc 2191
+cctagctgta tttagcctct gactatatta gtatacaaag aggtcatgtg gttgagacca 2251
+ggtgaatagt cactatcagt gtggagacaa gcacagcaca cagacatttt aggaaggaaa 2311
+ggaactacga aatcgtgtga aaatgggttg gaacccatca gtgatcgcat attcattgat 2371
+gagggtttgc ttgagataga aaatggtggc tcctttctgt cttatctcct agtttcttca 2431
+atgcttacgc cttgttcttc tcaagagaaa gttgtaactc tctggtcttc atatgtccct 2491
+gtgctccttt taaccaaata aagagttctt gtttctgaag aaaaaaaaaa aaaaaaaaa  2550
+
+<210> 2
+<211> 273
+<212> PRT
+<213> Homo sapiens
+
+<400> 2
+Met Ser Arg Val Val Ser Leu Leu Leu Gly Ala Ala Leu Leu Cys Gly
+ 1               5                  10                  15      
+His Gly Ala Phe Cys Arg Arg Val Val Ser Gly Gln Lys Val Cys Phe
+            20                  25                  30          
+Ala Asp Phe Lys His Pro Cys Tyr Lys Met Ala Tyr Phe His Glu Leu
+        35                  40                  45              
+Ser Ser Arg Val Ser Phe Gln Glu Ala Arg Leu Ala Cys Glu Ser Glu
+    50                  55                  60                  
+Gly Gly Val Leu Leu Ser Leu Glu Asn Glu Ala Glu Gln Lys Leu Ile
+65                  70                  75                  80  
+Glu Ser Met Leu Gln Asn Leu Thr Lys Pro Gly Thr Gly Ile Ser Asp
+                85                  90                  95      
+Gly Asp Phe Trp Ile Gly Leu Trp Arg Asn Gly Asp Gly Gln Thr Ser
+            100                 105                 110         
+Gly Ala Cys Pro Asp Leu Tyr Gln Trp Ser Asp Gly Ser Asn Ser Gln
+        115                 120                 125             
+Tyr Arg Asn Trp Tyr Thr Asp Glu Pro Ser Cys Gly Ser Glu Lys Cys
+    130                 135                 140                 
+Val Val Met Tyr His Gln Pro Thr Ala Asn Pro Gly Leu Gly Gly Pro
+145                 150                 155                 160 
+Tyr Leu Tyr Gln Trp Asn Asp Asp Arg Cys Asn Met Lys His Asn Tyr
+                165                 170                 175     
+Ile Cys Lys Tyr Glu Pro Glu Ile Asn Pro Thr Ala Pro Val Glu Lys
+            180                 185                 190         
+Pro Tyr Leu Thr Asn Gln Pro Gly Asp Thr His Gln Asn Val Val Val
+        195                 200                 205             
+Thr Glu Ala Gly Ile Ile Pro Asn Leu Ile Tyr Val Val Ile Pro Thr
+    210                 215                 220                 
+Ile Pro Leu Leu Leu Leu Ile Leu Val Ala Phe Gly Thr Cys Cys Phe
+225                 230                 235                 240 
+Gln Met Leu His Lys Ser Lys Gly Arg Thr Lys Thr Ser Pro Asn Gln
+                245                 250                 255     
+Ser Thr Leu Trp Ile Ser Lys Ser Thr Arg Lys Glu Ser Gly Met Glu
+            260                 265                 270         
+Val
+    
+
+
+<210> 3
+<211> 2418
+<212> DNA
+<213> Homo sapiens
+
+<220> 
+<221> CDS            
+<222> (388)...(1086)
+
+<400> 3
+ctgtggtgtt tttcccccgc tcctctggct gccttcctga tggatctctg tggtcccagg 60
+caggaatggc ctgcttgggg acccagcgag ctcccaaggc ctttcctgct gcttcctcta 120
+tccctgtgtt ttgcttggct ctctaaattg actcagctcc aggacatcag gaccccaggt 180
+tctctggtct tgggactctg agacttgcac caggaatcct gcccaggctc tcaggccttt 240
+ggactcagac tgagctactt cactggcttt cctggttctc cagcttgaag atggcagatc 300
+gtgggacttc tcagcctcca taattgagtg agccaattcc ctggccaaaa ggtgtgtttt 360
+gctgacttca agcatccctg ctacaaa atg gcc tac ttc cat gaa ctg tcc agc 414
+                              Met Ala Tyr Phe His Glu Leu Ser Ser
+                               1               5
+ 
+cga gtg agc ttt cag gag gca cgc ctg gct tgt gag agt gag gga gga   462
+Arg Val Ser Phe Gln Glu Ala Arg Leu Ala Cys Glu Ser Glu Gly Gly
+ 10                  15                  20                  25
+ 
+gtc ctc ctc agc ctt gag aat gaa gca gaa cag aag tta ata gag agc   510
+Val Leu Leu Ser Leu Glu Asn Glu Ala Glu Gln Lys Leu Ile Glu Ser
+                 30                  35                  40
+ 
+atg ttg caa aac ctg aca aaa ccc ggg aca ggg att tct gat ggt gat   558
+Met Leu Gln Asn Leu Thr Lys Pro Gly Thr Gly Ile Ser Asp Gly Asp
+             45                  50                  55
+ 
+ttc tgg ata ggg ctt tgg agg aat gga gat ggg caa aca tct ggt gcc   606
+Phe Trp Ile Gly Leu Trp Arg Asn Gly Asp Gly Gln Thr Ser Gly Ala
+         60                  65                  70
+ 
+tgc cca gat ctc tac cag tgg tct gat gga agc aat tcc cag tac cga   654
+Cys Pro Asp Leu Tyr Gln Trp Ser Asp Gly Ser Asn Ser Gln Tyr Arg
+     75                  80                  85
+ 
+aac tgg tac aca gat gaa cct tcc tgc gga agt gaa aag tgt gtt gtg   702
+Asn Trp Tyr Thr Asp Glu Pro Ser Cys Gly Ser Glu Lys Cys Val Val
+ 90                  95                 100                 105
+ 
+atg tat cac caa cca act gcc aat cct ggc ctt ggg ggt ccc tac ctt   750
+Met Tyr His Gln Pro Thr Ala Asn Pro Gly Leu Gly Gly Pro Tyr Leu
+                110                 115                 120
+ 
+tac cag tgg aat gat gac agg tgt aac atg aag cac aat tat att tgc   798
+Tyr Gln Trp Asn Asp Asp Arg Cys Asn Met Lys His Asn Tyr Ile Cys
+            125                 130                 135
+ 
+aag tat gaa cca gag att aat cca aca gcc cct gta gaa aag cct tat   846
+Lys Tyr Glu Pro Glu Ile Asn Pro Thr Ala Pro Val Glu Lys Pro Tyr
+        140                 145                 150
+ 
+ctt aca aat caa cca gga gac acc cat cag aat gtg gtt gtt act gaa   894
+Leu Thr Asn Gln Pro Gly Asp Thr His Gln Asn Val Val Val Thr Glu
+    155                 160                 165
+ 
+gca ggt ata att ccc aat cta att tat gtt gtt ata cca aca ata ccc   942
+Ala Gly Ile Ile Pro Asn Leu Ile Tyr Val Val Ile Pro Thr Ile Pro
+170                 175                 180                 185
+ 
+ctg ctc tta ctg ata ctg gtt gct ttt gga acc tgt tgt ttc cag atg   990
+Leu Leu Leu Leu Ile Leu Val Ala Phe Gly Thr Cys Cys Phe Gln Met
+                190                 195                 200
+ 
+ctg cat aaa agt aaa gga aga aca aaa act agt cca aac cag tct aca   1038
+Leu His Lys Ser Lys Gly Arg Thr Lys Thr Ser Pro Asn Gln Ser Thr
+            205                 210                 215
+ 
+ctg tgg att tca aag agt acc aga aaa gaa agt ggc atg gaa gta taa   1086
+Leu Trp Ile Ser Lys Ser Thr Arg Lys Glu Ser Gly Met Glu Val  *
+        220                 225                 230
+ 
+taactcattg acttggttcc agaattttgt aattctggat ctgtataagg aatggcatca 1146
+gaacaatagc ttggaatggc ttgaaatcac aaaggatctg caagatgaac tgtaagctcc 1206
+cccttgaggc aaatattaaa gtaattttta tatgtctatt atttcattta aagaatatgc 1266
+tgtgctaata atggagtgag acatgcttat tttgctaaag gatgcaccca aacttcaaac 1326
+ttcaagcaaa tgaaatggac aatgcagata aagttgttat caacacgtcg ggagtatgtg 1386
+tgttagaagc aattcctttt atttctttca cctttcataa gttgttatct agtcaatgta 1446
+atgtatattg tattgaaatt tacagtgtgc aaaagtattt tacctttgca taagtgtttg 1506
+ataaaaatga actgttctaa tatttatttt tatggcatct catttttcaa tacatgctct 1566
+tttgattaaa gaaacttatt actgttgtca actgaattca cacacacaca aatatagtac 1626
+catagaaaaa gtttgttttc tcgaaataat tcatctttca gcttctctgc ttttggtcaa 1686
+tgtctaggaa atctcttcag aaataagaag ctatttcatt aagtgtgata taaacctcct 1746
+caaacatttt acttagaggc aaggattgtc taatttcaat tgtgcaagac atgtgcctta 1806
+taattatttt tagcttaaaa ttaaacagat tttgtaataa tgtaactttg ttaataggtg 1866
+cataaacact aatgcagtca atttgaacaa aagaagtgac atacacaata taaatcatat 1926
+gtcttcacac gttgcctata taatgagaag cagctctctg agggttctga aatcaatgtg 1986
+gtccctctct tgcccactaa acaaagatgg ttgttcgggg tttgggattg acactggagg 2046
+cagatagttg caaagttagt ctaaggtttc cctagctgta tttagcctct gactatatta 2106
+gtatacaaag aggtcatgtg gttgagacca ggtgaatagt cactatcagt gtggagacaa 2166
+gcacagcaca cagacatttt aggaaggaaa ggaactacga aatcgtgtga aaatgggttg 2226
+gaacccatca gtgatcgcat attcattgat gagggtttgc ttgagataga aaatggtggc 2286
+tcctttctgt cttatctcct agtttcttca atgcttacgc cttgttcttc tcaagagaaa 2346
+gttgtaactc tctggtcttc atatgtccct gtgctccttt taaccaaata aagagttctt 2406
+gtttctgaag aa                                                     2418
+
+<210> 4
+<211> 232
+<212> PRT
+<213> Homo sapiens
+
+<400> 4
+Met Ala Tyr Phe His Glu Leu Ser Ser Arg Val Ser Phe Gln Glu Ala
+ 1               5                  10                  15      
+Arg Leu Ala Cys Glu Ser Glu Gly Gly Val Leu Leu Ser Leu Glu Asn
+            20                  25                  30          
+Glu Ala Glu Gln Lys Leu Ile Glu Ser Met Leu Gln Asn Leu Thr Lys
+        35                  40                  45              
+Pro Gly Thr Gly Ile Ser Asp Gly Asp Phe Trp Ile Gly Leu Trp Arg
+    50                  55                  60                  
+Asn Gly Asp Gly Gln Thr Ser Gly Ala Cys Pro Asp Leu Tyr Gln Trp
+65                  70                  75                  80  
+Ser Asp Gly Ser Asn Ser Gln Tyr Arg Asn Trp Tyr Thr Asp Glu Pro
+                85                  90                  95      
+Ser Cys Gly Ser Glu Lys Cys Val Val Met Tyr His Gln Pro Thr Ala
+            100                 105                 110         
+Asn Pro Gly Leu Gly Gly Pro Tyr Leu Tyr Gln Trp Asn Asp Asp Arg
+        115                 120                 125             
+Cys Asn Met Lys His Asn Tyr Ile Cys Lys Tyr Glu Pro Glu Ile Asn
+    130                 135                 140                 
+Pro Thr Ala Pro Val Glu Lys Pro Tyr Leu Thr Asn Gln Pro Gly Asp
+145                 150                 155                 160 
+Thr His Gln Asn Val Val Val Thr Glu Ala Gly Ile Ile Pro Asn Leu
+                165                 170                 175     
+Ile Tyr Val Val Ile Pro Thr Ile Pro Leu Leu Leu Leu Ile Leu Val
+            180                 185                 190         
+Ala Phe Gly Thr Cys Cys Phe Gln Met Leu His Lys Ser Lys Gly Arg
+        195                 200                 205             
+Thr Lys Thr Ser Pro Asn Gln Ser Thr Leu Trp Ile Ser Lys Ser Thr
+    210                 215                 220                 
+Arg Lys Glu Ser Gly Met Glu Val
+225                 230         
+
+
+<210> 5
+<211> 2236
+<212> DNA
+<213> Homo sapiens
+
+<220> 
+<221> CDS            
+<222> (206)...(904)
+
+<400> 5
+gcttgaagat ggcagatcgt gggacttctc agcctccata attgagtgag ccaattccct 60
+gaatacaaca agaagatggc catctgtaga ccaggaggtg gtccctcccc agaaactgga 120
+tgggccagca cgttgattct gagcttctag cctccagaac tgccaaaagg tgtgttttgc 180
+tgacttcaag catccctgct acaaa atg gcc tac ttc cat gaa ctg tcc agc   232
+                            Met Ala Tyr Phe His Glu Leu Ser Ser
+                             1               5
+ 
+cga gtg agc ttt cag gag gca cgc ctg gct tgt gag agt gag gga gga   280
+Arg Val Ser Phe Gln Glu Ala Arg Leu Ala Cys Glu Ser Glu Gly Gly
+ 10                  15                  20                  25
+ 
+gtc ctc ctc agc ctt gag aat gaa gca gaa cag aag tta ata gag agc   328
+Val Leu Leu Ser Leu Glu Asn Glu Ala Glu Gln Lys Leu Ile Glu Ser
+                 30                  35                  40
+ 
+atg ttg caa aac ctg aca aaa ccc ggg aca ggg att tct gat ggt gat   376
+Met Leu Gln Asn Leu Thr Lys Pro Gly Thr Gly Ile Ser Asp Gly Asp
+             45                  50                  55
+ 
+ttc tgg ata ggg ctt tgg agg aat gga gat ggg caa aca tct ggt gcc   424
+Phe Trp Ile Gly Leu Trp Arg Asn Gly Asp Gly Gln Thr Ser Gly Ala
+         60                  65                  70
+ 
+tgc cca gat ctc tac cag tgg tct gat gga agc aat tcc cag tac cga   472
+Cys Pro Asp Leu Tyr Gln Trp Ser Asp Gly Ser Asn Ser Gln Tyr Arg
+     75                  80                  85
+ 
+aac tgg tac aca gat gaa cct tcc tgc gga agt gaa aag tgt gtt gtg   520
+Asn Trp Tyr Thr Asp Glu Pro Ser Cys Gly Ser Glu Lys Cys Val Val
+ 90                  95                 100                 105
+ 
+atg tat cac caa cca act gcc aat cct ggc ctt ggg ggt ccc tac ctt   568
+Met Tyr His Gln Pro Thr Ala Asn Pro Gly Leu Gly Gly Pro Tyr Leu
+                110                 115                 120
+ 
+tac cag tgg aat gat gac agg tgt aac atg aag cac aat tat att tgc   616
+Tyr Gln Trp Asn Asp Asp Arg Cys Asn Met Lys His Asn Tyr Ile Cys
+            125                 130                 135
+ 
+aag tat gaa cca gag att aat cca aca gcc cct gta gaa aag cct tat   664
+Lys Tyr Glu Pro Glu Ile Asn Pro Thr Ala Pro Val Glu Lys Pro Tyr
+        140                 145                 150
+ 
+ctt aca aat caa cca gga gac acc cat cag aat gtg gtt gtt act gaa   712
+Leu Thr Asn Gln Pro Gly Asp Thr His Gln Asn Val Val Val Thr Glu
+    155                 160                 165
+ 
+gca ggt ata att ccc aat cta att tat gtt gtt ata cca aca ata ccc   760
+Ala Gly Ile Ile Pro Asn Leu Ile Tyr Val Val Ile Pro Thr Ile Pro
+170                 175                 180                 185
+ 
+ctg ctc tta ctg ata ctg gtt gct ttt gga acc tgt tgt ttc cag atg   808
+Leu Leu Leu Leu Ile Leu Val Ala Phe Gly Thr Cys Cys Phe Gln Met
+                190                 195                 200
+ 
+ctg cat aaa agt aaa gga aga aca aaa act agt cca aac cag tct aca   856
+Leu His Lys Ser Lys Gly Arg Thr Lys Thr Ser Pro Asn Gln Ser Thr
+            205                 210                 215
+ 
+ctg tgg att tca aag agt acc aga aaa gaa agt ggc atg gaa gta taa   904
+Leu Trp Ile Ser Lys Ser Thr Arg Lys Glu Ser Gly Met Glu Val  *
+        220                 225                 230
+ 
+taactcattg acttggttcc agaattttgt aattctggat ctgtataagg aatggcatca 964
+gaacaatagc ttggaatggc ttgaaatcac aaaggatctg caagatgaac tgtaagctcc 1024
+cccttgaggc aaatattaaa gtaattttta tatgtctatt atttcattta aagaatatgc 1084
+tgtgctaata atggagtgag acatgcttat tttgctaaag gatgcaccca aacttcaaac 1144
+ttcaagcaaa tgaaatggac aatgcagata aagttgttat caacacgtcg ggagtatgtg 1204
+tgttagaagc aattcctttt atttctttca cctttcataa gttgttatct agtcaatgta 1264
+atgtatattg tattgaaatt tacagtgtgc aaaagtattt tacctttgca taagtgtttg 1324
+ataaaaatga actgttctaa tatttatttt tatggcatct catttttcaa tacatgctct 1384
+tttgattaaa gaaacttatt actgttgtca actgaattca cacacacaca aatatagtac 1444
+catagaaaaa gtttgttttc tcgaaataat tcatctttca gcttctctgc ttttggtcaa 1504
+tgtctaggaa atctcttcag aaataagaag ctatttcatt aagtgtgata taaacctcct 1564
+caaacatttt acttagaggc aaggattgtc taatttcaat tgtgcaagac atgtgcctta 1624
+taattatttt tagcttaaaa ttaaacagat tttgtaataa tgtaactttg ttaataggtg 1684
+cataaacact aatgcagtca atttgaacaa aagaagtgac atacacaata taaatcatat 1744
+gtcttcacac gttgcctata taatgagaag cagctctctg agggttctga aatcaatgtg 1804
+gtccctctct tgcccactaa acaaagatgg ttgttcgggg tttgggattg acactggagg 1864
+cagatagttg caaagttagt ctaaggtttc cctagctgta tttagcctct gactatatta 1924
+gtatacaaag aggtcatgtg gttgagacca ggtgaatagt cactatcagt gtggagacaa 1984
+gcacagcaca cagacatttt aggaaggaaa ggaactacga aatcgtgtga aaatgggttg 2044
+gaacccatca gtgatcgcat attcattgat gagggtttgc ttgagataga aaatggtggc 2104
+tcctttctgt cttatctcct agtttcttca atgcttacgc cttgttcttc tcaagagaaa 2164
+gttgtaactc tctggtcttc atatgtccct gtgctccttt taaccaaata aagagttctt 2224
+gtttctgaag aa                                                     2236
+
+<210> 6
+<211> 232
+<212> PRT
+<213> Homo sapiens
+
+<400> 6
+Met Ala Tyr Phe His Glu Leu Ser Ser Arg Val Ser Phe Gln Glu Ala
+ 1               5                  10                  15      
+Arg Leu Ala Cys Glu Ser Glu Gly Gly Val Leu Leu Ser Leu Glu Asn
+            20                  25                  30          
+Glu Ala Glu Gln Lys Leu Ile Glu Ser Met Leu Gln Asn Leu Thr Lys
+        35                  40                  45              
+Pro Gly Thr Gly Ile Ser Asp Gly Asp Phe Trp Ile Gly Leu Trp Arg
+    50                  55                  60                  
+Asn Gly Asp Gly Gln Thr Ser Gly Ala Cys Pro Asp Leu Tyr Gln Trp
+65                  70                  75                  80  
+Ser Asp Gly Ser Asn Ser Gln Tyr Arg Asn Trp Tyr Thr Asp Glu Pro
+                85                  90                  95      
+Ser Cys Gly Ser Glu Lys Cys Val Val Met Tyr His Gln Pro Thr Ala
+            100                 105                 110         
+Asn Pro Gly Leu Gly Gly Pro Tyr Leu Tyr Gln Trp Asn Asp Asp Arg
+        115                 120                 125             
+Cys Asn Met Lys His Asn Tyr Ile Cys Lys Tyr Glu Pro Glu Ile Asn
+    130                 135                 140                 
+Pro Thr Ala Pro Val Glu Lys Pro Tyr Leu Thr Asn Gln Pro Gly Asp
+145                 150                 155                 160 
+Thr His Gln Asn Val Val Val Thr Glu Ala Gly Ile Ile Pro Asn Leu
+                165                 170                 175     
+Ile Tyr Val Val Ile Pro Thr Ile Pro Leu Leu Leu Leu Ile Leu Val
+            180                 185                 190         
+Ala Phe Gly Thr Cys Cys Phe Gln Met Leu His Lys Ser Lys Gly Arg
+        195                 200                 205             
+Thr Lys Thr Ser Pro Asn Gln Ser Thr Leu Trp Ile Ser Lys Ser Thr
+    210                 215                 220                 
+Arg Lys Glu Ser Gly Met Glu Val
+225                 230         
+
+
+<210> 7
+<211> 2133
+<212> DNA
+<213> Homo sapiens
+
+<220> 
+<221> CDS            
+<222> (206)...(916)
+
+<400> 7
+gcttgaagat ggcagatcgt gggacttctc agcctccata attgagtgag ccaattccct 60
+gaatacaaca agaagatggc catctgtaga ccaggaggtg gtccctcccc agaaactgga 120
+tgggccagca cgttgattct gagcttctag cctccagaac tgccaaaagg tgtgttttgc 180
+tgacttcaag catccctgct acaaa atg gcc tac ttc cat gaa ctg tcc agc   232
+                            Met Ala Tyr Phe His Glu Leu Ser Ser
+                             1               5
+ 
+cga gtg agc ttt cag gag gca cgc ctg gct tgt gag agt gag gga gga   280
+Arg Val Ser Phe Gln Glu Ala Arg Leu Ala Cys Glu Ser Glu Gly Gly
+ 10                  15                  20                  25
+ 
+gtc ctc ctc agc ctt gag aat gaa gca gaa cag aag tta ata gag agc   328
+Val Leu Leu Ser Leu Glu Asn Glu Ala Glu Gln Lys Leu Ile Glu Ser
+                 30                  35                  40
+ 
+atg ttg caa aac ctg aca aaa ccc ggg aca ggg att tct gat ggt gat   376
+Met Leu Gln Asn Leu Thr Lys Pro Gly Thr Gly Ile Ser Asp Gly Asp
+             45                  50                  55
+ 
+ttc tgg ata ggg ctt tgg agg aat gga gat ggg caa aca tct ggt gcc   424
+Phe Trp Ile Gly Leu Trp Arg Asn Gly Asp Gly Gln Thr Ser Gly Ala
+         60                  65                  70
+ 
+tgc cca gat ctc tac cag tgg tct gat gga agc aat tcc cag tac cga   472
+Cys Pro Asp Leu Tyr Gln Trp Ser Asp Gly Ser Asn Ser Gln Tyr Arg
+     75                  80                  85
+ 
+aac tgg tac aca gat gaa cct tcc tgc gga agt gaa aag tgt gtt gtg   520
+Asn Trp Tyr Thr Asp Glu Pro Ser Cys Gly Ser Glu Lys Cys Val Val
+ 90                  95                 100                 105
+ 
+atg tat cac caa cca act gcc aat cct ggc ctt ggg ggt ccc tac ctt   568
+Met Tyr His Gln Pro Thr Ala Asn Pro Gly Leu Gly Gly Pro Tyr Leu
+                110                 115                 120
+ 
+tac cag tgg aat gat gac agg tgt aac atg aag cac aat tat att tgc   616
+Tyr Gln Trp Asn Asp Asp Arg Cys Asn Met Lys His Asn Tyr Ile Cys
+            125                 130                 135
+ 
+aag tat gaa cca gag att aat cca aca gcc cct gta gaa aag cct tat   664
+Lys Tyr Glu Pro Glu Ile Asn Pro Thr Ala Pro Val Glu Lys Pro Tyr
+        140                 145                 150
+ 
+ctt aca aat caa cca gga gac acc cat cag aat gtg gtt gtt act gaa   712
+Leu Thr Asn Gln Pro Gly Asp Thr His Gln Asn Val Val Val Thr Glu
+    155                 160                 165
+ 
+gca gta aag gaa gaa caa aaa cta gtc caa acc agt cta cac tgt gga   760
+Ala Val Lys Glu Glu Gln Lys Leu Val Gln Thr Ser Leu His Cys Gly
+170                 175                 180                 185
+ 
+ttt caa aga gta cca gaa aag aaa gtg gca tgg aag tat aat aac tca   808
+Phe Gln Arg Val Pro Glu Lys Lys Val Ala Trp Lys Tyr Asn Asn Ser
+                190                 195                 200
+ 
+ttg act tgg ttc cag aat ttt gta att ctg gat ctg tat aag gaa tgg   856
+Leu Thr Trp Phe Gln Asn Phe Val Ile Leu Asp Leu Tyr Lys Glu Trp
+            205                 210                 215
+ 
+cat cag aac aat agc ttg gaa tgg ctt gaa atc aca aag gat ctg caa   904
+His Gln Asn Asn Ser Leu Glu Trp Leu Glu Ile Thr Lys Asp Leu Gln
+        220                 225                 230
+ 
+gat gaa ctg taa gctccccctt gaggcaaata ttaaagtaat ttttatatgt       956
+Asp Glu Leu  *
+    235
+ 
+ctattatttc atttaaagaa tatgctgtgc taataatgga gtgagacatg cttattttgc 1016
+taaaggatgc acccaaactt caaacttcaa gcaaatgaaa tggacaatgc agataaagtt 1076
+gttatcaaca cgtcgggagt atgtgtgtta gaagcaattc cttttatttc tttcaccttt 1136
+cataagttgt tatctagtca atgtaatgta tattgtattg aaatttacag tgtgcaaaag 1196
+tattttacct ttgcataagt gtttgataaa aatgaactgt tctaatattt atttttatgg 1256
+catctcattt ttcaatacat gctcttttga ttaaagaaac ttattactgt tgtcaactga 1316
+attcacacac acacaaatat agtaccatag aaaaagtttg ttttctcgaa ataattcatc 1376
+tttcagcttc tctgcttttg gtcaatgtct aggaaatctc ttcagaaata agaagctatt 1436
+tcattaagtg tgatataaac ctcctcaaac attttactta gaggcaagga ttgtctaatt 1496
+tcaattgtgc aagacatgtg ccttataatt atttttagct taaaattaaa cagattttgt 1556
+aataatgtaa ctttgttaat aggtgcataa acactaatgc agtcaatttg aacaaaagaa 1616
+gtgacataca caatataaat catatgtctt cacacgttgc ctatataatg agaagcagct 1676
+ctctgagggt tctgaaatca atgtggtccc tctcttgccc actaaacaaa gatggttgtt 1736
+cggggtttgg gattgacact ggaggcagat agttgcaaag ttagtctaag gtttccctag 1796
+ctgtatttag cctctgacta tattagtata caaagaggtc atgtggttga gaccaggtga 1856
+atagtcacta tcagtgtgga gacaagcaca gcacacagac attttaggaa ggaaaggaac 1916
+tacgaaatcg tgtgaaaatg ggttggaacc catcagtgat cgcatattca ttgatgaggg 1976
+tttgcttgag atagaaaatg gtggctcctt tctgtcttat ctcctagttt cttcaatgct 2036
+tacgccttgt tcttctcaag agaaagttgt aactctctgg tcttcatatg tccctgtgct 2096
+ccttttaacc aaataaagag ttcttgtttc tgaagaa                          2133
+
+<210> 8
+<211> 236
+<212> PRT
+<213> Homo sapiens
+
+<400> 8
+Met Ala Tyr Phe His Glu Leu Ser Ser Arg Val Ser Phe Gln Glu Ala
+ 1               5                  10                  15      
+Arg Leu Ala Cys Glu Ser Glu Gly Gly Val Leu Leu Ser Leu Glu Asn
+            20                  25                  30          
+Glu Ala Glu Gln Lys Leu Ile Glu Ser Met Leu Gln Asn Leu Thr Lys
+        35                  40                  45              
+Pro Gly Thr Gly Ile Ser Asp Gly Asp Phe Trp Ile Gly Leu Trp Arg
+    50                  55                  60                  
+Asn Gly Asp Gly Gln Thr Ser Gly Ala Cys Pro Asp Leu Tyr Gln Trp
+65                  70                  75                  80  
+Ser Asp Gly Ser Asn Ser Gln Tyr Arg Asn Trp Tyr Thr Asp Glu Pro
+                85                  90                  95      
+Ser Cys Gly Ser Glu Lys Cys Val Val Met Tyr His Gln Pro Thr Ala
+            100                 105                 110         
+Asn Pro Gly Leu Gly Gly Pro Tyr Leu Tyr Gln Trp Asn Asp Asp Arg
+        115                 120                 125             
+Cys Asn Met Lys His Asn Tyr Ile Cys Lys Tyr Glu Pro Glu Ile Asn
+    130                 135                 140                 
+Pro Thr Ala Pro Val Glu Lys Pro Tyr Leu Thr Asn Gln Pro Gly Asp
+145                 150                 155                 160 
+Thr His Gln Asn Val Val Val Thr Glu Ala Val Lys Glu Glu Gln Lys
+                165                 170                 175     
+Leu Val Gln Thr Ser Leu His Cys Gly Phe Gln Arg Val Pro Glu Lys
+            180                 185                 190         
+Lys Val Ala Trp Lys Tyr Asn Asn Ser Leu Thr Trp Phe Gln Asn Phe
+        195                 200                 205             
+Val Ile Leu Asp Leu Tyr Lys Glu Trp His Gln Asn Asn Ser Leu Glu
+    210                 215                 220                 
+Trp Leu Glu Ile Thr Lys Asp Leu Gln Asp Glu Leu
+225                 230                 235     
+
+
+<210> 9
+<211> 2033
+<212> DNA
+<213> Homo sapiens
+
+<220> 
+<221> CDS            
+<222> (106)...(816)
+
+<400> 9
+gcttgaagat ggcagatcgt gggacttctc agcctccata attgagtgag ccaattccct 60
+ggccaaaagg tgtgttttgc tgacttcaag catccctgct acaaa atg gcc tac ttc 117
+                                                  Met Ala Tyr Phe
+                                                   1
+ 
+cat gaa ctg tcc agc cga gtg agc ttt cag gag gca cgc ctg gct tgt   165
+His Glu Leu Ser Ser Arg Val Ser Phe Gln Glu Ala Arg Leu Ala Cys
+ 5                   10                  15                  20
+ 
+gag agt gag gga gga gtc ctc ctc agc ctt gag aat gaa gca gaa cag   213
+Glu Ser Glu Gly Gly Val Leu Leu Ser Leu Glu Asn Glu Ala Glu Gln
+                 25                  30                  35
+ 
+aag tta ata gag agc atg ttg caa aac ctg aca aaa ccc ggg aca ggg   261
+Lys Leu Ile Glu Ser Met Leu Gln Asn Leu Thr Lys Pro Gly Thr Gly
+             40                  45                  50
+ 
+att tct gat ggt gat ttc tgg ata ggg ctt tgg agg aat gga gat ggg   309
+Ile Ser Asp Gly Asp Phe Trp Ile Gly Leu Trp Arg Asn Gly Asp Gly
+         55                  60                  65
+ 
+caa aca tct ggt gcc tgc cca gat ctc tac cag tgg tct gat gga agc   357
+Gln Thr Ser Gly Ala Cys Pro Asp Leu Tyr Gln Trp Ser Asp Gly Ser
+     70                  75                  80
+ 
+aat tcc cag tac cga aac tgg tac aca gat gaa cct tcc tgc gga agt   405
+Asn Ser Gln Tyr Arg Asn Trp Tyr Thr Asp Glu Pro Ser Cys Gly Ser
+ 85                  90                  95                 100
+ 
+gaa aag tgt gtt gtg atg tat cac caa cca act gcc aat cct ggc ctt   453
+Glu Lys Cys Val Val Met Tyr His Gln Pro Thr Ala Asn Pro Gly Leu
+                105                 110                 115
+ 
+ggg ggt ccc tac ctt tac cag tgg aat gat gac agg tgt aac atg aag   501
+Gly Gly Pro Tyr Leu Tyr Gln Trp Asn Asp Asp Arg Cys Asn Met Lys
+            120                 125                 130
+ 
+cac aat tat att tgc aag tat gaa cca gag att aat cca aca gcc cct   549
+His Asn Tyr Ile Cys Lys Tyr Glu Pro Glu Ile Asn Pro Thr Ala Pro
+        135                 140                 145
+ 
+gta gaa aag cct tat ctt aca aat caa cca gga gac acc cat cag aat   597
+Val Glu Lys Pro Tyr Leu Thr Asn Gln Pro Gly Asp Thr His Gln Asn
+    150                 155                 160
+ 
+gtg gtt gtt act gaa gca gta aag gaa gaa caa aaa cta gtc caa acc   645
+Val Val Val Thr Glu Ala Val Lys Glu Glu Gln Lys Leu Val Gln Thr
+165                 170                 175                 180
+ 
+agt cta cac tgt gga ttt caa aga gta cca gaa aag aaa gtg gca tgg   693
+Ser Leu His Cys Gly Phe Gln Arg Val Pro Glu Lys Lys Val Ala Trp
+                185                 190                 195
+ 
+aag tat aat aac tca ttg act tgg ttc cag aat ttt gta att ctg gat   741
+Lys Tyr Asn Asn Ser Leu Thr Trp Phe Gln Asn Phe Val Ile Leu Asp
+            200                 205                 210
+ 
+ctg tat aag gaa tgg cat cag aac aat agc ttg gaa tgg ctt gaa atc   789
+Leu Tyr Lys Glu Trp His Gln Asn Asn Ser Leu Glu Trp Leu Glu Ile
+        215                 220                 225
+ 
+aca aag gat ctg caa gat gaa ctg taa gctccccctt gaggcaaata         836
+Thr Lys Asp Leu Gln Asp Glu Leu  *
+    230                 235
+ 
+ttaaagtaat ttttatatgt ctattatttc atttaaagaa tatgctgtgc taataatgga 896
+gtgagacatg cttattttgc taaaggatgc acccaaactt caaacttcaa gcaaatgaaa 956
+tggacaatgc agataaagtt gttatcaaca cgtcgggagt atgtgtgtta gaagcaattc 1016
+cttttatttc tttcaccttt cataagttgt tatctagtca atgtaatgta tattgtattg 1076
+aaatttacag tgtgcaaaag tattttacct ttgcataagt gtttgataaa aatgaactgt 1136
+tctaatattt atttttatgg catctcattt ttcaatacat gctcttttga ttaaagaaac 1196
+ttattactgt tgtcaactga attcacacac acacaaatat agtaccatag aaaaagtttg 1256
+ttttctcgaa ataattcatc tttcagcttc tctgcttttg gtcaatgtct aggaaatctc 1316
+ttcagaaata agaagctatt tcattaagtg tgatataaac ctcctcaaac attttactta 1376
+gaggcaagga ttgtctaatt tcaattgtgc aagacatgtg ccttataatt atttttagct 1436
+taaaattaaa cagattttgt aataatgtaa ctttgttaat aggtgcataa acactaatgc 1496
+agtcaatttg aacaaaagaa gtgacataca caatataaat catatgtctt cacacgttgc 1556
+ctatataatg agaagcagct ctctgagggt tctgaaatca atgtggtccc tctcttgccc 1616
+actaaacaaa gatggttgtt cggggtttgg gattgacact ggaggcagat agttgcaaag 1676
+ttagtctaag gtttccctag ctgtatttag cctctgacta tattagtata caaagaggtc 1736
+atgtggttga gaccaggtga atagtcacta tcagtgtgga gacaagcaca gcacacagac 1796
+attttaggaa ggaaaggaac tacgaaatcg tgtgaaaatg ggttggaacc catcagtgat 1856
+cgcatattca ttgatgaggg tttgcttgag atagaaaatg gtggctcctt tctgtcttat 1916
+ctcctagttt cttcaatgct tacgccttgt tcttctcaag agaaagttgt aactctctgg 1976
+tcttcatatg tccctgtgct ccttttaacc aaataaagag ttcttgtttc tgaagaa    2033
+
+<210> 10
+<211> 236
+<212> PRT
+<213> Homo sapiens
+
+<400> 10
+Met Ala Tyr Phe His Glu Leu Ser Ser Arg Val Ser Phe Gln Glu Ala
+ 1               5                  10                  15      
+Arg Leu Ala Cys Glu Ser Glu Gly Gly Val Leu Leu Ser Leu Glu Asn
+            20                  25                  30          
+Glu Ala Glu Gln Lys Leu Ile Glu Ser Met Leu Gln Asn Leu Thr Lys
+        35                  40                  45              
+Pro Gly Thr Gly Ile Ser Asp Gly Asp Phe Trp Ile Gly Leu Trp Arg
+    50                  55                  60                  
+Asn Gly Asp Gly Gln Thr Ser Gly Ala Cys Pro Asp Leu Tyr Gln Trp
+65                  70                  75                  80  
+Ser Asp Gly Ser Asn Ser Gln Tyr Arg Asn Trp Tyr Thr Asp Glu Pro
+                85                  90                  95      
+Ser Cys Gly Ser Glu Lys Cys Val Val Met Tyr His Gln Pro Thr Ala
+            100                 105                 110         
+Asn Pro Gly Leu Gly Gly Pro Tyr Leu Tyr Gln Trp Asn Asp Asp Arg
+        115                 120                 125             
+Cys Asn Met Lys His Asn Tyr Ile Cys Lys Tyr Glu Pro Glu Ile Asn
+    130                 135                 140                 
+Pro Thr Ala Pro Val Glu Lys Pro Tyr Leu Thr Asn Gln Pro Gly Asp
+145                 150                 155                 160 
+Thr His Gln Asn Val Val Val Thr Glu Ala Val Lys Glu Glu Gln Lys
+                165                 170                 175     
+Leu Val Gln Thr Ser Leu His Cys Gly Phe Gln Arg Val Pro Glu Lys
+            180                 185                 190         
+Lys Val Ala Trp Lys Tyr Asn Asn Ser Leu Thr Trp Phe Gln Asn Phe
+        195                 200                 205             
+Val Ile Leu Asp Leu Tyr Lys Glu Trp His Gln Asn Asn Ser Leu Glu
+    210                 215                 220                 
+Trp Leu Glu Ile Thr Lys Asp Leu Gln Asp Glu Leu
+225                 230                 235     
+
+
+<210> 11
+<211> 649
+<212> DNA
+<213> Homo sapiens
+
+<220> 
+<221> CDS            
+<222> (39)...(648)
+
+<400> 11
+aatactttct gagagtcctg gacctcctgt gcaagaac atg aaa cac ctg tgg ttc 56
+                                          Met Lys His Leu Trp Phe
+                                           1               5
+ 
+ttc ctc ctc ctg gtg gca gct ccc aga tgg gtc ctg tcc cag gtg cag   104
+Phe Leu Leu Leu Val Ala Ala Pro Arg Trp Val Leu Ser Gln Val Gln
+             10                  15                  20
+ 
+ctg cag gag tcg ggc cca gga ctg gtg aag cct tcg gag acc ctg tcc   152
+Leu Gln Glu Ser Gly Pro Gly Leu Val Lys Pro Ser Glu Thr Leu Ser
+         25                  30                  35
+ 
+ctc acc tgc act gtc tct ggt ggc tcc gtc agc agt ggt ggt tac tac   200
+Leu Thr Cys Thr Val Ser Gly Gly Ser Val Ser Ser Gly Gly Tyr Tyr
+     40                  45                  50
+ 
+tgg agc tgg atc cgg cag ccc cca ggg aag gga ctg gag tgg att ggg   248
+Trp Ser Trp Ile Arg Gln Pro Pro Gly Lys Gly Leu Glu Trp Ile Gly
+ 55                  60                  65                  70
+ 
+tat atc tat tac agt ggg ggc acc aac tac aac ccc tcc ctc aag agt   296
+Tyr Ile Tyr Tyr Ser Gly Gly Thr Asn Tyr Asn Pro Ser Leu Lys Ser
+                 75                  80                  85
+ 
+cga gtc acc ata tca gta gac acg tcc aag aac cag ttc tcc ctg aag   344
+Arg Val Thr Ile Ser Val Asp Thr Ser Lys Asn Gln Phe Ser Leu Lys
+             90                  95                 100
+ 
+ctg acc tct gtg acc gct gcg gac acg gcc gtg tat tac tgt gcg aga   392
+Leu Thr Ser Val Thr Ala Ala Asp Thr Ala Val Tyr Tyr Cys Ala Arg
+        105                 110                 115
+ 
+gag tcg gga tat tgt act aat gtt gca tgc ttc cct gat gct ttt gat   440
+Glu Ser Gly Tyr Cys Thr Asn Val Ala Cys Phe Pro Asp Ala Phe Asp
+    120                 125                 130
+ 
+atc tgg ggc caa ggg aca atg gtc acc gtg tct tca gcc tcc acc aag   488
+Ile Trp Gly Gln Gly Thr Met Val Thr Val Ser Ser Ala Ser Thr Lys
+135                 140                 145                 150
+ 
+ggc cca tcg gtc ttc ccc ctg gca ccc tcc tcc aag agc acc tct ggg   536
+Gly Pro Ser Val Phe Pro Leu Ala Pro Ser Ser Lys Ser Thr Ser Gly
+                155                 160                 165
+ 
+ggc aca gcg gcc ctg ggc tgc ctg gtc aag gac tac ttc ccc gaa ccg   584
+Gly Thr Ala Ala Leu Gly Cys Leu Val Lys Asp Tyr Phe Pro Glu Pro
+            170                 175                 180
+ 
+gtg acg gtg tcg tgg aac tca ggc gcc ctg acc agc ggc gtg cac acc   632
+Val Thr Val Ser Trp Asn Ser Gly Ala Leu Thr Ser Gly Val His Thr
+        185                 190                 195
+ 
+ttc cca gct gtc cta c a                                           649
+Phe Pro Ala Val Leu
+    200
+ 
+
+<210> 12
+<211> 203
+<212> PRT
+<213> Homo sapiens
+
+<400> 12
+Met Lys His Leu Trp Phe Phe Leu Leu Leu Val Ala Ala Pro Arg Trp
+ 1               5                  10                  15      
+Val Leu Ser Gln Val Gln Leu Gln Glu Ser Gly Pro Gly Leu Val Lys
+            20                  25                  30          
+Pro Ser Glu Thr Leu Ser Leu Thr Cys Thr Val Ser Gly Gly Ser Val
+        35                  40                  45              
+Ser Ser Gly Gly Tyr Tyr Trp Ser Trp Ile Arg Gln Pro Pro Gly Lys
+    50                  55                  60                  
+Gly Leu Glu Trp Ile Gly Tyr Ile Tyr Tyr Ser Gly Gly Thr Asn Tyr
+65                  70                  75                  80  
+Asn Pro Ser Leu Lys Ser Arg Val Thr Ile Ser Val Asp Thr Ser Lys
+                85                  90                  95      
+Asn Gln Phe Ser Leu Lys Leu Thr Ser Val Thr Ala Ala Asp Thr Ala
+            100                 105                 110         
+Val Tyr Tyr Cys Ala Arg Glu Ser Gly Tyr Cys Thr Asn Val Ala Cys
+        115                 120                 125             
+Phe Pro Asp Ala Phe Asp Ile Trp Gly Gln Gly Thr Met Val Thr Val
+    130                 135                 140                 
+Ser Ser Ala Ser Thr Lys Gly Pro Ser Val Phe Pro Leu Ala Pro Ser
+145                 150                 155                 160 
+Ser Lys Ser Thr Ser Gly Gly Thr Ala Ala Leu Gly Cys Leu Val Lys
+                165                 170                 175     
+Asp Tyr Phe Pro Glu Pro Val Thr Val Ser Trp Asn Ser Gly Ala Leu
+            180                 185                 190         
+Thr Ser Gly Val His Thr Phe Pro Ala Val Leu
+        195                 200             
+
+
+<210> 13
+<211> 884
+<212> DNA
+<213> Homo sapiens
+
+<220> 
+<221> CDS            
+<222> (100)...(816)
+
+<400> 13
+caccgcggtg gcggccgctc tagcccgact ggagcacgag gacactgaca tggactgatg 60
+gagtagaaag atcaggactc ctcagttcac cttctcaca atg agg ctc cct gct    114
+                                           Met Arg Leu Pro Ala
+                                            1               5
+ 
+cag ctc ctg ggg ctg cta atg ctc tgg gtc cca gga tcc agt ggg gat   162
+Gln Leu Leu Gly Leu Leu Met Leu Trp Val Pro Gly Ser Ser Gly Asp
+                 10                  15                  20
+ 
+gtt gtg atg act cag tct cca ctc tcc ctg ccc gtc acc ctt gga cag   210
+Val Val Met Thr Gln Ser Pro Leu Ser Leu Pro Val Thr Leu Gly Gln
+             25                  30                  35
+ 
+ccg gcc tcc atc tcc tgc agg tct agt caa agc ctc gta tac act gat   258
+Pro Ala Ser Ile Ser Cys Arg Ser Ser Gln Ser Leu Val Tyr Thr Asp
+         40                  45                  50
+ 
+gga aac acc tcc ttg aat tgg ttt cag cag agg cca ggc caa tct cca   306
+Gly Asn Thr Ser Leu Asn Trp Phe Gln Gln Arg Pro Gly Gln Ser Pro
+     55                  60                  65
+ 
+agg cgc cta att tat aag gtt tct aac tgg gac tct ggg gtc cca gac   354
+Arg Arg Leu Ile Tyr Lys Val Ser Asn Trp Asp Ser Gly Val Pro Asp
+ 70                  75                  80                  85
+ 
+agc ttc agc ggc agt ggg tca ggc act gat ttc aca ctg aaa atc agc   402
+Ser Phe Ser Gly Ser Gly Ser Gly Thr Asp Phe Thr Leu Lys Ile Ser
+                 90                  95                 100
+ 
+agg gtg gag gct gaa aat gtt ggg gtt tat tac tgc atg caa ggt aca   450
+Arg Val Glu Ala Glu Asn Val Gly Val Tyr Tyr Cys Met Gln Gly Thr
+            105                 110                 115
+ 
+cac tgg cct ttc act ttc ggc gga ggg acc aag gtg gag atc aaa cga   498
+His Trp Pro Phe Thr Phe Gly Gly Gly Thr Lys Val Glu Ile Lys Arg
+        120                 125                 130
+ 
+act gtg gct gca cca tct gtc ttc atc ttc ccg cca tct gat gag cag   546
+Thr Val Ala Ala Pro Ser Val Phe Ile Phe Pro Pro Ser Asp Glu Gln
+    135                 140                 145
+ 
+ttg aaa tct gga act gcc tct gtt gtg tgc ctg ctg aat aac ttc tat   594
+Leu Lys Ser Gly Thr Ala Ser Val Val Cys Leu Leu Asn Asn Phe Tyr
+150                 155                 160                 165
+ 
+ccc aga gag gcc aaa gta cag tgg aag gtg gat aac gcc ctc caa tcg   642
+Pro Arg Glu Ala Lys Val Gln Trp Lys Val Asp Asn Ala Leu Gln Ser
+                170                 175                 180
+ 
+ggt aac tcc cag gag agt gtc aca gag cag gac agc aag gac agc acc   690
+Gly Asn Ser Gln Glu Ser Val Thr Glu Gln Asp Ser Lys Asp Ser Thr
+            185                 190                 195
+ 
+tac agc ctc agc agc acc ctg acg ctg agc aaa gca gac tac gag aaa   738
+Tyr Ser Leu Ser Ser Thr Leu Thr Leu Ser Lys Ala Asp Tyr Glu Lys
+        200                 205                 210
+ 
+cac aaa gtc tac gcc tgc gaa gtc acc cat cag ggc ctg agc tcg ccc   786
+His Lys Val Tyr Ala Cys Glu Val Thr His Gln Gly Leu Ser Ser Pro
+    215                 220                 225
+ 
+gtc aca aag agc ttc aac agg gga gag tgt tagagggcgg atcccccggg     836
+Val Thr Lys Ser Phe Asn Arg Gly Glu Cys
+230                 235
+ 
+ctgcaggaat tcgatatcaa gcttatcgat accgtcgacc tcgagggg              884
+
+<210> 14
+<211> 239
+<212> PRT
+<213> Homo sapiens
+
+<400> 14
+Met Arg Leu Pro Ala Gln Leu Leu Gly Leu Leu Met Leu Trp Val Pro
+ 1               5                  10                  15      
+Gly Ser Ser Gly Asp Val Val Met Thr Gln Ser Pro Leu Ser Leu Pro
+            20                  25                  30          
+Val Thr Leu Gly Gln Pro Ala Ser Ile Ser Cys Arg Ser Ser Gln Ser
+        35                  40                  45              
+Leu Val Tyr Thr Asp Gly Asn Thr Ser Leu Asn Trp Phe Gln Gln Arg
+    50                  55                  60                  
+Pro Gly Gln Ser Pro Arg Arg Leu Ile Tyr Lys Val Ser Asn Trp Asp
+65                  70                  75                  80  
+Ser Gly Val Pro Asp Ser Phe Ser Gly Ser Gly Ser Gly Thr Asp Phe
+                85                  90                  95      
+Thr Leu Lys Ile Ser Arg Val Glu Ala Glu Asn Val Gly Val Tyr Tyr
+            100                 105                 110         
+Cys Met Gln Gly Thr His Trp Pro Phe Thr Phe Gly Gly Gly Thr Lys
+        115                 120                 125             
+Val Glu Ile Lys Arg Thr Val Ala Ala Pro Ser Val Phe Ile Phe Pro
+    130                 135                 140                 
+Pro Ser Asp Glu Gln Leu Lys Ser Gly Thr Ala Ser Val Val Cys Leu
+145                 150                 155                 160 
+Leu Asn Asn Phe Tyr Pro Arg Glu Ala Lys Val Gln Trp Lys Val Asp
+                165                 170                 175     
+Asn Ala Leu Gln Ser Gly Asn Ser Gln Glu Ser Val Thr Glu Gln Asp
+            180                 185                 190         
+Ser Lys Asp Ser Thr Tyr Ser Leu Ser Ser Thr Leu Thr Leu Ser Lys
+        195                 200                 205             
+Ala Asp Tyr Glu Lys His Lys Val Tyr Ala Cys Glu Val Thr His Gln
+    210                 215                 220                 
+Gly Leu Ser Ser Pro Val Thr Lys Ser Phe Asn Arg Gly Glu Cys
+225                 230                 235                 
+
+
+<210> 15
+<211> 1016
+<212> DNA
+<213> Homo sapiens
+
+<220> 
+<221> CDS            
+<222> (178)...(899)
+
+<400> 15
+cacacaggaa acagctatga ccatgattac gccaagcgcg caattaaccc tcactaaagg 60
+gaacaaaagc tggagctcca ccgcggtggc ggccgctcta gcccggctgg agcacgagga 120
+cactgacacg gactgaagga gtagaaagag ctacaacagg caggcagggg cagcaag atg 180
+                                                               Met
+                                                                1
+ 
+gtg ttg cag acc cag gtc ttc att tct ctg ttg ctc tgg atc tct ggt   228
+Val Leu Gln Thr Gln Val Phe Ile Ser Leu Leu Leu Trp Ile Ser Gly
+             5                   10                  15
+ 
+gcc aac ggg gac atc gtg atg acc cag tct cca gac tcc ctg gct gtg   276
+Ala Asn Gly Asp Ile Val Met Thr Gln Ser Pro Asp Ser Leu Ala Val
+         20                  25                  30
+ 
+tct ctg ggc gag cgg gcc acc atc aac tgc aag tcc agc cag ggt gtt   324
+Ser Leu Gly Glu Arg Ala Thr Ile Asn Cys Lys Ser Ser Gln Gly Val
+     35                  40                  45
+ 
+tta tac agc tcc aac aat aag aac tac tta gct tgg tac cag cag aaa   372
+Leu Tyr Ser Ser Asn Asn Lys Asn Tyr Leu Ala Trp Tyr Gln Gln Lys
+ 50                  55                  60                  65
+ 
+cca gga cag cca cct aag ctg ctc att tac tgg gca tct acc cgg gaa   420
+Pro Gly Gln Pro Pro Lys Leu Leu Ile Tyr Trp Ala Ser Thr Arg Glu
+                 70                  75                  80
+ 
+tcc ggg gtc cct gac cga ttc agt ggc agc ggg tct ggg aca gat ttc   468
+Ser Gly Val Pro Asp Arg Phe Ser Gly Ser Gly Ser Gly Thr Asp Phe
+             85                  90                  95
+ 
+act ctc acc atc agc agc ctg cag gct gaa gat gtg gca gtt tat ttc   516
+Thr Leu Thr Ile Ser Ser Leu Gln Ala Glu Asp Val Ala Val Tyr Phe
+        100                 105                 110
+ 
+tgt cag caa tat tat gtt agt ccg ctc act ttc ggc gga ggg acc aag   564
+Cys Gln Gln Tyr Tyr Val Ser Pro Leu Thr Phe Gly Gly Gly Thr Lys
+    115                 120                 125
+ 
+gtg gag atc aaa cga act gtg gct gca cca tct gtc ttc atc ttc ccg   612
+Val Glu Ile Lys Arg Thr Val Ala Ala Pro Ser Val Phe Ile Phe Pro
+130                 135                 140                 145
+ 
+cca tct gat gag cag ttg aaa tct gga act gcc tct gtt gtg tgc ctg   660
+Pro Ser Asp Glu Gln Leu Lys Ser Gly Thr Ala Ser Val Val Cys Leu
+                150                 155                 160
+ 
+ctg aat aac ttc tat ccc aga gag gcc aaa gta cag tgg aag gtg gat   708
+Leu Asn Asn Phe Tyr Pro Arg Glu Ala Lys Val Gln Trp Lys Val Asp
+            165                 170                 175
+ 
+aac gcc ctc caa tcg ggt aac tcc cag gag agt gtc aca gag cag gac   756
+Asn Ala Leu Gln Ser Gly Asn Ser Gln Glu Ser Val Thr Glu Gln Asp
+        180                 185                 190
+ 
+agc aag gac agc acc tac agc ctc agc agc acc ctg acg ctg agc aaa   804
+Ser Lys Asp Ser Thr Tyr Ser Leu Ser Ser Thr Leu Thr Leu Ser Lys
+    195                 200                 205
+ 
+gca gac tac gag aaa cac aaa gtc tac gcc tgc gaa gtc acc cat cag   852
+Ala Asp Tyr Glu Lys His Lys Val Tyr Ala Cys Glu Val Thr His Gln
+210                 215                 220                 225
+ 
+ggc ctg agc tcg ccc gtc aca aag agc ttc aac agg gga gag tgt ta    899
+Gly Leu Ser Ser Pro Val Thr Lys Ser Phe Asn Arg Gly Glu Cys
+                230                 235                 240
+ 
+gagggcggat cccccgggct gcaggaattc gatatcaagc ttatcgatac cgtcgacctc 959
+gagggggggc ccggtaccca attcgcccta tagtgagtcg tattacgcgc gctcact    1016
+
+<210> 16
+<211> 240
+<212> PRT
+<213> Homo sapiens
+
+<400> 16
+Met Val Leu Gln Thr Gln Val Phe Ile Ser Leu Leu Leu Trp Ile Ser
+ 1               5                  10                  15      
+Gly Ala Asn Gly Asp Ile Val Met Thr Gln Ser Pro Asp Ser Leu Ala
+            20                  25                  30          
+Val Ser Leu Gly Glu Arg Ala Thr Ile Asn Cys Lys Ser Ser Gln Gly
+        35                  40                  45              
+Val Leu Tyr Ser Ser Asn Asn Lys Asn Tyr Leu Ala Trp Tyr Gln Gln
+    50                  55                  60                  
+Lys Pro Gly Gln Pro Pro Lys Leu Leu Ile Tyr Trp Ala Ser Thr Arg
+65                  70                  75                  80  
+Glu Ser Gly Val Pro Asp Arg Phe Ser Gly Ser Gly Ser Gly Thr Asp
+                85                  90                  95      
+Phe Thr Leu Thr Ile Ser Ser Leu Gln Ala Glu Asp Val Ala Val Tyr
+            100                 105                 110         
+Phe Cys Gln Gln Tyr Tyr Val Ser Pro Leu Thr Phe Gly Gly Gly Thr
+        115                 120                 125             
+Lys Val Glu Ile Lys Arg Thr Val Ala Ala Pro Ser Val Phe Ile Phe
+    130                 135                 140                 
+Pro Pro Ser Asp Glu Gln Leu Lys Ser Gly Thr Ala Ser Val Val Cys
+145                 150                 155                 160 
+Leu Leu Asn Asn Phe Tyr Pro Arg Glu Ala Lys Val Gln Trp Lys Val
+                165                 170                 175     
+Asp Asn Ala Leu Gln Ser Gly Asn Ser Gln Glu Ser Val Thr Glu Gln
+            180                 185                 190         
+Asp Ser Lys Asp Ser Thr Tyr Ser Leu Ser Ser Thr Leu Thr Leu Ser
+        195                 200                 205             
+Lys Ala Asp Tyr Glu Lys His Lys Val Tyr Ala Cys Glu Val Thr His
+    210                 215                 220                 
+Gln Gly Leu Ser Ser Pro Val Thr Lys Ser Phe Asn Arg Gly Glu Cys
+225                 230                 235                 240 
+
+
+<210> 17
+<211> 203
+<212> PRT
+<213> Homo sapiens
+
+<400> 17
+Met Lys His Leu Trp Phe Phe Leu Leu Leu Val Ala Ala Pro Arg Trp
+ 1               5                  10                  15      
+Val Leu Ser Gln Val Gln Leu Gln Glu Ser Gly Pro Gly Leu Val Lys
+            20                  25                  30          
+Pro Ser Glu Thr Leu Ser Leu Thr Cys Thr Val Ser Gly Gly Ser Val
+        35                  40                  45              
+Ser Ser Gly Gly Tyr Tyr Trp Ser Trp Ile Arg Gln Pro Pro Gly Lys
+    50                  55                  60                  
+Gly Leu Glu Trp Ile Gly Tyr Ile Tyr Tyr Ser Gly Gly Thr Asn Tyr
+65                  70                  75                  80  
+Asn Pro Ser Leu Lys Ser Arg Val Thr Ile Ser Val Asp Thr Ser Lys
+                85                  90                  95      
+Asn Gln Phe Ser Leu Lys Leu Thr Ser Val Thr Ala Ala Asp Thr Ala
+            100                 105                 110         
+Val Tyr Tyr Cys Ala Arg Glu Ser Gly Tyr Cys Thr Asn Val Ala Cys
+        115                 120                 125             
+Phe Pro Asp Ala Phe Asp Ile Trp Gly Gln Gly Thr Met Val Thr Val
+    130                 135                 140                 
+Ser Ser Ala Ser Thr Lys Gly Pro Ser Val Phe Pro Leu Ala Pro Ser
+145                 150                 155                 160 
+Ser Lys Ser Thr Ser Gly Gly Thr Ala Ala Leu Gly Cys Leu Val Lys
+                165                 170                 175     
+Asp Tyr Phe Pro Glu Pro Val Thr Val Ser Trp Asn Ser Gly Ala Leu
+            180                 185                 190         
+Thr Ser Gly Val His Thr Phe Pro Ala Val Leu
+        195                 200             
+
+
+<210> 18
+<211> 239
+<212> PRT
+<213> Homo sapiens
+
+<400> 18
+Met Arg Leu Pro Ala Gln Leu Leu Gly Leu Leu Met Leu Trp Val Pro
+ 1               5                  10                  15      
+Gly Ser Ser Gly Asp Val Val Met Thr Gln Ser Pro Leu Ser Leu Pro
+            20                  25                  30          
+Val Thr Leu Gly Gln Pro Ala Ser Ile Ser Cys Arg Ser Ser Gln Ser
+        35                  40                  45              
+Leu Val Tyr Thr Asp Gly Asn Thr Ser Leu Asn Trp Phe Gln Gln Arg
+    50                  55                  60                  
+Pro Gly Gln Ser Pro Arg Arg Leu Ile Tyr Lys Val Ser Asn Trp Asp
+65                  70                  75                  80  
+Ser Gly Val Pro Asp Ser Phe Ser Gly Ser Gly Ser Gly Thr Asp Phe
+                85                  90                  95      
+Thr Leu Lys Ile Ser Arg Val Glu Ala Glu Asn Val Gly Val Tyr Tyr
+            100                 105                 110         
+Cys Met Gln Gly Thr His Trp Pro Phe Thr Phe Gly Gly Gly Thr Lys
+        115                 120                 125             
+Val Glu Ile Lys Arg Thr Val Ala Ala Pro Ser Val Phe Ile Phe Pro
+    130                 135                 140                 
+Pro Ser Asp Glu Gln Leu Lys Ser Gly Thr Ala Ser Val Val Cys Leu
+145                 150                 155                 160 
+Leu Asn Asn Phe Tyr Pro Arg Glu Ala Lys Val Gln Trp Lys Val Asp
+                165                 170                 175     
+Asn Ala Leu Gln Ser Gly Asn Ser Gln Glu Ser Val Thr Glu Gln Asp
+            180                 185                 190         
+Ser Lys Asp Ser Thr Tyr Ser Leu Ser Ser Thr Leu Thr Leu Ser Lys
+        195                 200                 205             
+Ala Asp Tyr Glu Lys His Lys Val Tyr Ala Cys Glu Val Thr His Gln
+    210                 215                 220                 
+Gly Leu Ser Ser Pro Val Thr Lys Ser Phe Asn Arg Gly Glu Cys
+225                 230                 235                 
+
+
+<210> 19
+<211> 240
+<212> PRT
+<213> Homo sapiens
+
+<400> 19
+Met Val Leu Gln Thr Gln Val Phe Ile Ser Leu Leu Leu Trp Ile Ser
+ 1               5                  10                  15      
+Gly Ala Asn Gly Asp Ile Val Met Thr Gln Ser Pro Asp Ser Leu Ala
+            20                  25                  30          
+Val Ser Leu Gly Glu Arg Ala Thr Ile Asn Cys Lys Ser Ser Gln Gly
+        35                  40                  45              
+Val Leu Tyr Ser Ser Asn Asn Lys Asn Tyr Leu Ala Trp Tyr Gln Gln
+    50                  55                  60                  
+Lys Pro Gly Gln Pro Pro Lys Leu Leu Ile Tyr Trp Ala Ser Thr Arg
+65                  70                  75                  80  
+Glu Ser Gly Val Pro Asp Arg Phe Ser Gly Ser Gly Ser Gly Thr Asp
+                85                  90                  95      
+Phe Thr Leu Thr Ile Ser Ser Leu Gln Ala Glu Asp Val Ala Val Tyr
+            100                 105                 110         
+Phe Cys Gln Gln Tyr Tyr Val Ser Pro Leu Thr Phe Gly Gly Gly Thr
+        115                 120                 125             
+Lys Val Glu Ile Lys Arg Thr Val Ala Ala Pro Ser Val Phe Ile Phe
+    130                 135                 140                 
+Pro Pro Ser Asp Glu Gln Leu Lys Ser Gly Thr Ala Ser Val Val Cys
+145                 150                 155                 160 
+Leu Leu Asn Asn Phe Tyr Pro Arg Glu Ala Lys Val Gln Trp Lys Val
+                165                 170                 175     
+Asp Asn Ala Leu Gln Ser Gly Asn Ser Gln Glu Ser Val Thr Glu Gln
+            180                 185                 190         
+Asp Ser Lys Asp Ser Thr Tyr Ser Leu Ser Ser Thr Leu Thr Leu Ser
+        195                 200                 205             
+Lys Ala Asp Tyr Glu Lys His Lys Val Tyr Ala Cys Glu Val Thr His
+    210                 215                 220                 
+Gln Gly Leu Ser Ser Pro Val Thr Lys Ser Phe Asn Arg Gly Glu Cys
+225                 230                 235                 240 
+
