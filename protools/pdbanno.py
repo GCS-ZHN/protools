@@ -1,8 +1,11 @@
 import logging
+import re
+import asyncio
+import subprocess
 from itertools import product, starmap
 from multiprocessing import Pool
 from pathlib import Path
-from typing import Union
+from typing import Union, Tuple, Iterable
 
 import pandas as pd
 from Bio.PDB.SASA import ShrakeRupley
@@ -13,7 +16,7 @@ from scipy.spatial import distance
 
 from . import pdbio
 from .typedef import FilePathType, StructureFragmentType
-from .utils import ensure_path
+from .utils import ensure_path, CmdWrapperBase
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -259,6 +262,169 @@ def calc_sasa_from_pdbs(
         raise ValueError("num_worker must be greater than 0")
     
     _LOGGER.info("all done")
+
+
+class TMalign(CmdWrapperBase):
+    """
+    TMalign python binding.
+    """
+    def __init__(self, 
+                 num_workers: int = 1,
+                 byresi: int = 0,
+                 clean: bool = True,
+                 tmalign_path: str = 'TMalign'):
+        super().__init__(
+            tmalign_path,
+            short_mode=True,
+            num_workers=num_workers,
+            install_help="Please install TMalign from https://zhanggroup.org/TM-align/")
+        self.byresi = byresi
+        self.clean = clean
+
+    def _preprocess_(self,
+                    query_pdb: FilePathType,
+                    native_pdb: FilePathType,
+                    output_dir: FilePathType, prefix: str = None):
+        query_pdb = ensure_path(query_pdb)
+        native_pdb = ensure_path(native_pdb)
+        output_dir = ensure_path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        if prefix is None:
+            prefix = query_pdb.stem
+        else:
+            if prefix != Path(prefix).stem:
+                raise ValueError(f"Invalid prefix: {prefix}")
+        return query_pdb, native_pdb, output_dir, prefix
+    
+    def _postprocess_(self, 
+                     result: subprocess.CompletedProcess, 
+                     output_dir: Path, prefix: str = None):
+        result = result.stdout.decode('utf-8')
+        tm_score = float(re.search(r"TM-score=\s+([\d\.]+)", result).group(1))
+        rmsd = float(re.search(r"RMSD=\s+([\d\.]+)", result).group(1))
+
+        if self.clean:
+            for suffix in ['', '_all', '_all_atm', '_atm', '_all_atm_lig']:
+                file = output_dir / (prefix + suffix)
+                file_pml = output_dir / (prefix + suffix + '.pml')
+                if file.exists():
+                    file.unlink()
+                if file_pml.exists():
+                    file_pml.unlink()
+        return tm_score, rmsd
+
+    def __call__(self, 
+                 query_pdb: FilePathType,
+                 native_pdb: FilePathType,
+                 output_dir: FilePathType,
+                 prefix: str = None) -> Tuple[float, float]:
+        """
+        Align two pdb files using TMalign and return TM-score.
+
+        Parameters
+        ----------
+        query_pdb : FilePathType
+            Path to query pdb file.
+
+        native_pdb : FilePathType
+            Path to native pdb file.
+
+        output_dir : FilePathType
+            Path to output directory.
+        prefix : str
+            Prefix of output file.
+
+        Returns
+        ----------
+        Tuple[float]
+            TM-score and RMSD.
+        """
+        query_pdb, native_pdb, output_dir, prefix = self._preprocess_(
+            query_pdb, native_pdb, output_dir, prefix)
+        result = super().__call__(
+            query_pdb,
+            native_pdb,
+            o=output_dir / prefix,
+            byresi=self.byresi,
+            stdout=subprocess.PIPE)
+        return self._postprocess_(result, output_dir, prefix)
+
+    async def async_call(self, 
+                         query_pdb: FilePathType,
+                         native_pdb: FilePathType,
+                         output_dir: FilePathType,
+                         prefix: str = None) -> Tuple[float, float]:
+        """
+        Align two pdb files using TMalign and return TM-score.
+
+        Parameters
+        ----------
+        query_pdb : FilePathType
+            Path to query pdb file.
+
+        native_pdb : FilePathType
+            Path to native pdb file.
+
+        output_dir : FilePathType
+            Path to output directory.
+        prefix : str
+            Prefix of output file.
+
+        Returns
+        ----------
+        Tuple[float]
+            TM-score and RMSD.
+        """
+        query_pdb, native_pdb, output_dir, prefix = self._preprocess_(
+            query_pdb, native_pdb, output_dir, prefix)
+        result = await super().async_call(
+            query_pdb,
+            native_pdb,
+            o=output_dir / prefix,
+            byresi=self.byresi,
+            stdout=subprocess.PIPE)
+        return self._postprocess_(result, output_dir, prefix)
+
+    def batch_align(self,
+                    pair_iterable: Iterable[Tuple[str, str]],
+                    output_dir: FilePathType) -> pd.DataFrame:
+        """
+        Align a batch of pdb files using TMalign and return TM-score.
+
+        Parameters
+        ----------
+        pair_iterable : Iterable[Tuple[str, str]]
+            Iterable of pdb file pairs.
+        output_dir : FilePathType
+            Path to output directory.
+
+        Returns
+        ----------
+        pd.DataFrame
+            TM-score and RMSD for each input pdb file pair.
+        """
+        output_dir = ensure_path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        pdb_info = list(pair_iterable)
+        pdb_info = pd.DataFrame(pdb_info, columns=['gen', 'native'])
+        params = map(
+            lambda x: (x.gen, x.native, output_dir),
+            pdb_info.itertuples(index=False))
+        if self.semaphore._value > 1:
+            loop = asyncio.get_event_loop()
+            tasks = list(starmap(self.async_call, params))
+            gather = asyncio.gather(*tasks)
+            results = loop.run_until_complete(gather)
+            results = pd.DataFrame(
+                results,
+                columns=['tmscore', 'rmsd'])
+
+        else:
+            results = pd.DataFrame(
+                starmap(self, params),
+                columns=['tmscore', 'rmsd'])
+        return pd.concat([pdb_info, results], axis=1)
 
 
 if __name__ == '__main__':
