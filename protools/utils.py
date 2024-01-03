@@ -2,12 +2,18 @@ import time
 import os
 import shutil
 import subprocess
+import asyncio
 import functools
 import logging
 
 from pathlib import Path
 from typing import Optional
 from .typedef import FilePathType
+from collections import namedtuple
+
+
+AsyncCompletedProcess = namedtuple('AsyncCompletedProcess', ['stdout', 'stderr'])
+
 
 def ensure_path(path: FilePathType) -> Path:
     if not isinstance(path, Path):
@@ -48,8 +54,11 @@ class CmdNotFoundError(RuntimeError):
     """
     Raised when the command is not found.
     """
-    def __init__(self, cmd: str):
-        super().__init__(f'Command {cmd} not found.')
+    def __init__(self, cmd: str, install_help: Optional[str] = None):
+        message = f'Command {cmd} not found.'
+        if install_help:
+            message += ' ' + install_help.strip()
+        super().__init__(message)
 
 
 class CmdWrapperBase(object):
@@ -61,17 +70,25 @@ class CmdWrapperBase(object):
     cmd : str
         The command to be wrapped.
     """
-    def __init__(self, cmd: str):
-        self.cmd = self.find_command(cmd)
+    def __init__(self, 
+                 cmd: str,
+                 short_mode: bool = False,
+                 num_workers: int = 1,
+                 install_help: Optional[str] = None):
+        self.cmd = self.find_command(cmd, install_help)
+        self.short_mode = short_mode
+        self.semaphore = asyncio.Semaphore(num_workers)
 
-    def _check_mod(self, cmd) -> str:
+    @classmethod
+    def _check_mod(cls, cmd) -> str:
         if not os.path.exists(cmd):
             raise FileNotFoundError(f'{cmd} not existed.')
         if not os.access(cmd, os.X_OK):
             raise PermissionError(f'{cmd} not executable.')
         return cmd
 
-    def find_command(self, cmd) -> str:
+    @classmethod
+    def find_command(cls, cmd: str, install_help: Optional[str] = None) -> str:
         """
         Tries to find the full path to a command.
 
@@ -79,6 +96,9 @@ class CmdWrapperBase(object):
         ----------
         cmd : str
             The command to be found.
+        install_help : str, optional
+            The command to install the command, it will be shown
+            when the command is not installed if provided.
 
         Returns
         -------
@@ -87,41 +107,131 @@ class CmdWrapperBase(object):
         """
         try:
             if os.path.sep in cmd:
-                return self._check_mod(cmd)
+                return cls._check_mod(cmd)
             
             if f'{cmd.upper()}_PATH' in os.environ:
-                return self._check_mod(os.environ[f'{cmd.upper()}_PATH'])
+                return cls._check_mod(os.environ[f'{cmd.upper()}_PATH'])
 
         except (FileNotFoundError, PermissionError) as e:
-            raise CmdNotFoundError(cmd) from e
+            raise CmdNotFoundError(cmd, install_help) from e
         
         cmd_path = shutil.which(cmd)
         if cmd_path is None:
-            raise CmdNotFoundError(cmd)
+            raise CmdNotFoundError(cmd, install_help)
         return cmd_path
     
-    def __call__(self, *args, **kwargs):
+    def _format_args(self, *args, **kwargs) -> list:
         """
-        Run the command.
+        Format the arguments.
         """
         cmds = [self.cmd]
         cmds.extend(map(str, args))
         for k, v in kwargs.items():
-            if len(k) == 1:
+            if len(k) == 1 or self.short_mode:
                 cmds.append(f'-{k}')
             else:
                 cmds.append(f'--{k}')
             cmds.append(str(v))
-        process = subprocess.run(cmds)
-        process.check_returncode()
-        return process
+        return cmds
     
-    def __getattr__(self, name):
+    def __call__(
+            self, 
+            *args, 
+            stdout=None,
+            stderr=None,
+            stdin=None,
+            **kwargs):
+        """
+        Run the command.
+
+        Parameters
+        ----------
+        *args
+            The positional arguments.
+        stdout
+            The stdout of the command. See subprocess.run for more details.
+        stderr
+            The stderr of the command. See subprocess.run for more details.
+        stdin
+            The stdin of the command. See subprocess.run for more details.
+        **kwargs
+            The keyword arguments.
+        """
+        cmds = self._format_args(*args, **kwargs)
+        process = subprocess.run(
+            cmds, 
+            stdout=stdout, 
+            stderr=stderr, 
+            stdin=stdin,
+            check=True)
+        return process
+
+    async def async_call(
+            self, 
+            *args,
+            stdout=None,
+            stderr=None,
+            stdin=None,
+            **kwargs) -> AsyncCompletedProcess:
+        """
+        Run the command asynchronously.
+        As each command as an subprocess,
+        It will run parallelly if multiple commands are called.
+
+        Parameters
+        ----------
+        *args
+            The positional arguments.
+        stdout
+            The stdout of the command. See subprocess.run for more details.
+        stderr
+            The stderr of the command. See subprocess.run for more details.
+        stdin
+            The stdin of the command. See subprocess.run for more details.
+        **kwargs
+            The keyword arguments.
+
+        Returns
+        ---------
+        AsyncCompletedProcess
+            The result of the command.
+        """
+        async with self.semaphore:
+            cmds = self._format_args(*args, **kwargs)
+            process = await asyncio.create_subprocess_exec(
+                *cmds, 
+                stdout=stdout, 
+                stderr=stderr, 
+                stdin=stdin)
+            async_stdout, async_stderr = await process.communicate()
+            return AsyncCompletedProcess(async_stdout, async_stderr)
+    
+    def __getattr__(self, name: str):
         """
         Create a subcommand wrapper.
+        This is useful when the command has subcommands.
+
+        Parameters
+        ----------
+        name : str
+            The name of the subcommand.
+            If the name starts with `async_`, the subcommand
+            will be wrapped as an asynchronous function.
+            And really called subcommand name will be the
+            name without `async_`.
+
+        Returns
+        ----------
+        function or coroutine function
+            The wrapper of the subcommand.
         """
-        def wrapper(*args, **kwargs):
-            return self(name, *args, **kwargs)
+        if name.startswith('async_'):
+            name = name[6:]
+            async def wrapper(*args, **kwargs):
+                return await self.async_call(name, *args, **kwargs)
+        else:
+            def wrapper(*args, **kwargs):
+                return self(name, *args, **kwargs)
         return wrapper
 
 
