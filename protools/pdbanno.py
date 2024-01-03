@@ -386,7 +386,7 @@ class TMalign(CmdWrapperBase):
             stdout=subprocess.PIPE)
         return self._postprocess_(result, output_dir, prefix)
 
-    def batch_align(self,
+    async def async_batch_align(self,
                     pair_iterable: Iterable[Tuple[str, str]],
                     output_dir: FilePathType) -> pd.DataFrame:
         """
@@ -412,10 +412,8 @@ class TMalign(CmdWrapperBase):
             lambda x: (x.gen, x.native, output_dir),
             pdb_info.itertuples(index=False))
         if self.semaphore._value > 1:
-            loop = asyncio.get_event_loop()
             tasks = list(starmap(self.async_call, params))
-            gather = asyncio.gather(*tasks)
-            results = loop.run_until_complete(gather)
+            results = await asyncio.gather(*tasks)
             results = pd.DataFrame(
                 results,
                 columns=['tmscore', 'rmsd'])
@@ -425,6 +423,45 @@ class TMalign(CmdWrapperBase):
                 starmap(self, params),
                 columns=['tmscore', 'rmsd'])
         return pd.concat([pdb_info, results], axis=1)
+    
+    def batch_align(self,
+                    pair_iterable: Iterable[Tuple[str, str]],
+                    output_dir: FilePathType) -> pd.DataFrame:
+        """
+        Align a batch of pdb files using TMalign and return TM-score.
+
+        Parameters
+        ----------
+        pair_iterable : Iterable[Tuple[str, str]]
+            Iterable of pdb file pairs.
+        output_dir : FilePathType
+            Path to output directory.
+
+        Returns
+        ----------
+        pd.DataFrame
+            TM-score and RMSD for each input pdb file pair.
+
+        See Also
+        ----------
+        async_batch_align
+
+        Notes
+        -----------
+        This method is not recommended for use in a Jupyter notebook,
+        Otherwise, a RuntimeError will be raised. Or you can use
+        `nest_asyncio` to avoid this error.
+        """
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        if loop.is_running():
+            raise RuntimeError("Event loop already exist and is running, \
+please use `async_batch_align` if you want to use asyncio.")
+        return loop.run_until_complete(
+            self.async_batch_align(pair_iterable, output_dir))
 
 
 if __name__ == '__main__':
