@@ -211,7 +211,7 @@ async def async_download_PDB(pdb_id: str, target_path: FilePathType, callback: C
         logging.error(e)
 
 
-def read_pdb_seq(entity: StructureFragmentType) -> Iterable[Tuple[str, str, Seq]]:
+def read_pdb_seq(entity: StructureFragmentType, disable_connected_judge: bool = True) -> Iterable[Tuple[str, str, Seq]]:
     """
     Extract the sequence of a S.
 
@@ -219,6 +219,10 @@ def read_pdb_seq(entity: StructureFragmentType) -> Iterable[Tuple[str, str, Seq]
     ----------
     entity : StructureFragmentType
         Structure, Model or Chain object.
+    disable_connected_judge : bool, optional
+        Disable the judge of connected residues, by default True.
+        `PDBParser` will automatically connect residues that are
+        close to each other, which may cause problems in some cases.
 
     Returns
     ----------
@@ -233,7 +237,8 @@ def read_pdb_seq(entity: StructureFragmentType) -> Iterable[Tuple[str, str, Seq]
     else:
         chains = entity.get_chains()
     
-    ppbuilder = PPBuilder()
+    radius = float('inf') if disable_connected_judge else 1.8
+    ppbuilder = PPBuilder(radius=radius)
     for chain, pp in zip(chains, ppbuilder.build_peptides(entity)):
         model = chain.get_parent()
         model_id = model.get_id() if model else 0
