@@ -4,9 +4,10 @@ import logging
 import warnings
 from pathlib import Path
 from typing import Callable, Iterable, Optional, Tuple, Union
+from collections import OrderedDict
 
 import pandas as pd
-from Bio.PDB import PDBList, PDBParser, PPBuilder
+from Bio.PDB import PDBList, PDBParser
 from Bio.PDB.Atom import Atom
 from Bio.PDB.Chain import Chain
 from Bio.PDB.Entity import Entity
@@ -14,14 +15,18 @@ from Bio.PDB.Model import Model
 from Bio.PDB.PDBIO import PDBIO
 from Bio.PDB.Residue import Residue
 from Bio.PDB.Structure import Structure
+from Bio.PDB.Chain import Chain
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
+from Bio.Data import PDBData
 
 from .seqio import save_fasta
 from .typedef import FilePathType, StructureFragmentAAType, StructureFragmentType
 from .utils import ensure_path
 
 __all__ = [
+    'is_aa',
+    'get_aa_sequence',
     'get_structure',
     'save_to_pdb',
     'download_PDB',
@@ -29,6 +34,74 @@ __all__ = [
     'read_pdb_seq',
     'pdb2fasta',
     'pdb2df']
+
+
+def is_aa(residue: Residue) -> bool:
+    """
+    Judge whether a residue is an amino acid.
+
+    Parameters
+    ----------
+    residue : Residue
+        Residue to be judged.
+
+    Returns
+    ----------
+    is_aa : bool
+        Whether the residue is an amino acid.
+    """
+    if residue.get_resname() in PDBData.protein_letters_3to1_extended: 
+        return True
+    if 'N' in residue and 'CA' in residue and 'C' in residue and 'O' in residue:
+        warnings.warn(
+f"Residue {residue.get_resname()} has all amino acid backbone atom name, \
+but is not in the amino acid list. We assume it is an amino acid, \
+but you should check the PDB file.")
+        return True
+    return False
+
+
+def get_aa_sequence(chain: Chain, standard: bool = True, unknown_aa: str = 'X') -> Seq:
+    """
+    Get the amino acid sequence of a chain.
+
+    Parameters
+    ----------
+    chain : Chain
+        Chain to be processed.
+    standard : bool, optional
+        Whether only standard amino acids are included, by default True.
+    unknown_aa : str, optional
+        Symbol to represent unknown amino acids, by default 'X'.
+
+    Returns
+    ----------
+    seq : Seq
+        Amino acid sequence of the chain.
+    """
+    seq = OrderedDict()
+    aa_3to1 = PDBData.protein_letters_3to1_extended
+    if standard:
+        aa_3to1 = PDBData.protein_letters_3to1
+    for residue in chain:
+        if is_aa(residue):
+            resi = residue.get_id()[1:]
+            if resi in seq:
+                warnings.warn(
+f"Chain {chain.get_id()} at residue {resi} has multiple amino acid residues: \
+{residue.get_resname()} and {seq[resi].get_resname()}. The residue with higher \
+occupancy will be used.")
+                prev_occ = [atom.get_occupancy() for atom in seq[resi]]
+                curr_occ = [atom.get_occupancy() for atom in residue]
+                prev_occ = sum(prev_occ) / len(prev_occ)
+                curr_occ = sum(curr_occ) / len(curr_occ)
+                if curr_occ > prev_occ:
+                    seq[resi] = residue
+            else:
+                seq[resi] = residue
+        else:
+            continue
+    return Seq(''.join(aa_3to1.get(residue.get_resname(), unknown_aa) for residue in seq.values()))
 
 
 def get_structure(pdb_file: FilePathType, structure_id: str = 'pdb') -> Structure:
@@ -211,7 +284,7 @@ async def async_download_PDB(pdb_id: str, target_path: FilePathType, callback: C
         logging.error(e)
 
 
-def read_pdb_seq(entity: StructureFragmentType, disable_connected_judge: bool = True) -> Iterable[Tuple[str, str, Seq]]:
+def read_pdb_seq(entity: StructureFragmentType, standard: bool = True, unknown_aa:str = 'X') -> Iterable[Tuple[str, str, Seq]]:
     """
     Extract the sequence of a S.
 
@@ -219,10 +292,10 @@ def read_pdb_seq(entity: StructureFragmentType, disable_connected_judge: bool = 
     ----------
     entity : StructureFragmentType
         Structure, Model or Chain object.
-    disable_connected_judge : bool, optional
-        Disable the judge of connected residues, by default True.
-        `PDBParser` will automatically connect residues that are
-        close to each other, which may cause problems in some cases.
+    standard : bool, optional
+        Whether only standard amino acids are included, by default True.
+    unknown_aa : str, optional
+        Symbol to represent unknown amino acids, by default 'X'.
 
     Returns
     ----------
@@ -236,13 +309,11 @@ def read_pdb_seq(entity: StructureFragmentType, disable_connected_judge: bool = 
         chains = [entity]
     else:
         chains = entity.get_chains()
-    
-    radius = float('inf') if disable_connected_judge else 1.8
-    ppbuilder = PPBuilder(radius=radius)
-    for chain, pp in zip(chains, ppbuilder.build_peptides(entity)):
+
+    for chain in chains:
         model = chain.get_parent()
         model_id = model.get_id() if model else 0
-        seq = pp.get_sequence()
+        seq = get_aa_sequence(chain, standard=standard, unknown_aa=unknown_aa)
         yield model_id, chain.get_id(), seq
 
 
@@ -251,6 +322,8 @@ def pdb2fasta(
         *pdb_files: str,
         multimer_mode: str = 'joint',
         selected_chains: Optional[str] = None,
+        standard: bool = True,
+        unknown_aa: str = 'X',
         joint_sep: str = ':') -> None:
     """
     Convert PDB files to a fasta file.
@@ -268,6 +341,12 @@ def pdb2fasta(
         Mode of the conversion. 'seperate' for
         single sequence per entry, 'joint' for
         joint all sequences in a PDB complex file.
+
+    standard : bool, optional
+        Whether only standard amino acids are included, by default True.
+
+    unknown_aa : str, optional
+        Symbol to represent unknown amino acids, by default 'X'.
 
     selected_chains: str, optional
         If provided, only selected chain will be
@@ -288,7 +367,7 @@ def pdb2fasta(
     def _iter():
         for pdb_file in pdb_files:
             pdb_id = Path(pdb_file).stem
-            seq_iter = read_pdb_seq(get_structure(pdb_file))
+            seq_iter = read_pdb_seq(get_structure(pdb_file), standard=standard, unknown_aa=unknown_aa)
             seq_iter = filter(lambda x: selected_chains is None or x[1] in selected_chains, seq_iter)
             if multimer_mode == 'seperate':
                 for model_id, chain_id, seq in seq_iter:
@@ -343,7 +422,13 @@ def pdb2df(entity: Union[Structure, Model, Chain, Residue], *extra_attrs: str) -
             'model': model.get_id()
         }
         for attr in extra_attrs:
-            res[attr] = getattr(atom, attr)
+            try:
+                res[attr] = getattr(atom, attr)
+            except AttributeError as e:
+                try:
+                    res[attr] = getattr(atom, f'get_{attr}')()
+                except:
+                    raise e
         return res
     
     return pd.DataFrame(_atom_to_dict(atom) for atom in entity.get_atoms())
