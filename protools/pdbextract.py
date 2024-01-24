@@ -5,7 +5,7 @@ from multiprocessing import Pool
 from pathlib import Path
 from typing import Iterable, Tuple
 
-from .pdbio import Structure, get_structure, save_to_pdb
+from .pdbio import Structure, get_structure, save_pdb
 from .typedef import FilePathType
 from .utils import ensure_path
 
@@ -103,7 +103,7 @@ def extract(
             continue
         chain.detach_child(residue.get_id())
 
-    save_to_pdb(out_file, *chains)
+    save_pdb(out_file, *chains)
 
 
 

@@ -3,7 +3,7 @@ from typing import Optional
 
 from Bio import BiopythonWarning
 
-from .pdbio import save_to_pdb, get_structure
+from .pdbio import save_pdb, get_structure
 from .utils import ensure_path
 
 warnings.simplefilter('ignore', BiopythonWarning)
@@ -82,7 +82,7 @@ def renumber_residue(
     if out_file is None:
         out_file = pdb_file.parent / f"{pdb_file.stem}_renumbered{pdb_file.suffix}" 
     
-    save_to_pdb(out_file, *[model[chain_id] for chain_id in chain_order], remarks=[f"Renumbered from {pdb_file}"])
+    save_pdb(out_file, *[model[chain_id] for chain_id in chain_order], remarks=[f"Renumbered from {pdb_file}"])
 
 
 if __name__ == '__main__':

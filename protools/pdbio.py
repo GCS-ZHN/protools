@@ -21,14 +21,15 @@ from Bio.SeqRecord import SeqRecord
 from Bio.Data import PDBData
 
 from .seqio import save_fasta
-from .typedef import FilePathType, StructureFragmentAAType, StructureFragmentType
-from .utils import ensure_path
+from .typedef import FilePathType, FilePathOrIOType, StructureFragmentAAType, StructureFragmentType
+from .utils import ensure_path, ensure_fileio
 
 __all__ = [
     'is_aa',
     'get_aa_sequence',
     'get_structure',
-    'save_to_pdb',
+    'write_seqres',
+    'save_pdb',
     'download_PDB',
     'async_download_PDB',
     'read_pdb_seq',
@@ -128,7 +129,26 @@ def get_structure(pdb_file: FilePathType, structure_id: str = 'pdb') -> Structur
     return parser.get_structure(structure_id, pdb_file)
 
 
-def save_to_pdb(output_path: FilePathType, *entities: StructureFragmentAAType, remarks: Optional[Iterable[str]] = None) -> None:
+def write_seqres(target_path: FilePathOrIOType, seqres: dict):
+    # https://files.wwpdb.org/pub/pdb/doc/format_descriptions/Format_v33_Letter.pdf
+    format_line = lambda k: 'SEQRES {:>3d} {:1s} {:>4d} ' + ''.join([' {:>3s}'] * k) + '\n'
+    f, need_close = ensure_fileio(target_path, 'w')
+    for chain, seq in seqres.items():
+        seq = [PDBData.protein_letters_1to3.get(aa, 'UNK') for aa in seq]
+        for i in range(0, len(seq), 13):
+            seq_slice = seq[i:i+13]
+            f.write(format_line(len(seq_slice)).format(i//13+1, chain, len(seq), *seq_slice))
+    if need_close:
+        f.close()
+    else:
+        f.flush()
+
+
+def save_pdb(
+        output_path: FilePathType, 
+        *entities: StructureFragmentAAType, 
+        remarks: Optional[Iterable[str]] = None,
+        seqres: dict = None) -> None:
     """
     Save entities to a PDB file.
 
@@ -140,6 +160,11 @@ def save_to_pdb(output_path: FilePathType, *entities: StructureFragmentAAType, r
         Entities to save.
     remarks : Iterable[str], optional
         Remarks to be written to the PDB file.
+    seqres : dict, optional
+        SEQRES records to be written to the PDB file.
+        The key is the chain ID and the value is the
+        one-letter amino acid sequence. Only works
+        when the entities are not Residue objects.
 
     Raises
     ------
@@ -173,13 +198,18 @@ def save_to_pdb(output_path: FilePathType, *entities: StructureFragmentAAType, r
             if remarks is not None:
                 for remark in remarks:
                     fp.write(f"REMARK 999 {remark}\n")
+            if seqres is not None:
+                write_seqres(fp, seqres)
             pdb_io.save(fp)
 
     elif isinstance(entities[0], Model):
         structure = Structure("pdb")
+        if len(entities) > 1:
+            # TODO: support multiple models with differnt SEQRES
+            raise RuntimeError("Multiple Model objects are not implemented yet")
         for model in _loop_type_check(entities, Model):
             structure.add(model)
-        save_to_pdb(output_path, structure, remarks=remarks)
+        save_pdb(output_path, structure, remarks=remarks, seqres=seqres)
 
     elif isinstance(entities[0], Chain):
         models = [Model("model_0")]
@@ -188,9 +218,11 @@ def save_to_pdb(output_path: FilePathType, *entities: StructureFragmentAAType, r
                 models.append(Model(f"model_{len(models)}"))
             else:
                 models[-1].add(chain)
-        save_to_pdb(output_path, *models, remarks=remarks)
+        save_pdb(output_path, *models, remarks=remarks, seqres=seqres)
 
     elif isinstance(entities[0], Residue):
+        if seqres is not None:
+            raise ValueError("SEQRES is not supported for Residue object")
         chains = [Chain("A")]
         for residue in _loop_type_check(entities, Residue, allow_none=True):
             if residue is None:
@@ -200,7 +232,7 @@ def save_to_pdb(output_path: FilePathType, *entities: StructureFragmentAAType, r
                 chains.append(Chain(chain_id))
             else:
                 chains[-1].add(residue)
-        save_to_pdb(output_path, *chains, remarks=remarks)
+        save_pdb(output_path, *chains, remarks=remarks)
 
     else:
         raise TypeError(f"Unsupported type {type(entities[0])}")
