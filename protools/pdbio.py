@@ -9,7 +9,7 @@ PDB standard: https://files.wwpdb.org/pub/pdb/doc/format_descriptions/Format_v33
 import logging
 import warnings
 from pathlib import Path
-from typing import Callable, Iterable, Optional, Tuple, Union
+from typing import Callable, Dict, Iterable, Optional, Tuple, Union
 from collections import OrderedDict
 
 import pandas as pd
@@ -173,7 +173,7 @@ def _write_remark(target_path: FilePathOrIOType, remark_id: int, *remarks: str):
 def save_pdb(
         output_path: FilePathType, 
         *entities: StructureFragmentAAType, 
-        remarks: Optional[Iterable[str]] = None,
+        remarks: Optional[Dict[int, str]] = None,
         seqres: dict = None) -> None:
     """
     Save entities to a PDB file.
@@ -184,7 +184,7 @@ def save_pdb(
         Path to the output PDB file.
     entities : Structure, Model, Chain, or Residue
         Entities to save.
-    remarks : Iterable[str], optional
+    remarks : Dict[int, str], optional
         Remarks to be written to the PDB file.
     seqres : dict, optional
         SEQRES records to be written to the PDB file.
@@ -222,7 +222,8 @@ def save_pdb(
         with open(output_path, "w") as fp:
             _write_remark(fp, 220, "Created by protools")
             if remarks is not None:
-                _write_remark(fp, 999, *remarks)
+                for k, v in remarks.items():
+                    _write_remark(fp, k, *v)
             if seqres is not None:
                 _write_seqres(fp, seqres)
             pdb_io.save(fp)
