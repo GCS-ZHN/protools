@@ -8,7 +8,8 @@ import logging
 
 from pathlib import Path
 from typing import Optional
-from .typedef import FilePathType
+from io import IOBase
+from .typedef import FilePathType, FilePathOrIOType
 from collections import namedtuple
 
 
@@ -19,6 +20,45 @@ def ensure_path(path: FilePathType) -> Path:
     if not isinstance(path, Path):
         path = Path(path).expanduser().resolve().absolute()
     return path
+
+
+def ensure_fileio(path_or_io: FilePathOrIOType, mode: str = 'r') -> IOBase:
+    """
+    Ensure the input is a IO object. If the input is a path,
+    open the path as a IO object.
+
+    Parameters
+    ----------
+    path_or_io : FilePathOrIOType
+        The input path or FileIO object.
+
+    Returns
+    ----------
+    IOBase
+        The IO object.
+    bool
+        Whether the IO object is created by this function.
+
+    Notes
+    ----------
+    If the input is a IO object, it will be returned directly.
+    You should close the IO object by yourself.
+
+    Raises
+    ----------
+    ValueError
+        If the input is a closed IO object or the mode is not matched.
+    """
+    if isinstance(path_or_io, (str, Path)):
+        return ensure_path(path_or_io).open(mode), True
+    elif isinstance(path_or_io, IOBase):
+        if path_or_io.closed:
+            raise ValueError('The input handler is closed.')
+        if path_or_io.mode != mode:
+            raise ValueError(f'The input handler is not in "{mode}" mode.')
+        return path_or_io, False
+    else:
+        raise TypeError(f'Unsupported type: {type(path_or_io)}')
 
 
 def max_retry(max: int = 3, err_types: Exception =(RuntimeError,), interval: int = 1):
