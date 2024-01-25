@@ -137,6 +137,13 @@ def read_fasta(path: FilePathType) -> Fasta:
     return Fasta(map(lambda x: (x.id, x), SeqIO.parse(path, 'fasta')))
 
 
+def read_seqres(path: Path) -> Fasta:
+    if not isinstance(path, Path):
+        path = Path(path)
+    seqres = SeqIO.parse(path, 'pdb-seqres')
+    return Fasta((record.id[-1], str(record.seq)) for record in seqres)
+
+
 def save_fasta(sequences: Iterable[SeqRecord], path: FilePathType, mkdir: bool = False):
     """
     Save fasta file.

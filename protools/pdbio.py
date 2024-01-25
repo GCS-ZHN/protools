@@ -6,6 +6,7 @@ A module for reading and writing PDB files.
 PDB standard: https://files.wwpdb.org/pub/pdb/doc/format_descriptions/Format_v33_Letter.pdf
 """
 
+from io import StringIO
 import logging
 import warnings
 from pathlib import Path
@@ -471,7 +472,8 @@ def pdb2df(entity: Union[Structure, Model, Chain, Residue], *extra_attrs: str) -
             'id': atom.get_serial_number(), 
             'name': atom.get_name(),
             'resn': residue.get_resname(),
-            'resi': f'{resids[1]}{resids[2]}'.strip(),
+            'seqid': resids[1],
+            'inscode': resids[2],
             'chain': chain.get_id(), 
             'x': coord[0], 
             'y': coord[1], 
@@ -559,28 +561,144 @@ def read_residue(pdb: Union[FilePathType, str, Entity], mode='centroid') -> pd.D
     raise ValueError('mode must be one of "centroid", "fuc", "CA"')
 
 
-def get_pdb_remarks(pdb_file: FilePathType) -> Iterable[str]:
+def read_remarks(pdbfile: Path) -> Dict[int, str]:
     """
-    Get the remarks of a PDB file.
-
-    Parameters
-    ----------
-    pdb_file : str
-        Path to the PDB file.
-
-    Returns
-    ----------
-    remarks : Iterable[str]
-        remarks.
+    Read all remarks defined in PDB.
     """
-    pdb_file = ensure_path(pdb_file)
-    if not pdb_file.exists():
-        raise FileNotFoundError(f"Could not find PDB file {pdb_file}")
+    remarks = {}
+    with open(pdbfile) as f:
+        for line in f:
+            if line.startswith('REMARK'):
+                remark_type_code = int(line[7:10])
+                remark_content = line[11:]
+                if remark_type_code not in remarks:
+                    remarks[remark_type_code] = remark_content
+                else:
+                    remarks[remark_type_code] += remark_content
+    return remarks
 
-    with open(pdb_file, "r") as fp:
-        for line in fp:
-            if line.startswith("REMARK"):
-                yield line.replace("REMARK", "").strip()
+
+def read_missing_residues(pdbfile: Path) -> pd.DataFrame:
+    """
+    Read missing residues from REMARK 465
+    """
+    remark = read_remarks(pdbfile).get(465, "")
+    remark = StringIO(remark)
+    reach_title = False
+    result = {
+        'model': [],
+        'res_name': [],
+        'chain_id': [],
+        'sequence_number' : [],
+        'insertion_code': [],
+    }
+    for line in remark:
+        if line.strip() == 'M RES C SSSEQI':
+            reach_title = True
+            continue
+        if not reach_title:
+            continue
+        model = line[2]
+        model = int(model) if model.isdigit() else 0
+        resn = line[4:7].strip()
+        chain_id = line[8]
+        ssseq = int(line[10:15].strip())
+        inscode = line[15]
+        result['model'].append(model)
+        result['res_name'].append(resn)
+        result['chain_id'].append(chain_id)
+        result['sequence_number'].append(ssseq)
+        result['insertion_code'].append(inscode)
+    return pd.DataFrame(result)
+
+
+def generate_missing_residues_remarks(data: pd.DataFrame) -> Dict[int, list]:
+    """
+    Generate REMARK 465
+    """
+    remarks = [
+        '',
+        'MISSING RESIDUES',
+        'THE FOLLOWING RESIDUES WERE NOT LOCATED IN THE',
+        'EXPERIMENT. (M=MODEL NUMBER; RES=RESIDUE NAME; C=CHAIN',
+        'IDENTIFIER; SSSEQ=SEQUENCE NUMBER; I=INSERTION CODE.)',
+        '',
+        '  M RES C SSSEQI'
+    ]
+    format_line = '  {:>1} {:>3s} {:>1s} {:>5d}{:>1s}'
+    for _, row in data.iterrows():
+        remarks.append(format_line.format(
+            row['model'],
+            row['res_name'],
+            row['chain_id'],
+            row['sequence_number'],
+            row['insertion_code'],
+        ))
+    return {465: remarks}
+
+
+def read_missing_atoms(pdbfile: Path) -> pd.DataFrame:
+    """
+    Read missing atoms from REMARK 470
+    """
+    remark = read_remarks(pdbfile).get(470, "")
+    remark = StringIO(remark)
+    reach_title = False
+    result = {
+        'model': [],
+        'res_name': [],
+        'chain_id': [],
+        'sequence_number' : [],
+        'insertion_code': [],
+        'atom_name': [],
+    }
+    for line in remark:
+        if line.strip() == 'M RES CSSEQI  ATOMS':
+            reach_title = True
+            continue
+        if not reach_title:
+            continue
+        model = line[2]
+        model = int(model) if model.isdigit() else 0
+        resn = line[4:7].strip()
+        chain_id = line[8]
+        ssseq = int(line[9:13].strip())
+        inscode = line[13]
+        atom_names = line[16:].strip().split()
+        result['model'].append(model)
+        result['res_name'].append(resn)
+        result['chain_id'].append(chain_id)
+        result['sequence_number'].append(ssseq)
+        result['insertion_code'].append(inscode)
+        result['atom_name'].append(atom_names)
+    return pd.DataFrame(result)
+
+
+def generate_missing_atoms_remarks(data: pd.DataFrame) -> Dict[int, list]:
+    """
+    Generate remark 470
+    """
+    remarks = [
+        '',
+        'MISSING ATOMS',
+        'THE FOLLOWING RESIDUES HAVE MISSING ATOMS(M=MODEL NUMBER;',
+        'RES=RESIDUE NAME; C=CHAIN IDENTIFIER; SSEQ=SEQUENCE NUMBER;',
+        'I=INSERTION CODE):',
+        '  M RES CSSEQI  ATOMS',
+    ]
+    format_func = lambda k: '  {:>1} {:>3s} {:>1s}{:>4d}{:>1s} ' + ''.join(['  {:<3s}'] * k)
+    for _, row in data.iterrows():
+        format_line = format_func(len(row['atom_name']))
+        remarks.append(format_line.format(
+            row['model'],
+            row['res_name'],
+            row['chain_id'],
+            row['sequence_number'],
+            row['insertion_code'],
+            *row['atom_name'],
+        ))
+    return {470: remarks}
+
 
 
 if __name__ == "__main__":
