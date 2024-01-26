@@ -171,11 +171,61 @@ def _write_remark(target_path: FilePathOrIOType, remark_id: int, *remarks: str):
         f.flush()
 
 
+def read_modified_residues(pdbfile: Path) -> pd.DataFrame:
+    """
+    Read modified residues from MODRES Record
+    """
+    result = {
+        'id_code': [],            # column 8-11
+        'res_name': [],           # column 13-15
+        'chain_id': [],           # column 17
+        'sequence_number' : [],   # column 19-22
+        'insertion_code': [],     # column 23
+        'standard_res_name': [],  # column 25-27
+        'comment': []             # column 30-
+    }
+    with open(pdbfile) as f:
+        for line in f:
+            if line.startswith('MODRES'):
+                id_code = line[7:11].strip()
+                res_name = line[12:15].strip()
+                chain_id = line[16]
+                ssseq = int(line[18:22].strip())
+                inscode = line[22]
+                standard_res_name = line[24:27].strip()
+                comment = line[29:].strip()
+                result['id_code'].append(id_code)
+                result['res_name'].append(res_name)
+                result['chain_id'].append(chain_id)
+                result['sequence_number'].append(ssseq)
+                result['insertion_code'].append(inscode)
+                result['standard_res_name'].append(standard_res_name)
+                result['comment'].append(comment)
+    return pd.DataFrame(result)
+
+
+def write_modified_residues(data: pd.DataFrame, target_path: FilePathOrIOType):
+    """
+    Generate MODRES Record
+    """
+    if len(data) == 0:
+        return
+    format_line = 'MODRES {:<4s} {:<3s} {:<1s} {:>4d}{:<1s} {:<3s}  {:<s}'
+    f, need_close = ensure_fileio(target_path, 'w')
+    for _, row in data.iterrows():
+        f.write(_basic_pdb_column_format(format_line.format(*row.values)))
+    if need_close:
+        f.close()
+    else:
+        f.flush()
+
+
 def save_pdb(
         output_path: FilePathType, 
         *entities: StructureFragmentAAType, 
         remarks: Optional[Dict[int, str]] = None,
-        seqres: dict = None) -> None:
+        seqres: dict = None,
+        modres: pd.DataFrame = None) -> None:
     """
     Save entities to a PDB file.
 
@@ -192,6 +242,11 @@ def save_pdb(
         The key is the chain ID and the value is the
         one-letter amino acid sequence. Only works
         when the entities are not Residue objects.
+    modres : pd.DataFrame, optional
+        MODRES records to be written to the PDB file.
+        The DataFrame should have the following columns:
+        id_code, res_name, chain_id, sequence_number,
+        insertion_code, standard_res_name, comment.
 
     Raises
     ------
@@ -227,6 +282,8 @@ def save_pdb(
                     _write_remark(fp, k, *v)
             if seqres is not None:
                 _write_seqres(fp, seqres)
+            if modres is not None:
+                write_modified_residues(modres, fp)
             pdb_io.save(fp)
 
     elif isinstance(entities[0], Model):
@@ -236,7 +293,12 @@ def save_pdb(
             raise RuntimeError("Multiple Model objects are not implemented yet")
         for model in _loop_type_check(entities, Model):
             structure.add(model)
-        save_pdb(output_path, structure, remarks=remarks, seqres=seqres)
+        save_pdb(
+            output_path,
+            structure,
+            remarks=remarks,
+            seqres=seqres,
+            modres=modres)
 
     elif isinstance(entities[0], Chain):
         models = [Model("model_0")]
@@ -245,7 +307,12 @@ def save_pdb(
                 models.append(Model(f"model_{len(models)}"))
             else:
                 models[-1].add(chain)
-        save_pdb(output_path, *models, remarks=remarks, seqres=seqres)
+        save_pdb(
+            output_path,
+            *models,
+            remarks=remarks,
+            seqres=seqres,
+            modres=modres)
 
     elif isinstance(entities[0], Residue):
         if seqres is not None:
@@ -259,7 +326,11 @@ def save_pdb(
                 chains.append(Chain(chain_id))
             else:
                 chains[-1].add(residue)
-        save_pdb(output_path, *chains, remarks=remarks)
+        save_pdb(
+            output_path,
+            *chains,
+            remarks=remarks,
+            modres=modres)
 
     else:
         raise TypeError(f"Unsupported type {type(entities[0])}")
