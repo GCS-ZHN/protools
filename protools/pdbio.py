@@ -34,6 +34,7 @@ from .utils import ensure_path, ensure_fileio
 
 __all__ = [
     'is_aa',
+    'get_aa_residues',
     'get_aa_sequence',
     'get_structure',
     'save_pdb',
@@ -76,28 +77,23 @@ but you should check the PDB file.")
     return False
 
 
-def get_aa_sequence(chain: Chain, standard: bool = True, unknown_aa: str = 'X') -> Seq:
+def get_aa_residues(chain: Chain) -> OrderedDict:
     """
-    Get the amino acid sequence of a chain.
+    Get the amino acid residues of a chain.
+    If multiple residues have the same residue ID,
+    the residue with higher occupancy will be used.
 
     Parameters
     ----------
     chain : Chain
         Chain to be processed.
-    standard : bool, optional
-        Whether only standard amino acids are included, by default True.
-    unknown_aa : str, optional
-        Symbol to represent unknown amino acids, by default 'X'.
 
     Returns
     ----------
-    seq : Seq
-        Amino acid sequence of the chain.
+    seq : OrderedDict
+        Amino acid residues of the chain.
     """
     seq = OrderedDict()
-    aa_3to1 = PDBData.protein_letters_3to1_extended
-    if standard:
-        aa_3to1 = PDBData.protein_letters_3to1
     for residue in chain:
         if is_aa(residue):
             resi = residue.get_id()[1:]
@@ -116,6 +112,31 @@ occupancy will be used.")
                 seq[resi] = residue
         else:
             continue
+    return seq
+
+
+def get_aa_sequence(chain: Chain, standard: bool = True, unknown_aa: str = 'X') -> Seq:
+    """
+    Get the amino acid sequence of a chain.
+
+    Parameters
+    ----------
+    chain : Chain
+        Chain to be processed.
+    standard : bool, optional
+        Whether only standard amino acids are included, by default True.
+    unknown_aa : str, optional
+        Symbol to represent unknown amino acids, by default 'X'.
+
+    Returns
+    ----------
+    seq : Seq
+        Amino acid sequence of the chain.
+    """
+    aa_3to1 = PDBData.protein_letters_3to1_extended
+    if standard:
+        aa_3to1 = PDBData.protein_letters_3to1
+    seq = get_aa_residues(chain)
     return Seq(''.join(aa_3to1.get(residue.get_resname(), unknown_aa) for residue in seq.values()))
 
 
