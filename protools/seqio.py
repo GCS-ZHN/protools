@@ -88,11 +88,11 @@ class Fasta(OrderedDict):
             df.set_index('id', inplace=True)
         return df
     
-    def to_fasta(self, path: FilePathType, mkdir: bool = False):
+    def to_fasta(self, path: FilePathType, mkdir: bool = False, **kwargs):
         """
         Save as FASTA format.
         """
-        save_fasta(self.values(), path=path, mkdir=mkdir)
+        save_fasta(self.values(), path=path, mkdir=mkdir, **kwargs)
 
     def to_csv(self, path: FilePathType, mkdir: bool = False):
         """
@@ -144,7 +144,11 @@ def read_seqres(path: Path) -> Fasta:
     return Fasta((record.id[-1], str(record.seq)) for record in seqres)
 
 
-def save_fasta(sequences: Iterable[SeqRecord], path: FilePathType, mkdir: bool = False):
+def save_fasta(
+        sequences: Iterable[SeqRecord],
+        path: FilePathType,
+        mkdir: bool = False,
+        two_line_mode: bool = False):
     """
     Save fasta file.
 
@@ -161,7 +165,7 @@ def save_fasta(sequences: Iterable[SeqRecord], path: FilePathType, mkdir: bool =
     if mkdir:
         path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, 'w') as f:
-        SeqIO.write(sequences, f, 'fasta')
+        SeqIO.write(sequences, f, 'fasta-2line' if two_line_mode else 'fasta')
 
 
 def df2fasta(df:pd.DataFrame,
