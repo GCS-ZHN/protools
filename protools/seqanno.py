@@ -9,6 +9,17 @@ try:
 except ImportError:
     pass
 
+try:
+    require_antpack = require_package("antpack", "pip install git+https://github.com/jlparkI/AntPack")
+    from antpack import SingleChainAnnotator
+    _HC_ANNOTATOR = SingleChainAnnotator(chains=['H'], scheme='imgt')
+    _LC_ANNOTATOR = SingleChainAnnotator(chains=['K', 'L'], scheme='imgt')
+except ImportError:
+    pass
+
+
+IMGT_BORDERS = [27,  39,  56,   66,  105,  118, 129]
+
 
 @require_abnumber
 def remove_constant_region(fasta_file: Path, strict: bool = False, ignore_error: bool = False):
@@ -42,6 +53,68 @@ def annotate_chain_type(fasta_file: Path):
             yield {"id": seq_id, "chain_type": chain.chain_type}
         except ChainParseError:
             yield {"id": seq_id, "chain_type": "unknown"}
+
+
+@require_antpack
+def anno_cdr(seq: str, chain: str) -> dict:
+    """
+    Annotate Antibody CDR regions based antpack package
+
+    Parameters
+    ----------
+    seq : str
+        Amino acid sequence of antibody
+
+    chain : str
+        Chain type, 'H' for heavy chain, 'K' for kappa light chain, 'L' for lambda light chain
+
+    Returns
+    ----------
+    dict
+        A dictionary containing CDR regions and their sequences
+    """
+    if chain == 'H':
+        numbering, percent_identity, chain_type, err_message = _HC_ANNOTATOR.analyze_seq(seq)
+        assert chain_type == 'H', f"Chain type {chain_type} != H"
+    else:
+        numbering, percent_identity, chain_type, err_message = _LC_ANNOTATOR.analyze_seq(seq)
+        assert chain_type in ['K', 'L'], f"Chain type {chain_type} != K or L"
+
+    if len(numbering) != len(seq):
+        raise ValueError(f"Numbering length {len(numbering)} != sequence length {len(seq)}, {err_message}")
+    res = [''] * len(IMGT_BORDERS)
+    real_borders = [[-1, 0] for _ in range(len(IMGT_BORDERS))]
+    region_idx = 0
+    for seq_idx, num in enumerate(numbering):
+        if num == '-':
+            continue
+        try:
+            if int(num) >= IMGT_BORDERS[region_idx]:
+                region_idx += 1
+        except ValueError:
+            pass
+        if real_borders[region_idx][0] == -1:
+            real_borders[region_idx][0] = seq_idx
+        res[region_idx] += seq[seq_idx]
+        real_borders[region_idx][1] = seq_idx + 1
+    res = {
+        f'{chain}FR1': res[0],
+        f'{chain}FR1_slice': slice(*real_borders[0]),
+        f'{chain}CDR1': res[1],
+        f'{chain}CDR1_slice': slice(*real_borders[1]),
+        f'{chain}FR2': res[2],
+        f'{chain}FR2_slice': slice(*real_borders[2]),
+        f'{chain}CDR2': res[3],
+        f'{chain}CDR2_slice': slice(*real_borders[3]),
+        f'{chain}FR3': res[4],
+        f'{chain}FR3_slice': slice(*real_borders[4]),
+        f'{chain}CDR3': res[5],
+        f'{chain}CDR3_slice': slice(*real_borders[5]),
+        f'{chain}FR4': res[6],
+        f'{chain}FR4_slice': slice(*real_borders[6]),
+        f'{chain}_percent_identity': percent_identity
+    }
+    return res
 
 
 if __name__ == "__main__":
