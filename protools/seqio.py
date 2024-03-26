@@ -285,7 +285,9 @@ if __name__ == '__main__':
     from argparse import ArgumentParser
     parser = ArgumentParser()
     subparsers = parser.add_subparsers(dest="cmd")
-    csv2fasta_parser = subparsers.add_parser('csv2fasta')
+    csv2fasta_parser = subparsers.add_parser(
+        'csv2fasta',
+        help='Convert sequence csv to fasta format.')
     csv2fasta_parser.add_argument(
         '-i', '--input',
         required=True,
@@ -317,7 +319,9 @@ if __name__ == '__main__':
         default='',
         help='separator of the joint sequence')
     
-    fasta2csv_parser = subparsers.add_parser('fasta2csv')
+    fasta2csv_parser = subparsers.add_parser(
+        'fasta2csv',
+        help='Convert sequence fasta format to csv format.')
     fasta2csv_parser.add_argument(
         '-i', '--input',
         required=True,
@@ -329,15 +333,48 @@ if __name__ == '__main__':
         type=Path,
         help='output csv file')
 
-    complex_parser = subparsers.add_parser('complex')
-    complex_parser.add_argument('--seqs1', '-i1', type=Path, required=True)
-    complex_parser.add_argument('--seqs2', '-i2', type=Path, required=True)
-    complex_parser.add_argument('--output', '-o', type=Path, required=True)
-    complex_parser.add_argument('--linker', '-l', default='')
+    complex_parser = subparsers.add_parser(
+        'complex',
+        help='Create complex sequences from two fasta files.'
+        )
+    complex_parser.add_argument(
+        '--seqs1',
+        '-i1', type=Path,
+        required=True,
+        help='Input fasta 1')
+    complex_parser.add_argument(
+        '--seqs2',
+        '-i2',
+        type=Path,
+        required=True,
+        help='Input fasta 2')
+    complex_parser.add_argument(
+        '--output',
+        '-o',
+        type=Path,
+        required=True,
+        help='Output fasta')
+    complex_parser.add_argument(
+        '--linker',
+        '-l',
+        default='',
+        help='Linker between two sequences in a complex')
 
-    unique_parser = subparsers.add_parser('unique', help='Remove duplicated sequences')
-    unique_parser.add_argument('--input', '-i', required=True, type=Path, help='Input fasta')
-    unique_parser.add_argument('--output', '-o', required=True, type=Path, help='Output fasta')
+    unique_parser = subparsers.add_parser(
+        'unique',
+        help='Remove duplicated sequences')
+    unique_parser.add_argument(
+        '--input',
+        '-i',
+        required=True,
+        type=Path,
+        help='Input fasta')
+    unique_parser.add_argument(
+        '--output',
+        '-o',
+        required=True,
+        type=Path,
+        help='Output fasta')
 
     args = parser.parse_args()
 
@@ -358,10 +395,15 @@ if __name__ == '__main__':
         save_fasta(
             cross_create(seqs1.values(), seqs2.values(), args.linker),
             args.output)
+
     elif args.cmd == 'unique':
         seqs = read_fasta(args.input)
         seqs_uniqued = seqs.unique()
         print(f'Input size: {len(seqs)}, output size: {len(seqs_uniqued)}')
         seqs_uniqued.to_fasta(args.output)
+
+    elif args.cmd is None:
+        parser.print_help()
+
     else:
         raise ValueError(f"Unknown subcommand: {args.cmd}")
