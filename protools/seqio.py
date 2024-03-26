@@ -116,6 +116,16 @@ class Fasta(OrderedDict):
         new = self.copy()
         new.update(other)
         return new
+    
+    def unique(self) -> 'Fasta':
+        uniqued = Fasta()
+        seqs = set()
+        for rid, record in self.items():
+            seq = str(record.seq)
+            if seq not in seqs:
+                seqs.add(seq)
+                uniqued[rid] = record
+        return uniqued
 
 
 def read_fasta(path: FilePathType) -> Fasta:
@@ -325,6 +335,10 @@ if __name__ == '__main__':
     complex_parser.add_argument('--output', '-o', type=Path, required=True)
     complex_parser.add_argument('--linker', '-l', default='')
 
+    unique_parser = subparsers.add_parser('unique', help='Remove duplicated sequences')
+    unique_parser.add_argument('--input', '-i', required=True, type=Path, help='Input fasta')
+    unique_parser.add_argument('--output', '-o', required=True, type=Path, help='Output fasta')
+
     args = parser.parse_args()
 
     if args.cmd == 'csv2fasta':
@@ -344,6 +358,10 @@ if __name__ == '__main__':
         save_fasta(
             cross_create(seqs1.values(), seqs2.values(), args.linker),
             args.output)
-
+    elif args.cmd == 'unique':
+        seqs = read_fasta(args.input)
+        seqs_uniqued = seqs.unique()
+        print(f'Input size: {len(seqs)}, output size: {len(seqs_uniqued)}')
+        seqs_uniqued.to_fasta(args.output)
     else:
         raise ValueError(f"Unknown subcommand: {args.cmd}")
