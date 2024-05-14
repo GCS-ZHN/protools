@@ -14,7 +14,7 @@ from typing import Callable, Dict, Iterable, Optional, Tuple, Union
 from collections import OrderedDict
 
 import pandas as pd
-from Bio.PDB import PDBList, PDBParser
+from Bio.PDB import PDBList, PDBParser, MMCIFParser
 from Bio.PDB.Atom import Atom
 from Bio.PDB.Chain import Chain
 from Bio.PDB.Entity import Entity
@@ -160,7 +160,12 @@ def get_structure(pdb_file: FilePathType, structure_id: str = 'pdb') -> Structur
     if not pdb_file.exists():
         raise FileNotFoundError(f"Could not find PDB file {pdb_file}")
 
-    parser = PDBParser(QUIET=True)
+    if pdb_file.suffix.lower() == '.cif':
+        parser = MMCIFParser(QUIET=True)
+    elif pdb_file.suffix.lower() == '.pdb':
+        parser = PDBParser(QUIET=True)
+    else:
+        raise ValueError(f"Unsupported file type {pdb_file.suffix}")
     return parser.get_structure(structure_id, pdb_file)
 
 
