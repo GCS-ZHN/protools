@@ -18,9 +18,22 @@ AsyncCompletedProcess = namedtuple('AsyncCompletedProcess', ['stdout', 'stderr']
 
 
 def ensure_path(path: FilePathType) -> Path:
+    """
+    Convert the input to a Path object.
+
+    Parameters
+    ----------
+    path : FilePathType
+        The input path.
+
+    Returns
+    ----------
+    Path
+        The Path object with absolute path.
+    """
     if not isinstance(path, Path):
-        path = Path(path).expanduser().resolve().absolute()
-    return path
+        path = Path(path)
+    return path.expanduser().resolve().absolute()
 
 
 def ensure_fileio(path_or_io: FilePathOrIOType, mode: str = 'r') -> IOBase:
