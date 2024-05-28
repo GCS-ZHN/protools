@@ -30,7 +30,8 @@ class HDock(DockBase):
         self.local_dir = tempfile.TemporaryDirectory()
 
     def __del__(self):
-        self.local_dir.cleanup()
+        if hasattr(self, "local_dir"):
+            self.local_dir.cleanup()
 
     def _filter_dockout(
             self, 
