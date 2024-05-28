@@ -11,6 +11,7 @@ from typing import Optional
 from io import IOBase
 from .typedef import FilePathType, FilePathOrIOType
 from collections import namedtuple
+from contextlib import contextmanager
 
 
 AsyncCompletedProcess = namedtuple('AsyncCompletedProcess', ['stdout', 'stderr'])
@@ -301,3 +302,24 @@ def require_package(package_name: str, install_cmd: Optional[str] = None):
             return func(*args, **kwargs)
         return wrapper
     return decorator
+
+
+@contextmanager
+def local_cwd(path: FilePathType):
+    """
+    Change the current working directory locally.
+
+    Parameters
+    ----------
+    path : FilePathType
+        The path to the new working directory.
+    """
+    cwd = Path.cwd()
+    path = ensure_path(path)
+    if not path.is_dir():
+        raise NotADirectoryError(f'{path} is not a directory.')
+    if cwd != path:
+        os.chdir(path)
+    yield path
+    if cwd != path:
+        os.chdir(cwd)

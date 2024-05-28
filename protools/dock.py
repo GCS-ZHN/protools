@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 from typing import Optional
 
-from .utils import CmdWrapperBase, ensure_path
+from .utils import CmdWrapperBase, ensure_path, local_cwd
 
 
 class DockBase(object, metaclass=abc.ABCMeta):
@@ -27,6 +27,10 @@ class HDock(DockBase):
     def __init__(self) -> None:
         self.hdock_bin = CmdWrapperBase("hdock")
         self.hdock_create_bin = CmdWrapperBase("createpl")
+        self.local_dir = tempfile.TemporaryDirectory()
+
+    def __del__(self):
+        self.local_dir.cleanup()
 
     def _filter_dockout(
             self, 
@@ -62,55 +66,59 @@ class HDock(DockBase):
              angle: int = 15) -> Path:
         ligand_pdb = ensure_path(ligand_pdb)
         receptor_pdb = ensure_path(receptor_pdb)
-        ligand_temp_pdb = tempfile.NamedTemporaryFile(
-            dir=".", prefix="Hdock-ligand-", suffix=".pdb")
-        ligand_temp_pdb = Path(ligand_temp_pdb.name)
-        shutil.copy(ligand_pdb, ligand_temp_pdb)
-        receptor_temp_pdb = tempfile.NamedTemporaryFile(
-            dir=".", prefix="Hdock-receptor-", suffix=".pdb")
-        receptor_temp_pdb = Path(receptor_temp_pdb.name)
-        shutil.copy(receptor_pdb, receptor_temp_pdb)
-        temp_out = tempfile.NamedTemporaryFile(
-            dir=".", delete=False, prefix="Hdock-", suffix=".out")
-        temp_out = Path(temp_out.name)
-        cmds = [
-                receptor_temp_pdb.name,
-                ligand_temp_pdb.name,
-                "-angle", angle,
-                "-out", temp_out.name]
-        if not itscore:
-            cmds.extend(["-itscore", "false"])
-        if rsite:
-            temp_rsite = tempfile.NamedTemporaryFile(
-            dir=".", delete=False, prefix="Hdock-", suffix=".rsite")
-            temp_rsite = ensure_path(temp_rsite.name)
-            shutil.copy(rsite, temp_rsite)
-            cmds.extend(['-rsite', temp_rsite.name])
-        if lsite:
-            temp_lsite = tempfile.NamedTemporaryFile(
-            dir=".", delete=False, prefix="Hdock-", suffix=".lsite")
-            temp_lsite = ensure_path(temp_lsite.name)
-            shutil.copy(lsite, temp_lsite)
-            cmds.extend(['-lsite', temp_lsite.name])
+        rsite = ensure_path(rsite) if rsite else None
+        lsite = ensure_path(lsite) if lsite else None
+        output = ensure_path(output) if output else None
 
-        process = self.hdock_bin(*cmds)
-        if process.returncode != 0:
-            raise RuntimeError(f"HDock failed with exit code {process.returncode}.")
+        with local_cwd(self.local_dir.name) as cwd:
+            ligand_temp_pdb = tempfile.NamedTemporaryFile(
+                dir=cwd, prefix="Hdock-ligand-", suffix=".pdb")
+            ligand_temp_pdb = Path(ligand_temp_pdb.name)
+            shutil.copy(ligand_pdb, ligand_temp_pdb)
+            receptor_temp_pdb = tempfile.NamedTemporaryFile(
+                dir=cwd, prefix="Hdock-receptor-", suffix=".pdb")
+            receptor_temp_pdb = Path(receptor_temp_pdb.name)
+            shutil.copy(receptor_pdb, receptor_temp_pdb)
+            temp_out = tempfile.NamedTemporaryFile(
+                dir=cwd, delete=False, prefix="Hdock-", suffix=".out")
+            temp_out = Path(temp_out.name)
+            cmds = [
+                    receptor_temp_pdb.name,
+                    ligand_temp_pdb.name,
+                    "-angle", angle,
+                    "-out", temp_out.name]
+            if not itscore:
+                cmds.extend(["-itscore", "false"])
+            if rsite:
+                temp_rsite = tempfile.NamedTemporaryFile(
+                dir=cwd, delete=False, prefix="Hdock-", suffix=".rsite")
+                temp_rsite = ensure_path(temp_rsite.name)
+                shutil.copy(rsite, temp_rsite)
+                cmds.extend(['-rsite', temp_rsite.name])
+            if lsite:
+                temp_lsite = tempfile.NamedTemporaryFile(
+                dir=cwd, delete=False, prefix="Hdock-", suffix=".lsite")
+                temp_lsite = ensure_path(temp_lsite.name)
+                shutil.copy(lsite, temp_lsite)
+                cmds.extend(['-lsite', temp_lsite.name])
 
-        if output is not None:
-            output = ensure_path(output)
-            output.parent.mkdir(parents=True, exist_ok=True)
-            shutil.move(temp_out.name, output)
-        else:
-            output = temp_out.name
+            process = self.hdock_bin(*cmds)
+            if process.returncode != 0:
+                raise RuntimeError(f"HDock failed with exit code {process.returncode}.")
 
-        self._filter_dockout(
-            output,
-            output,
-            os.path.relpath(str(receptor_pdb), str(output.parent)),
-            os.path.relpath(str(ligand_pdb), str(output.parent)))
+            if output is not None:
+                output.parent.mkdir(parents=True, exist_ok=True)
+                shutil.move(temp_out.name, output)
+            else:
+                output = temp_out.name
 
-        return output
+            self._filter_dockout(
+                output,
+                output,
+                os.path.relpath(str(receptor_pdb), str(output.parent)),
+                os.path.relpath(str(ligand_pdb), str(output.parent)))
+
+            return output
 
     def create_complex(self,
                        dock_result: Path,
@@ -122,51 +130,46 @@ class HDock(DockBase):
                        chid: bool = False):
         dock_result = ensure_path(dock_result)
         outpath = dock_result.parent
-        cwd = os.getcwd()
-        if outpath != cwd:
-            os.makedirs(outpath, exist_ok=True)
-            os.chdir(outpath)
+        outpath.mkdir(parents=True, exist_ok=True)
 
-        # copy to current directory as tmp files
-        dock_result_tmp = tempfile.NamedTemporaryFile(
-            dir=".", prefix="Hdock-dockout-", suffix=".out")
-        receptor_tmp = tempfile.NamedTemporaryFile(
-            dir=".", prefix="Hdock-receptor-", suffix=".pdb")
-        ligand_tmp = tempfile.NamedTemporaryFile(
-            dir=".", prefix="Hdock-ligand-", suffix=".pdb")
-        complex_tmp = tempfile.NamedTemporaryFile(
-            dir=".",
-            prefix="Hdock-complex-",
-            suffix=".pdb",
-            delete=False
-        )
-        self._filter_dockout(
-            in_dockout=dock_result.name,
-            out_dockout=dock_result_tmp.name,
-            new_receptor_path=os.path.basename(receptor_tmp.name),
-            new_ligand_path=os.path.basename(ligand_tmp.name),
-            copy=True)
+        with local_cwd(outpath) as cwd:
+            # copy to current directory as tmp files
+            dock_result_tmp = tempfile.NamedTemporaryFile(
+                dir=cwd, prefix="Hdock-dockout-", suffix=".out")
+            receptor_tmp = tempfile.NamedTemporaryFile(
+                dir=cwd, prefix="Hdock-receptor-", suffix=".pdb")
+            ligand_tmp = tempfile.NamedTemporaryFile(
+                dir=cwd, prefix="Hdock-ligand-", suffix=".pdb")
+            complex_tmp = tempfile.NamedTemporaryFile(
+                dir=cwd,
+                prefix="Hdock-complex-",
+                suffix=".pdb",
+                delete=False
+            )
+            self._filter_dockout(
+                in_dockout=dock_result.name,
+                out_dockout=dock_result_tmp.name,
+                new_receptor_path=os.path.basename(receptor_tmp.name),
+                new_ligand_path=os.path.basename(ligand_tmp.name),
+                copy=True)
 
-        cmds = [os.path.basename(dock_result_tmp.name),
-                os.path.basename(complex_tmp.name),
-                "-nmax", str(model_num),
-                "-rmsd", str(rmsd)]
-        if complex:
-            cmds.append("-complex")
-        if models:
-            cmds.append("-models")
-        if chid:
-            cmds.append("-chid")
+            cmds = [os.path.basename(dock_result_tmp.name),
+                    os.path.basename(complex_tmp.name),
+                    "-nmax", str(model_num),
+                    "-rmsd", str(rmsd)]
+            if complex:
+                cmds.append("-complex")
+            if models:
+                cmds.append("-models")
+            if chid:
+                cmds.append("-chid")
 
-        status = self.hdock_create_bin(*cmds).returncode
-        if status != 0:
-            raise RuntimeError(
-                f"HDock create complex failed with exit code {status}.")
+            status = self.hdock_create_bin(*cmds).returncode
+            if status != 0:
+                raise RuntimeError(
+                    f"HDock create complex failed with exit code {status}.")
 
-        os.rename(complex_tmp.name, pdb_name)
-
-        if outpath != cwd:
-            os.chdir(cwd)
+            os.rename(complex_tmp.name, pdb_name)
 
 
 if __name__ == '__main__':
