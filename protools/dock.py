@@ -27,7 +27,7 @@ class HDock(DockBase):
     def __init__(self) -> None:
         self.hdock_bin = CmdWrapperBase("hdock")
         self.hdock_create_bin = CmdWrapperBase("createpl")
-        self.local_dir = tempfile.TemporaryDirectory()
+        self.local_dir = tempfile.TemporaryDirectory(prefix='hdock-')
 
     def __del__(self):
         if hasattr(self, "local_dir"):
