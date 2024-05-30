@@ -10,8 +10,8 @@ from typing import Iterable, Union, Dict, Tuple, Optional
 from collections import OrderedDict
 from itertools import product
 
-from .utils import ensure_path
-from .typedef import FilePathType, SeqLikeType
+from .utils import ensure_fileio, ensure_path
+from .typedef import FilePathType, FilePathOrIOType, SeqLikeType
 
 
 class Fasta(OrderedDict):
@@ -65,9 +65,10 @@ class Fasta(OrderedDict):
             )
         if isinstance(__value, SeqRecord):
             assert __value.id == __key, f"Mismatch id and SeqRecord: {__key} != {__value.id}"
+            if hasattr(self, '_binded_file'):
+                save_fasta([__value], self._binded_file, **self._binded_kwargs)
             return super().__setitem__(__key, __value)
         raise ValueError('Element should be str, Seq or SeqRecord')
-        
 
     def to_dict(self) -> Iterable[Dict]:
         """
@@ -88,26 +89,29 @@ class Fasta(OrderedDict):
             df.set_index('id', inplace=True)
         return df
     
-    def to_fasta(self, path: FilePathType, mkdir: bool = False, **kwargs):
+    def to_fasta(self, path: FilePathOrIOType, mkdir: bool = False, **kwargs):
         """
         Save as FASTA format.
         """
         save_fasta(self.values(), path=path, mkdir=mkdir, **kwargs)
 
-    def to_csv(self, path: FilePathType, mkdir: bool = False):
+    def to_csv(self, path: FilePathOrIOType, mkdir: bool = False):
         """
         Save as CSV format.
         """
-        path = ensure_path(path)
+        f, need_close = ensure_fileio(path, 'w')
         if mkdir:
             path.parent.mkdir(parents=True, exist_ok=True)
-        with open(path, 'w') as f:
-            writer = csv.DictWriter(
-                f, 
-                fieldnames=['id', 'sequence', 'description'],
-                lineterminator='\n')
-            writer.writeheader()
-            writer.writerows(self.to_dict())
+        writer = csv.DictWriter(
+            f, 
+            fieldnames=['id', 'sequence', 'description'],
+            lineterminator='\n')
+        writer.writeheader()
+        writer.writerows(self.to_dict())
+        if need_close:
+            f.close()
+        else:
+            f.flush()
 
     def __add__(self, other: 'Fasta') -> 'Fasta':
         """
@@ -126,6 +130,28 @@ class Fasta(OrderedDict):
                 seqs.add(seq)
                 uniqued[rid] = record
         return uniqued
+
+    def bind2file(self, path: FilePathType, mode: str = 'w', **kwargs):
+        """
+        Bind the fasta object to a file.
+
+        But the deleted sequence will not be saved to the file.
+        """
+        self._binded_file = ensure_path(path).open(mode)
+        self._binded_kwargs = kwargs
+        self.to_fasta(self._binded_file, **kwargs)
+
+    def unbind(self):
+        """
+        Unbind the fasta object from the file.
+        """
+        if hasattr(self, '_binded_file'):
+            self._binded_file.close()
+            del self._binded_file
+            del self._binded_kwargs
+
+    def __del__(self):
+        self.unbind()
 
 
 def read_fasta(path: FilePathType) -> Fasta:
@@ -156,7 +182,7 @@ def read_seqres(path: Path) -> Fasta:
 
 def save_fasta(
         sequences: Iterable[SeqRecord],
-        path: FilePathType,
+        path: FilePathOrIOType,
         mkdir: bool = False,
         two_line_mode: bool = False):
     """
@@ -171,11 +197,14 @@ def save_fasta(
     mkdir : bool, optional
         Whether to make the directory. The default is False.
     """
-    path = ensure_path(path)
-    if mkdir:
+    if mkdir and isinstance(path, Path):
         path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, 'w') as f:
-        SeqIO.write(sequences, f, 'fasta-2line' if two_line_mode else 'fasta')
+    f, need_close = ensure_fileio(path, 'w')
+    SeqIO.write(sequences, f, 'fasta-2line' if two_line_mode else 'fasta')
+    if need_close:
+        f.close()
+    else:
+        f.flush()
 
 
 def df2fasta(df:pd.DataFrame,
