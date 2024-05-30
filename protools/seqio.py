@@ -5,6 +5,7 @@ import csv
 from Bio import SeqIO
 from Bio.Seq import Seq 
 from Bio.SeqRecord import SeqRecord
+from Bio.PDB.MMCIF2Dict import MMCIF2Dict
 from pathlib import Path
 from typing import Iterable, Union, Dict, Tuple, Optional
 from collections import OrderedDict
@@ -173,16 +174,32 @@ def read_fasta(path: FilePathType) -> Fasta:
     return Fasta(map(lambda x: (x.id, x), SeqIO.parse(path, 'fasta')))
 
 
-def read_seqres(path: Path) -> Fasta:
+def read_seqres(path: Path, auth: bool = True) -> Fasta:
     if not isinstance(path, Path):
         path = Path(path)
     if path.suffix.lower() == '.pdb':
         seqres = SeqIO.parse(path, 'pdb-seqres')
+        seqres_iter = (
+            (record.id.split(':')[-1], str(record.seq)) for record in seqres)
+
     elif path.suffix.lower() == '.cif':
         seqres = SeqIO.parse(path, 'cif-seqres')
+        seqres_iter = (
+            (record.id.split(':')[-1], str(record.seq)) for record in seqres)
+        # as bioython use '_pdbx_poly_seq_scheme.asym_id' in 
+        # `Bio.SeqIO.PdbIO.CifSeqresIterator`, we need to convert
+        # chain id to auth chain id by '_pdbx_poly_seq_scheme.pdb_strand_id'
+        if auth:
+            mmcif_dict = MMCIF2Dict(path)
+            label2auth = dict(zip(
+                mmcif_dict['_pdbx_poly_seq_scheme.asym_id'],
+                mmcif_dict['_pdbx_poly_seq_scheme.pdb_strand_id']))
+            seqres_iter = (
+                (label2auth[label], seq) for label, seq in seqres_iter)
+
     else:
         raise ValueError(f"Unsupported file format: {path.suffix}")
-    return Fasta((record.id[-1], str(record.seq)) for record in seqres)
+    return Fasta(seqres_iter)
 
 
 def save_fasta(
