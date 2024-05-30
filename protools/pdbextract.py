@@ -123,7 +123,7 @@ def batch_extract(
     pool = Pool(num_process)
 
     for pdb_file in pdb_files:
-        out_file = out_dir / pdb_file.name
+        out_file = out_dir / (pdb_file.stem + '.pdb')
         pool.apply_async(
             extract,
             args=(pdb_file, out_file, resi_selection, remain, model_id)

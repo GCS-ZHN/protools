@@ -176,7 +176,12 @@ def read_fasta(path: FilePathType) -> Fasta:
 def read_seqres(path: Path) -> Fasta:
     if not isinstance(path, Path):
         path = Path(path)
-    seqres = SeqIO.parse(path, 'pdb-seqres')
+    if path.suffix.lower() == '.pdb':
+        seqres = SeqIO.parse(path, 'pdb-seqres')
+    elif path.suffix.lower() == '.cif':
+        seqres = SeqIO.parse(path, 'cif-seqres')
+    else:
+        raise ValueError(f"Unsupported file format: {path.suffix}")
     return Fasta((record.id[-1], str(record.seq)) for record in seqres)
 
 

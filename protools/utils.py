@@ -11,15 +11,29 @@ from typing import Optional
 from io import IOBase
 from .typedef import FilePathType, FilePathOrIOType
 from collections import namedtuple
+from contextlib import contextmanager
 
 
 AsyncCompletedProcess = namedtuple('AsyncCompletedProcess', ['stdout', 'stderr'])
 
 
 def ensure_path(path: FilePathType) -> Path:
+    """
+    Convert the input to a Path object.
+
+    Parameters
+    ----------
+    path : FilePathType
+        The input path.
+
+    Returns
+    ----------
+    Path
+        The Path object with absolute path.
+    """
     if not isinstance(path, Path):
-        path = Path(path).expanduser().resolve().absolute()
-    return path
+        path = Path(path)
+    return path.expanduser().resolve().absolute()
 
 
 def ensure_fileio(path_or_io: FilePathOrIOType, mode: str = 'r') -> IOBase:
@@ -301,3 +315,24 @@ def require_package(package_name: str, install_cmd: Optional[str] = None):
             return func(*args, **kwargs)
         return wrapper
     return decorator
+
+
+@contextmanager
+def local_cwd(path: FilePathType):
+    """
+    Change the current working directory locally.
+
+    Parameters
+    ----------
+    path : FilePathType
+        The path to the new working directory.
+    """
+    cwd = Path.cwd()
+    path = ensure_path(path)
+    if not path.is_dir():
+        raise NotADirectoryError(f'{path} is not a directory.')
+    if cwd != path:
+        os.chdir(path)
+    yield path
+    if cwd != path:
+        os.chdir(cwd)
