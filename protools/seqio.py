@@ -174,7 +174,97 @@ def read_fasta(path: FilePathType) -> Fasta:
     return Fasta(map(lambda x: (x.id, x), SeqIO.parse(path, 'fasta')))
 
 
+def read_pdb_seqres(path: Path) -> Dict[str, Iterable[str]]:
+    """
+    Read sequence from PDB SEQRES record.
+    keep the format without any conversion.
+    any unstandard amino acid will be kept as is.
+
+    Parameters
+    ----------
+    path : Path
+        The path of the PDB file.
+
+    Returns
+    ----------
+    Dict[str, Iterable[str]]
+        The sequence data. The key is the chain id.
+        The value is the list of 3-letter amino acid 
+        code or nucleotide code.
+    """
+    data = {}
+    with path.open() as f:
+        for line in f:
+            line = line.strip()
+            if line.startswith('SEQRES'):
+                chain_id = line[11]
+                seq = line[19:].split()
+                data.setdefault(chain_id, []).extend(seq)
+    return data
+
+
+def read_mmcif_seqres(path: Path, auth: bool = True) -> Dict[str, Iterable[str]]:
+    """
+    Read sequence from mmCIF file.
+    Similar to `read_pdb_seqres`.
+
+    Parameters
+    ----------
+    path : Path
+        The path of the mmCIF file.
+    auth : bool, optional
+        Whether to use the auth chain id.
+        The default is True.
+
+    Returns
+    ----------
+    Dict[str, Iterable[str]]
+        The sequence data. The key is the chain id.
+        The value is the list of 3-letter amino acid 
+        code or nucleotide code.
+
+    See Also
+    ----------
+    read_pdb_seqres
+    """
+    mmcif_dict = MMCIF2Dict(path)
+    if auth:
+        chain_list = mmcif_dict['_pdbx_poly_seq_scheme.pdb_strand_id']
+    else:
+        chain_list = mmcif_dict['_pdbx_poly_seq_scheme.asym_id']
+    aa_list = mmcif_dict['_pdbx_poly_seq_scheme.mon_id']
+    data = {}
+    for chain_id, seq in zip(chain_list, aa_list):
+        data.setdefault(chain_id, []).append(seq)
+    return data
+
+
 def read_seqres(path: Path, auth: bool = True) -> Fasta:
+    """
+    Read sequence from PDB or mmCIF file.
+    Extended from BioPython. Only support
+    amino acid sequence.
+
+    Parameters
+    ----------
+    path : Path
+        The path of the PDB or mmCIF file.
+    auth : bool, optional
+        Whether to use the auth chain id.
+        The default is True.
+
+    Returns
+    ----------
+    Fasta
+        The sequence data. The key is the chain id.
+        The value is the sequence record.
+
+    Notes
+    ----------
+    This function only support amino acid sequence, and
+    return one-letter amino acid sequence as Fasta object,
+    which may result in loss of information.
+    """
     if not isinstance(path, Path):
         path = Path(path)
     if path.suffix.lower() == '.pdb':
