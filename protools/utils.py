@@ -123,15 +123,29 @@ class CmdWrapperBase(object):
     ----------
     cmd : str
         The command to be wrapped.
+    short_mode : bool, optional
+        Whether the command is in short mode.
+        If it is in short mode, the command will be
+        formatted as `-key v` instead of `--key v`.
+    num_workers : int, optional
+        The number of workers for asynchronous calls.
+    install_help : str, optional
+        The command to install the command.
+    bool2flag : bool, optional
+        Whether the boolean value will be converted to flag.
+        If it is True, the boolean argument will be converted
+        to a flag without value.
     """
     def __init__(self, 
                  cmd: str,
                  short_mode: bool = False,
                  num_workers: int = 1,
-                 install_help: Optional[str] = None):
+                 install_help: Optional[str] = None,
+                 bool2flag: bool = False):
         self.cmd = self.find_command(cmd, install_help)
         self.short_mode = short_mode
         self.semaphore = asyncio.Semaphore(num_workers)
+        self.bool2flag = bool2flag
 
     @classmethod
     def _check_mod(cls, cmd) -> str:
@@ -185,6 +199,10 @@ class CmdWrapperBase(object):
                 cmds.append(f'-{k}')
             else:
                 cmds.append(f'--{k}')
+            if self.bool2flag and isinstance(v, bool):
+                if not v:
+                    cmds.pop()
+                continue
             cmds.append(str(v))
         return cmds
     
@@ -279,6 +297,11 @@ class CmdWrapperBase(object):
         function or coroutine function
             The wrapper of the subcommand.
         """
+        if name.startswith('__'):
+            # avoid conflicts with built-in magic methods if it not implemented
+            # otherwise, it will cause unknown behavior
+            raise AttributeError(
+                f"'{self.__class__.__name__}' object has no attribute '{name}'")
         if name.startswith('async_'):
             name = name[6:]
             async def wrapper(*args, **kwargs):
