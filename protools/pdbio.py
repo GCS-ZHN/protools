@@ -170,10 +170,36 @@ def get_structure(pdb_file: FilePathType, structure_id: str = 'pdb') -> Structur
 
 
 def _write_seqres(target_path: FilePathOrIOType, seqres: dict):
+    """
+    Write SEQRES records to a PDB file.
+
+    Parameters
+    ----------
+    target_path : str
+        Path to the output PDB file.
+    seqres : dict
+        SEQRES records to be written to the PDB file.
+        The key is the chain ID and the value is the
+        one-letter amino acid sequence or a list of
+        three-letter amino acid sequence or nucleotide
+
+    Notes
+    ----------
+    SEQRES records maybe amino acid or nucleotide sequence.
+    But this function only supports amino acid sequence if
+    the sequence is a one-letter amino acid string. If you
+    want to write nucleotide sequence, you should input a list
+    of three-letter nucleotide.
+    """
     format_line = lambda k: 'SEQRES {:>3d} {:1s} {:>4d} ' + ''.join([' {:>3s}'] * k)
     f, need_close = ensure_fileio(target_path, 'w')
     for chain, seq in seqres.items():
-        seq = [PDBData.protein_letters_1to3.get(aa, 'UNK') for aa in seq]
+        if isinstance(seq, (str, Seq)):
+            seq = [PDBData.protein_letters_1to3.get(aa, 'UNK') for aa in seq]
+        elif isinstance(seq, (list, tuple)):
+            pass
+        else:
+            raise ValueError("Invalid SEQRES format")
         for i in range(0, len(seq), 13):
             seq_slice = seq[i:i+13]
             line = format_line(len(seq_slice)).format(i//13+1, chain, len(seq), *seq_slice)
@@ -249,7 +275,7 @@ def write_modified_residues(data: pd.DataFrame, target_path: FilePathOrIOType):
 def save_pdb(
         output_path: FilePathType, 
         *entities: StructureFragmentAAType, 
-        remarks: Optional[Dict[int, str]] = None,
+        remarks: Optional[Dict[int, Iterable[str]]] = None,
         seqres: dict = None,
         modres: pd.DataFrame = None) -> None:
     """
@@ -261,7 +287,7 @@ def save_pdb(
         Path to the output PDB file.
     entities : Structure, Model, Chain, or Residue
         Entities to save.
-    remarks : Dict[int, str], optional
+    remarks : Dict[int, Iterable[str]], optional
         Remarks to be written to the PDB file.
     seqres : dict, optional
         SEQRES records to be written to the PDB file.
