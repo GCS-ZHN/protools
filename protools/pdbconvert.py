@@ -114,6 +114,9 @@ def rand_rotate(
         The rotation angles.
     """
     rand_gen = np.random.default_rng(seed)
-    rotation_angles = rand_gen.uniform(0, 360, 3)
+    if degrees:
+        rotation_angles = rand_gen.uniform(0, 360, 3)
+    else:
+        rotation_angles = rand_gen.uniform(0, 2 * np.pi, 3)
     rotate(entity, rotation_angles, degrees, self_rotation)
     return rotation_angles
