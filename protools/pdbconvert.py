@@ -45,10 +45,10 @@ def translate(
 
 
 def rotate(
-        entity: Entity, x_rotation: float = 0,
-        y_rotation: float = 0, z_rotation: float = 0,
+        entity: Entity, 
+        rotation_angles: np.ndarray,
         degrees: bool = True,
-        self_rotation: bool = False) -> np.ndarray:
+        self_rotation: bool = False) -> Entity:
     """
     Rotates the entity by the given angles inplace.
 
@@ -57,14 +57,7 @@ def rotate(
     entity : Entity
         The entity to rotate.
 
-    x_rotation : float
-        The rotation angle around the x-axis.
-
-    y_rotation : float
-        The rotation angle around the y-axis.
-
-    z_rotation : float
-        The rotation angle around the z-axis.
+    rotation_angles : np.ndarray
 
     degrees : bool
         If True, the angles are interpreted as degrees, otherwise as radians.
@@ -75,20 +68,23 @@ def rotate(
 
     Returns
     -------
-    np.ndarray
-        The rotation matrix.
+    Entity
+        The rotated entity (inplace).
     """
+    rotation_angles = np.array(rotation_angles)
+    if len(rotation_angles) != 3 or len(rotation_angles.shape) != 1:
+        raise ValueError('The rotation angles must be a 1D array of length 3.')
     coord_point = np.array([0, 0, 0])
     if self_rotation:
-        coord_point = np.mean([atom.get_coord() for atom in entity.get_atoms()], axis=0)
+        coord_point = np.mean(
+            [atom.get_coord() for atom in entity.get_atoms()], axis=0)
     rotation_matrix = R.from_euler(
-        'xyz', [x_rotation, y_rotation, z_rotation], degrees=degrees).as_matrix()
+        'xyz', rotation_angles, degrees=degrees).as_matrix()
     for atom in entity.get_atoms():
         coord = atom.get_coord() - coord_point
         new_coord = np.dot(rotation_matrix, coord) + coord_point
         atom.set_coord(new_coord)
-    return rotation_matrix
-
+    return entity
 
 def rand_rotate(
         entity: Entity, degrees: bool = True,
@@ -105,14 +101,14 @@ def rand_rotate(
         If True, the angles are interpreted as degrees, otherwise as radians.
 
     self_rotation : bool
-        If True, the entity is rotated around its center of mass, otherwise around the origin.
+        If True, the entity is rotated around its center of mass,
+        otherwise around the origin.
 
     Returns
     -------
     np.ndarray
-        The rotation matrix.
+        The rotation angles.
     """
-    x_rotation = np.random.uniform(0, 360)
-    y_rotation = np.random.uniform(0, 360)
-    z_rotation = np.random.uniform(0, 360)
-    return rotate(entity, x_rotation, y_rotation, z_rotation, degrees, self_rotation)
+    rotation_angles = np.random.uniform(0, 360, 3)
+    rotate(entity, rotation_angles, degrees, self_rotation)
+    return rotation_angles
