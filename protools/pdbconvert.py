@@ -88,7 +88,8 @@ def rotate(
 
 def rand_rotate(
         entity: Entity, degrees: bool = True,
-        self_rotation: bool = False) -> np.ndarray:
+        self_rotation: bool = False,
+        seed: int = None) -> np.ndarray:
     """
     Rotates the entity by random angles.
 
@@ -104,11 +105,15 @@ def rand_rotate(
         If True, the entity is rotated around its center of mass,
         otherwise around the origin.
 
+    seed : int
+        The seed for the random number generator.
+
     Returns
     -------
     np.ndarray
         The rotation angles.
     """
-    rotation_angles = np.random.uniform(0, 360, 3)
+    rand_gen = np.random.default_rng(seed)
+    rotation_angles = rand_gen.uniform(0, 360, 3)
     rotate(entity, rotation_angles, degrees, self_rotation)
     return rotation_angles
