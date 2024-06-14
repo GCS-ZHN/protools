@@ -212,6 +212,7 @@ class CmdWrapperBase(object):
             stdout=None,
             stderr=None,
             stdin=None,
+            cwd=None,
             **kwargs):
         """
         Run the command.
@@ -226,6 +227,8 @@ class CmdWrapperBase(object):
             The stderr of the command. See subprocess.run for more details.
         stdin
             The stdin of the command. See subprocess.run for more details.
+        cwd
+            The current working directory of the command.
         **kwargs
             The keyword arguments.
         """
@@ -235,6 +238,7 @@ class CmdWrapperBase(object):
             stdout=stdout, 
             stderr=stderr, 
             stdin=stdin,
+            cwd=cwd,
             check=True)
         return process
 
