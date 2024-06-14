@@ -141,11 +141,13 @@ class CmdWrapperBase(object):
                  short_mode: bool = False,
                  num_workers: int = 1,
                  install_help: Optional[str] = None,
+                 list2nargs: bool = True,
                  bool2flag: bool = False):
         self.cmd = self.find_command(cmd, install_help)
         self.short_mode = short_mode
         self.semaphore = asyncio.Semaphore(num_workers)
         self.bool2flag = bool2flag
+        self.list2nargs = list2nargs
 
     @classmethod
     def _check_mod(cls, cmd) -> str:
@@ -202,6 +204,9 @@ class CmdWrapperBase(object):
             if self.bool2flag and isinstance(v, bool):
                 if not v:
                     cmds.pop()
+                continue
+            if self.list2nargs and isinstance(v, (list, tuple)):
+                cmds.extend(map(str, v))
                 continue
             cmds.append(str(v))
         return cmds
