@@ -90,17 +90,20 @@ class Fasta(OrderedDict):
             df.set_index('id', inplace=True)
         return df
     
-    def to_fasta(self, path: FilePathOrIOType, mkdir: bool = False, **kwargs):
+    def to_fasta(self, path: FilePathOrIOType,
+                 mkdir: bool = False, mode: str = 'w', **kwargs):
         """
         Save as FASTA format.
         """
-        save_fasta(self.values(), path=path, mkdir=mkdir, **kwargs)
+        save_fasta(self.values(), 
+            path=path, mkdir=mkdir, mode=mode, **kwargs)
 
-    def to_csv(self, path: FilePathOrIOType, mkdir: bool = False):
+    def to_csv(self, path: FilePathOrIOType,
+               mkdir: bool = False, mode: str = 'w'):
         """
         Save as CSV format.
         """
-        f, need_close = ensure_fileio(path, 'w')
+        f, need_close = ensure_fileio(path, mode)
         if mkdir:
             path.parent.mkdir(parents=True, exist_ok=True)
         writer = csv.DictWriter(
@@ -140,7 +143,7 @@ class Fasta(OrderedDict):
         """
         self._binded_file = ensure_path(path).open(mode)
         self._binded_kwargs = kwargs
-        self.to_fasta(self._binded_file, **kwargs)
+        self.to_fasta(self._binded_file, mode=mode, **kwargs)
 
     def unbind(self):
         """
@@ -296,7 +299,8 @@ def save_fasta(
         sequences: Iterable[SeqRecord],
         path: FilePathOrIOType,
         mkdir: bool = False,
-        two_line_mode: bool = False):
+        two_line_mode: bool = False,
+        mode: str = 'w'):
     """
     Save fasta file.
 
@@ -311,7 +315,7 @@ def save_fasta(
     """
     if mkdir and isinstance(path, Path):
         path.parent.mkdir(parents=True, exist_ok=True)
-    f, need_close = ensure_fileio(path, 'w')
+    f, need_close = ensure_fileio(path, mode)
     SeqIO.write(sequences, f, 'fasta-2line' if two_line_mode else 'fasta')
     if need_close:
         f.close()
