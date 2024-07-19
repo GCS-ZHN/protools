@@ -66,8 +66,12 @@ class Fasta(OrderedDict):
             )
         if isinstance(__value, SeqRecord):
             assert __value.id == __key, f"Mismatch id and SeqRecord: {__key} != {__value.id}"
-            if hasattr(self, '_binded_file'):
-                save_fasta([__value], self._binded_file, **self._binded_kwargs)
+            if hasattr(self, '_binded_fileio'):
+                save_fasta(
+                    [__value],
+                    self._binded_fileio, 
+                    mode=self._binded_fileio.mode,
+                    **self._binded_kwargs)
             return super().__setitem__(__key, __value)
         raise ValueError('Element should be str, Seq or SeqRecord')
 
@@ -135,46 +139,57 @@ class Fasta(OrderedDict):
                 uniqued[rid] = record
         return uniqued
 
-    def bind2file(self, path: FilePathType, mode: str = 'w', **kwargs):
+    def bind2file(self, path: FilePathType, **kwargs):
         """
         Bind the fasta object to a file.
 
         But the deleted sequence will not be saved to the file.
         """
-        self._binded_file = ensure_path(path).open(mode)
+        _binded_fileio = ensure_path(path).open('a+')
+        if _binded_fileio.tell() > 0:
+            if len(self) > 0:
+                raise ValueError('Both file and fasta object are not empty.')
+            _binded_fileio.seek(0)
+            self.update(read_fasta(_binded_fileio, 'a+'))
+        if len(self) > 0:
+            # refresh file old content with current kwargs
+            _binded_fileio = ensure_path(path).open('w+')
+            self.to_fasta(
+                _binded_fileio, mode='w+', **kwargs)
+        self._binded_fileio = _binded_fileio
         self._binded_kwargs = kwargs
-        self.to_fasta(self._binded_file, mode=mode, **kwargs)
 
     def unbind(self):
         """
         Unbind the fasta object from the file.
         """
         if hasattr(self, '_binded_file'):
-            self._binded_file.close()
-            del self._binded_file
+            self._binded_fileio.close()
+            del self._binded_fileio
             del self._binded_kwargs
 
     def __del__(self):
         self.unbind()
 
 
-def read_fasta(path: FilePathType) -> Fasta:
+def read_fasta(path: FilePathOrIOType, mode: str = 'r') -> Fasta:
     """
     Read fasta file as `Fasta` object.
     
     Parameters
     ----------
-    path : str or Path
+    path : str, Path or file-like object
         The path of the fasta file.
 
     Returns
     ----------
     Fasta object.
     """
-    if not isinstance(path, Path):
-        path = Path(path)
-    path = path.resolve().expanduser().absolute()
-    return Fasta(map(lambda x: (x.id, x), SeqIO.parse(path, 'fasta')))
+    path, need_close = ensure_fileio(path, mode)
+    res = Fasta(map(lambda x: (x.id, x), SeqIO.parse(path, 'fasta')))
+    if need_close:
+        path.close()
+    return res
 
 
 def read_pdb_seqres(path: Path) -> Dict[str, Iterable[str]]:
