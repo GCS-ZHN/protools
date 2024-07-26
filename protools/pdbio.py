@@ -27,7 +27,7 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio.Data import PDBData
 
-from .seqio import save_fasta
+from .seqio import save_fasta, read_seqres, Fasta
 from .typedef import FilePathType, FilePathOrIOType, StructureFragmentAAType, StructureFragmentType
 from .utils import ensure_path, ensure_fileio
 
@@ -565,6 +565,27 @@ def pdb2fasta(
                 raise ValueError(
                     f"Unsupported multimer mode {multimer_mode}")
     save_fasta(_iter(), fasta_path, mkdir=True)
+
+
+def pdb2seq(path: FilePathType) -> Fasta:
+    """
+    Convert a PDB file to a Fasta object.
+
+    Parameters
+    ----------
+    path : str
+        Path to the PDB file.
+
+    Returns
+    ----------
+    fasta : Fasta
+        Fasta object of the PDB file.
+    """
+    seqs = read_seqres(path)
+    if len(seqs) == 0:
+        seqs = read_pdb_seq(get_structure(path))
+        seqs = Fasta((x[1], x[2]) for x in seqs)
+    return seqs
 
 
 def pdb2df(entity: Union[Structure, Model, Chain, Residue], *extra_attrs: str) -> pd.DataFrame:
