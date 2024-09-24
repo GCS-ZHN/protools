@@ -106,7 +106,6 @@ def extract(
     save_pdb(out_file, *chains)
 
 
-
 def batch_extract(
         pdb_files: Iterable[FilePathType], 
         out_dir: FilePathType,

@@ -3,9 +3,15 @@ A submodule struture operation.
 """
 
 import numpy as np
+import re
 
 from Bio.PDB.Entity import Entity
+from Bio.PDB.Chain import Chain
 from scipy.spatial.transform import Rotation as R
+
+from protools import pdbio, utils
+
+from typing import List
 
 
 __all__ = ['translate', 'rotate', 'rand_rotate']
@@ -120,3 +126,54 @@ def rand_rotate(
         rotation_angles = rand_gen.uniform(0, 2 * np.pi, 3)
     rotate(entity, rotation_angles, degrees, self_rotation)
     return rotation_angles
+
+
+def chain_split(
+        chain: Chain,
+        linker_pattern: str) -> List[Chain]:
+    """
+    Split chain by the given regular expression linker pattern.
+
+    Parameters
+    ----------
+    chain : Chain
+        The chain to split.
+
+    linker_pattern : str
+        The regular expression linker pattern. such as 
+        'GGGGS', 'G{3,4}S'
+    """
+
+    aa_sequence = str(pdbio.get_aa_sequence(chain))
+    sequence_size = len(aa_sequence)
+    aa_residues = list(pdbio.get_aa_residues(chain).values())
+    parent: Entity = chain.get_parent()
+    if parent is not None:
+        parent.detach_child(chain.get_id())
+    assert sequence_size == len(aa_residues)
+
+    pattern = re.compile(linker_pattern)
+    # found all linker slices
+    matches = pattern.finditer(aa_sequence)
+    linker_slices = [slice(*m.span()) for m in matches]
+    linker_intervals = utils.Intervals.from_slices(linker_slices)
+    new_chain_intervals = linker_intervals.reverse(high=sequence_size)
+    new_chains = []
+    idx = 0
+    for interval in new_chain_intervals:
+        while True:
+            if idx > 25:
+                raise ValueError('Too many chains splited.')
+            chain_id = chr(ord('A') + idx)
+            if parent is not None and parent.has_id(chain_id):
+                idx += 1
+                continue
+            break
+        new_chain = Chain(chain_id)
+        for residue in aa_residues[interval]:
+            new_chain.add(residue)
+        new_chains.append(new_chain)
+        idx += 1
+        if parent is not None:
+            parent.add(new_chain)
+    return new_chains
