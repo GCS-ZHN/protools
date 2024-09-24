@@ -582,7 +582,10 @@ class Intervals(object):
     def __repr__(self):
         return f"'{self}' (zero_based={self.zero_based}, end_inclusive={self.end_inclusive}, dynamic={self.dynamic})"
 
-    def __len__(self):
+    def size(self) -> int:
+        """
+        Return intervals' total size.
+        """
         if self.dynamic:
             raise ValueError("Dynamic interval does not have length")
         return sum([i.stop - i.start for i in self._interval_slices])
