@@ -5,7 +5,8 @@ import logging
 from Bio import ExPASy, SwissProt
 from Bio.Seq import Seq
 from pathlib import Path
-from ..utils import max_retry, FilePathType, ensure_path, catch_error
+from ..utils import (
+    max_retry, FilePathType, ensure_path, catch_error, Intervals)
 from multiprocessing import Pool
 from itertools import starmap, product
 from Bio.SeqFeature import ExactPosition
@@ -14,7 +15,29 @@ from Bio.SeqFeature import ExactPosition
 loger = logging.getLogger(__name__)
 
 
+def get_uniprot_record(accession_id: str) -> SwissProt.Record:
+    """
+    Extracts the SwissProt record from the given accession id.
+
+    Parameters
+    ----------
+    accession_id : str
+        The accession id of the protein in UniProt.
+
+    Returns
+    ----------
+    SwissProt.Record
+        The SwissProt record of the protein.
+    """
+    handle = ExPASy.get_sprot_raw(accession_id)
+    record = SwissProt.read(handle)
+    return record
+
+
 def extract_features(record: SwissProt.Record):
+    """
+    Extracts the features from the SwissProt record.
+    """
     loger.debug(f'Record: {record.accessions}')
     seq = Seq(record.sequence)
     loger.debug(f'Sequence: {seq}')
@@ -42,6 +65,71 @@ def extract_features(record: SwissProt.Record):
         yield res
 
 
+def extract_extracellular_chains(record: SwissProt.Record) -> pd.DataFrame:
+    """
+    Extracts the extracellular chains from the SwissProt record.
+
+    Parameters
+    ----------
+    record : SwissProt.Record
+        The SwissProt record.
+    
+    Returns
+    ----------
+    pd.DataFrame
+        The extracellular chains. there are three columns: 
+        'seq', 'slice', 'exact'. 'seq' is the sequence of
+        the extracellular chain, 'slice' is the slice of the
+        extracellular chain in the full sequence, 'exact' is a
+        boolean value indicating whether the slice is from the
+        exact extracellular region or not.
+    """
+    non_extracellular_slices = []
+    extracellular_slices = []
+    signal_slice = None
+    for feature in record.features:
+        pos_start = feature.location.start
+        if not isinstance(pos_start, ExactPosition):
+            continue
+        pos_end = feature.location.end
+        if not isinstance(pos_end, ExactPosition):
+            continue
+        if feature.type == 'SIGNAL':
+            if signal_slice is not None:
+                raise ValueError('Multiple signal peptide found')
+            signal_slice = slice(pos_start, pos_end)
+            non_extracellular_slices.append(signal_slice)
+        if feature.type == 'TRANSMEM':
+            non_extracellular_slices.append(slice(pos_start, pos_end))
+        if feature.type == 'TOPO_DOM':
+            if feature.qualifiers['note'] == 'Extracellular':
+                extracellular_slices.append(slice(pos_start, pos_end))
+            if feature.qualifiers['note'] == 'Cytoplasmic':
+                non_extracellular_slices.append(slice(pos_start, pos_end))
+
+    results = []
+    if len(extracellular_slices) > 0:
+        for extracellular in extracellular_slices:
+            extracellular_seq = record.sequence[extracellular]
+            results.append({
+                'seq': extracellular_seq,
+                'slice': extracellular,
+                'exact': True,
+            })
+        return pd.DataFrame(results)
+
+    for extracellular in Intervals.from_slices(
+            non_extracellular_slices).reverse(high=len(record.sequence)):
+        extracellular_seq = record.sequence[extracellular]
+        results.append({
+            'seq': extracellular_seq,
+            'slice': extracellular,
+            'exact': False,
+        })
+
+    return pd.DataFrame(results)
+
+
 @catch_error(loger, err_types=(Exception,))
 @max_retry(max=5)
 def fetch_uniprot_features(accession_id: str, output_path: FilePathType, skip_exist: bool = False):
@@ -56,8 +144,7 @@ def fetch_uniprot_features(accession_id: str, output_path: FilePathType, skip_ex
         return
 
     loger.info(f'Fetching {accession_id}')
-    handle = ExPASy.get_sprot_raw(accession_id)
-    record = SwissProt.read(handle)
+    record = get_uniprot_record(accession_id)
     features = pd.DataFrame(extract_features(record))
     features.to_csv(output_file, sep='\t', index=False)
     loger.info(f'Writing to {output_file}')
