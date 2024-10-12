@@ -435,6 +435,7 @@ class Intervals(object):
         interval = cls('', 
                        zero_based=zero_based,
                        end_inclusive=end_inclusive)
+        slices = [slice(s.start, s.stop) if s.start else slice(0, s.stop) for s in slices]
         interval._interval_slices = cls._merge_intervals(slices)
         interval.dynamic = any([i.stop is None for i in interval._interval_slices])
         return interval
@@ -626,3 +627,22 @@ class Intervals(object):
     
     def __iter__(self):
         return iter(self._interval_slices)
+
+    def __contains__(self, value):
+        """
+        Check if the value is in the intervals.
+        """
+        if isinstance(value, int):
+            if not self.zero_based:
+                value -= 1
+            for i in self._interval_slices:
+                if i.start <= value and (i.stop is None or value < i.stop):
+                    return True
+            return False
+        if isinstance(value, self.__class__):
+            cross_intervals = self.intersect(value)
+            return cross_intervals == value
+        if isinstance(value, slice):
+            value = self.__class__.from_slices([value])
+            return self.__contains__(value)
+        raise TypeError('Element value must be int, slice or Intervals')
