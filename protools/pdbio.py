@@ -667,7 +667,7 @@ def read_residue(pdb: Union[FilePathType, str, Entity], mode='centroid') -> pd.D
     >>> df = read_residue('1a12.pdb', mode='centroid')
     >>> df.head()
                                   x          y          z
-    model chain resi resn                                
+    model chain seqid resn                                
     0     A     100  GLY   7.494460 -33.223431  16.242475
                 101  ARG   3.844297 -34.536686  13.638067
                 102  ASP   2.507354 -39.138135  16.654611
@@ -687,7 +687,7 @@ def read_residue(pdb: Union[FilePathType, str, Entity], mode='centroid') -> pd.D
         df['y'] *= df['mass']
         df['z'] *= df['mass']
         df = df.drop(['id', 'name', 'element'], axis=1)
-        df = df.groupby(['model', 'chain', 'resi', 'resn']).sum()
+        df = df.groupby(['model', 'chain', 'seqid', 'resn']).sum()
         df['x'] /= df['mass']
         df['y'] /= df['mass']
         df['z'] /= df['mass']
@@ -699,7 +699,7 @@ def read_residue(pdb: Union[FilePathType, str, Entity], mode='centroid') -> pd.D
         if mode == 'CA':
             df = df[df['name'] == 'CA']
         df = df.drop(['id', 'name', 'element'], axis=1)
-        df = df.groupby(['model', 'chain', 'resi', 'resn']).mean()
+        df = df.groupby(['model', 'chain', 'seqid', 'resn']).mean()
         return df
     
     raise ValueError('mode must be one of "centroid", "fuc", "CA"')

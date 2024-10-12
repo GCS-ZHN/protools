@@ -49,7 +49,7 @@ def neighbor_water_count(
     ----------
     >>> from protools import pdbanno
     >>> pdbanno.neighbor_water_count('3inj.pdb')
-    model  chain  resi  resn
+    model  chain  seqid  resn
     0      A      10    ALA     0
                   100   THR     1
                   101   TYR     1
@@ -87,7 +87,7 @@ def neighbor_water_count(
     elif level == 'C':
         level_columns = ['model', 'chain']
     elif level == 'R':
-        level_columns = ['model', 'chain', 'resi', 'resn']
+        level_columns = ['model', 'chain', 'seqid', 'resn']
     else:
         raise ValueError(f"Unknown level: {level}")
 
@@ -131,7 +131,7 @@ def calc_sasa(
     >>> from protools import pdbanno
     >>> pdb = pdbio.get_structure('3inj.pdb')
     >>> pdbanno.calc_sasa(pdb[0])
-    model  chain  resi  resn
+    model  chain  seqid  resn
     0      A      7     ALA     139.496754
                   8     VAL      24.683581
                   9     PRO      49.398717
@@ -145,7 +145,7 @@ def calc_sasa(
                   500   SER       0.000000
     Length: 3953, dtype: float64
     >>> pdbanno.calc_sasa(pdb[0]['H'])
-    model  chain  resi  resn
+    model  chain  seqid  resn
     0      H      6     GLN     142.226811
                   7     ALA      64.825545
                   8     VAL      35.011793
@@ -159,7 +159,7 @@ def calc_sasa(
                   500   SER     129.328349
     Length: 495, dtype: float64
     >>> pdbanno.calc_sasa(pdb[0]['H'][6])
-    model  chain  resi  resn
+    model  chain  seqid  resn
     0      H      6     GLN     285.154046
     dtype: float64
 
@@ -196,7 +196,7 @@ def calc_sasa(
         index = (model_id, chain_id, resid, res.resname)
         result[index] = res.sasa
     res = pd.Series(result)
-    res.index.set_names(['model', 'chain', 'resi', 'resn'], inplace=True)
+    res.index.set_names(['model', 'chain', 'seqid', 'resn'], inplace=True)
     return res
 
 
