@@ -1,15 +1,19 @@
 """
 A module for converting between different sequence type.
 """
+import numpy as np
+import pandas as pd
 
 from .seqio import Fasta, read_fasta, save_fasta
-from Bio.Data import CodonTable
+from Bio.Data import CodonTable, IUPACData
 from Bio.Seq import Seq
 from .typedef import FilePathType
 from .utils import ensure_path
 from Bio.SeqRecord import SeqRecord
 from collections import OrderedDict
 from dnachisel import DnaOptimizationProblem, AvoidPattern, EnforceGCContent, EnforceTranslation, CodonOptimize
+from protools.seqanno import numbering_seq
+from typing import Iterable
 
 
 def _reverse_translate(seq: Seq, codon_table: CodonTable.CodonTable) -> Seq:
@@ -193,7 +197,7 @@ class ComplexFasta(OrderedDict):
     """
     A class for handling fasta files with multiple sequences per record.
     """
-        
+
     @staticmethod
     def read_colabfold(source: FilePathType) -> 'ComplexFasta':
         """Read a fasta file in colabfold format.
@@ -290,3 +294,146 @@ class ComplexFasta(OrderedDict):
     
     def __getitem__(self, __key: str) -> Fasta:
         return super().__getitem__(__key)
+
+
+class AntibodyPSSM(object):
+    """
+    A class for building antibody PSSM.
+
+    Parameters
+    ----------
+    pssm : np.ndarray
+        The PSSM matrix.
+    """
+
+    def __init__(self, pssm: np.ndarray = None):
+        self._pssm = pssm
+
+    @classmethod
+    def build_from_fasta(cls, fasta: Fasta, chain: str = None) -> 'AntibodyPSSM':
+        """Build PSSM from a fasta object of antibody sequences.
+
+        Parameters
+        ----------
+        fasta : Fasta
+            Input fasta object containing antibody sequences.
+        chain : str
+            Chain type, 'H' for heavy chain, 'L' for lambda/kappa light chain.
+            if sequence already aligned, set chain to None.
+
+        Returns
+        ----------
+        AntibodyPSSM
+            An instance of AntibodyPSSM with the built PSSM.
+        """
+        cls.build_from_seqs(map(str, fasta.values()), chain)
+
+    @classmethod
+    def build_from_seqs(cls, seqs: Iterable[str], chain: str = None) -> 'AntibodyPSSM':
+        """Build PSSM from a list of antibody sequences.
+
+        Parameters
+        ----------
+        seqs : Iterable[str]
+            Input sequences.
+        chain : str
+            Chain type, 'H' for heavy chain, 'L' for lambda/kappa light chain.
+            if sequence already aligned, set chain to None.
+        """
+        # Initialize a dictionary to hold frequency counts for each position
+        position_counts = {}
+
+        # Iterate over each sequence in the fasta
+        aligned_length = None
+        for seq in seqs:
+            # Get numbering using the numbering_seq function
+            if chain is not None:
+                numbering, _ = numbering_seq(seq, chain)
+            else:
+                seq_length = len(seq)
+                if aligned_length is None:
+                    aligned_length = seq_length
+                if seq_length != aligned_length:
+                    raise ValueError(
+                        "Aligned sequence length not matched."
+                    )
+                numbering = [i if s in IUPACData.protein_letters else '-' for i, s in enumerate(seq)]
+
+            # Count amino acid frequencies at each position
+            for seq_idx, num in enumerate(numbering):
+                try:
+                    # Skip non-Fv region amino acids and insertions
+                    num = int(num)
+                except ValueError:
+                    continue
+                if num not in position_counts:
+                    position_counts[num] = {aa: 0 for aa in IUPACData.protein_letters}
+                position_counts[num][seq[seq_idx]] += 1
+
+        # Convert counts to frequencies
+        pssm = []
+        for position in sorted(position_counts.keys()):
+            total = sum(position_counts[position].values())
+            frequencies = [position_counts[position][aa] / total for aa in IUPACData.protein_letters]
+            pssm.append(frequencies)
+
+        # Convert the list of frequencies to a numpy array
+        pssm_array = np.array(pssm)
+        pssm_array = np.log(pssm_array * 20 + 1e-12)
+        # Return an instance of AntibodyPSSM
+        return cls(pssm=pssm_array)
+
+    @classmethod
+    def read(cls, source: FilePathType) -> 'AntibodyPSSM':
+        with open(source, 'rb') as f:
+            pssm = np.load(f)
+        return cls(pssm)
+
+    def write(self, target: FilePathType):
+        with open(target, 'wb') as f:
+            np.save(f, self.pssm)
+
+    @property
+    def pssm(self) -> np.ndarray:
+        """The PSSM matrix."""
+        if self._pssm is None:
+            raise ValueError('PSSM not built')
+        return self._pssm
+
+    @property
+    def logits(self) -> np.ndarray:
+        """The logit matrix."""
+        return self.pssm - np.log(20)
+    
+    @property
+    def probs(self) -> np.ndarray:
+        """The protein probability matrix (PPM)."""
+        e_x = np.exp(self.logits)
+        return e_x / e_x.sum(axis=1, keepdims=True)
+    
+    def __repr__(self) -> str:
+        if self.pssm is None:
+            return 'AntibodyPSSM(None)'
+        
+        pssm_df = pd.DataFrame(self.pssm, columns=list(IUPACData.protein_letters))
+        return repr(pssm_df)
+    
+    def sample(self, seed: int = None) -> str:
+        """Sample a sequence from the PSSM.
+
+        Parameters
+        ----------
+        seed : int
+            Random seed.
+
+        Returns
+        ----------
+        str
+            Sampled sequence.
+        """
+        if seed is not None:
+            np.random.seed(seed)
+        seq = ''
+        for row in self.probs:
+            seq += np.random.choice(list(IUPACData.protein_letters), p=row)
+        return seq

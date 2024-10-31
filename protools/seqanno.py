@@ -56,6 +56,16 @@ def annotate_chain_type(fasta_file: Path):
 
 
 @require_antpack
+def numbering_seq(seq: str, chain: str) -> tuple:
+    if chain == 'H':
+        numbering, percent_identity, chain_type, err_message = _HC_ANNOTATOR.analyze_seq(seq)
+        assert chain_type == 'H', f"Chain type {chain_type} != H"
+    else:
+        numbering, percent_identity, chain_type, err_message = _LC_ANNOTATOR.analyze_seq(seq)
+        assert chain_type in ['K', 'L'], f"Chain type {chain_type} != K or L"
+    return numbering, percent_identity
+
+
 def anno_cdr(seq: str, chain: str) -> dict:
     """
     Annotate Antibody CDR regions based antpack package
@@ -73,13 +83,8 @@ def anno_cdr(seq: str, chain: str) -> dict:
     dict
         A dictionary containing CDR regions and their sequences
     """
-    if chain == 'H':
-        numbering, percent_identity, chain_type, err_message = _HC_ANNOTATOR.analyze_seq(seq)
-        assert chain_type == 'H', f"Chain type {chain_type} != H"
-    else:
-        numbering, percent_identity, chain_type, err_message = _LC_ANNOTATOR.analyze_seq(seq)
-        assert chain_type in ['K', 'L'], f"Chain type {chain_type} != K or L"
 
+    numbering, percent_identity = numbering_seq(seq, chain)
     if len(numbering) != len(seq):
         raise ValueError(f"Numbering length {len(numbering)} != sequence length {len(seq)}, {err_message}")
     res = [''] * len(IMGT_BORDERS)
