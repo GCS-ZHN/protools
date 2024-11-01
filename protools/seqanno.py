@@ -9,13 +9,9 @@ try:
 except ImportError:
     pass
 
-try:
-    require_antpack = require_package("antpack", "pip install git+https://github.com/jlparkI/AntPack")
-    from antpack import SingleChainAnnotator
-    _HC_ANNOTATOR = SingleChainAnnotator(chains=['H'], scheme='imgt')
-    _LC_ANNOTATOR = SingleChainAnnotator(chains=['K', 'L'], scheme='imgt')
-except ImportError:
-    pass
+from antpack import SingleChainAnnotator
+_HC_ANNOTATOR = SingleChainAnnotator(chains=['H'], scheme='imgt')
+_LC_ANNOTATOR = SingleChainAnnotator(chains=['K', 'L'], scheme='imgt')
 
 
 IMGT_BORDERS = [27,  39,  56,   66,  105,  118, 129]
@@ -55,7 +51,6 @@ def annotate_chain_type(fasta_file: Path):
             yield {"id": seq_id, "chain_type": "unknown"}
 
 
-@require_antpack
 def numbering_seq(seq: str, chain: str) -> tuple:
     if chain == 'H':
         numbering, percent_identity, chain_type, err_message = _HC_ANNOTATOR.analyze_seq(seq)
