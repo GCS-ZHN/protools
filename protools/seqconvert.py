@@ -437,3 +437,47 @@ class AntibodyPSSM(object):
         for row in self.probs:
             seq += np.random.choice(list(IUPACData.protein_letters), p=row)
         return seq
+
+
+def clip_a3m(a3m: Fasta, start: int = 0, end: int = None) -> Fasta:
+    """
+    Clip single a3m file
+
+
+    Parameters
+    ---------------
+    - start: int, default is 0
+            the inclusive beginning of clipped sequence.
+    
+    - end: int, default is None
+            the exclusive ending of clipped sequence.
+    """
+    items = iter(a3m.items())
+    query_id, query_seq = next(items)
+    query_seq = str(query_seq.seq)
+    if end is None:
+        end = len(query_seq)
+    if end > len(query_seq) or end <= start or start < 0:
+        raise ValueError('Invalid position for clip.')
+    
+    new_fasta = Fasta(query_id=query_seq[start:end])
+
+    for rid, seq in items:
+        seq = str(seq.seq)
+        s, e = 0, 0
+        aligned_idx = -1
+        for idx, aa in enumerate(seq):
+            if aa.isupper() or aa == '-':
+                aligned_idx += 1
+                if aligned_idx == start:
+                    s = idx
+                if aligned_idx == end - 1:
+                    e = idx + 1
+                    break
+            elif not aa.islower():
+                raise ValueError(f'Invalid symol for seq {rid} at position {idx+1}')
+        else:
+            raise RuntimeError(f'Clip failed for {rid}')
+        new_fasta[rid] = seq[s:e]
+
+    return new_fasta
