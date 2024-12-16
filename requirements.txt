@@ -4,3 +4,4 @@ tqdm
 scipy
 dnachisel
 antpack
+requests

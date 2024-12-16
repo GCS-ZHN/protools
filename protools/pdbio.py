@@ -9,12 +9,15 @@ PDB standard: https://files.wwpdb.org/pub/pdb/doc/format_descriptions/Format_v33
 from io import StringIO
 import logging
 import warnings
+import requests
+import gzip
 from pathlib import Path
 from typing import Callable, Dict, Iterable, Optional, Tuple, Union
 from collections import OrderedDict
+from itertools import product
 
 import pandas as pd
-from Bio.PDB import PDBList, PDBParser, MMCIFParser
+from Bio.PDB import PDBParser, MMCIFParser
 from Bio.PDB.Atom import Atom
 from Bio.PDB.Chain import Chain
 from Bio.PDB.Entity import Entity
@@ -30,6 +33,7 @@ from Bio.Data import PDBData
 from .seqio import save_fasta, read_seqres, Fasta
 from .typedef import FilePathType, FilePathOrIOType, StructureFragmentAAType, StructureFragmentType
 from .utils import ensure_path, ensure_fileio
+from tqdm.auto import tqdm
 
 
 __all__ = [
@@ -394,7 +398,7 @@ def save_pdb(
         raise TypeError(f"Unsupported type {type(entities[0])}")
 
 
-def download_PDB(pdb_id: str, target_path: FilePathType, server: str = 'http://ftp.wwpdb.org') -> Path:
+def fetch(pdb_id: str, target_dir: FilePathType, server: str = 'https://files.rcsb.org') -> Path:
     """
     Download a PDB file from the PDB database.
 
@@ -403,13 +407,11 @@ def download_PDB(pdb_id: str, target_path: FilePathType, server: str = 'http://f
     pdb_id : str
         PDB ID of the PDB file to download.
 
-    target_path : str
+    target_dir : str
         Path to save the downloaded PDB file.
-        If current pdb file exists, download will be skipped.
 
     server : str, optional
         URL of the PDB server to download from.
-        Default is 'http://ftp.wwpdb.org'.
 
     Returns
     ----------
@@ -421,55 +423,40 @@ def download_PDB(pdb_id: str, target_path: FilePathType, server: str = 'http://f
     FileNotFoundError
         If the PDB file could not be downloaded.
     """
-    pdbl = PDBList(server=server, verbose=False)
-    target_path = ensure_path(target_path)
-    file = pdbl.retrieve_pdb_file(pdb_id, pdir=target_path, file_format='pdb')
-    file = Path(file)
-    if not file.is_file():
-        raise FileNotFoundError(
-            f"Could not download PDB {pdb_id} to {target_path}")
-    return file
+    target_dir = ensure_path(target_dir)
+    target_dir.mkdir(exist_ok=True, parents=True)
+    file_name_format = {
+        'pdb': f'{pdb_id[1:3]}/pdb{pdb_id}.ent.gz',
+        'mmCIF': f'{pdb_id[1:3]}/{pdb_id}.cif.gz'
+    }
+    type2suffix = {
+        'pdb': '.pdb',
+        'mmCIF': '.cif'
+    }
+    tmp_file = target_dir / f'{pdb_id}.tmp'
 
+    for pdb_dir, pdb_type in product(['divided', 'obsolete'], type2suffix.keys()):
+        try:
+            url = f'{server}/pub/pdb/data/structures/{pdb_dir}/{pdb_type}/{file_name_format[pdb_type]}'
+            response = requests.get(url, stream=True)
+            response.raise_for_status()
+            total = int(response.headers.get('content-length', 0))
+            with tqdm.wrapattr(response.raw, 'read', total=total,
+                               desc=f'Downloading {pdb_id}') as stream:
+                with gzip.open(stream, mode='r') as f:
+                    with tmp_file.open('wb') as out:
+                        for chunk in iter(lambda: f.read(1024), b''):
+                            out.write(chunk)
+            path = target_dir / (pdb_id + type2suffix[pdb_type])
+            tmp_file.rename(path)
+            return path
+        except requests.HTTPError as e:
+            if e.response.status_code == 404:
+                print(f'Failed to fetch {pdb_id} [{pdb_dir}/{pdb_type}]: {e}, try other')
+                continue
+            raise e
 
-async def async_download_PDB(pdb_id: str, target_path: FilePathType, callback: Callable) -> Path:
-    """
-    Asynchronously download a PDB file from the PDB database.
-    Downloading is a IO-bound task, so it is suitable to be
-    run asynchronously.
-
-    Parameters
-    ----------
-    pdb_id : str
-        PDB ID of the PDB file to download.
-
-    target_path : str
-        Path to save the downloaded PDB file.
-        If current pdb file exists, download will be skipped.
-
-    callback : Callable
-        Callback function to be called after the download
-        is finished, no arguments are passed to the callback;
-        if the download failed, the PDB ID will be passed.
-
-    Returns
-    ----------
-    file : Path
-        Path to the downloaded PDB file.
-
-    Notes
-    ----------
-    This function is not thread-safe, so it should be run
-    in a single thread. Downloading failed will not raise
-    an exception, which is different from the method 
-    `download_PDB`.
-    """
-    try:
-        file = download_PDB(pdb_id, target_path)
-        callback()
-        return file
-    except RuntimeError as e:
-        callback(pdb_id)
-        logging.error(e)
+    raise FileNotFoundError(f'Failed to fetch {pdb_id}')
 
 
 def read_pdb_seq(entity: StructureFragmentType, standard: bool = True, unknown_aa:str = 'X') -> Iterable[Tuple[str, str, Seq]]:
@@ -864,28 +851,6 @@ if __name__ == "__main__":
     help_parser.add_argument(
         "command", type=str, help="Subcommand to show help for")
 
-    # add subcommand 'download'
-    download_parser = subparsers.add_parser("download")
-
-    pdb_id_group = download_parser.add_mutually_exclusive_group(required=True)
-    pdb_id_group.add_argument(
-        "--pdb_ids",
-        "-i",
-        nargs="+",
-        help="PDB IDs to download")
-    pdb_id_group.add_argument(
-        "--pdb_id_file",
-        "-f",
-        type=str,
-        help="Path to a file containing PDB IDs to download")
-
-    download_parser.add_argument(
-        "--target_path",
-        "-d",
-        type=str,
-        default=".",
-        help="Path to save the downloaded PDB files")
-
     # add subcommand 'pdb2fasta'
     pdb2fasta_parser = subparsers.add_parser("pdb2fasta")
     pdb2fasta_parser.add_argument(
@@ -922,38 +887,6 @@ if __name__ == "__main__":
 
     if args.cmd == "help":
         subparsers.choices[args.command].print_help()
-
-    elif args.cmd == "download":
-        if args.pdb_ids is not None:
-            pdb_ids = args.pdb_ids
-        else:
-            with open(args.pdb_id_file, "r") as fp:
-                pdb_ids = [line.strip() for line in fp]
-
-        for pid in pdb_ids:
-            if len(pid) != 4:
-                raise ValueError(f"Invalid pdbid {pid}")
-
-        output_path = ensure_path(args.target_path)
-        if not output_path.exists():
-            output_path.mkdir(parents=True, exist_ok=True)
-        elif not output_path.is_dir():
-            raise FileNotFoundError(
-                f"Target path {args.target_path} is not a directory")
-
-        process_bar = tqdm(total=len(pdb_ids), desc="Downloading PDB files")
-        download_failed = []
-
-        def callback(*args):
-            if len(args) > 0:
-                download_failed.append(args[0])
-            process_bar.update(1)
-
-        tasks = [async_download_PDB(pdb_id, str(
-            output_path), callback) for pdb_id in pdb_ids]
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(asyncio.gather(*tasks))
-        process_bar.close()
 
     elif args.cmd == "pdb2fasta":
         pdb2fasta(
