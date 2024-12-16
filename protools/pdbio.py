@@ -45,6 +45,9 @@ __all__ = [
     'pdb2df']
 
 
+BACKBONE_ATOMS = ('N', 'CA', 'C', 'O')
+
+
 def _basic_pdb_column_format(line: str) -> str:
     line = line.strip()
     if len(line) > 80:
@@ -66,9 +69,12 @@ def is_aa(residue: Residue) -> bool:
     is_aa : bool
         Whether the residue is an amino acid.
     """
-    if residue.get_resname() in PDBData.protein_letters_3to1_extended: 
+    if residue.get_resname() in PDBData.protein_letters_3to1_extended:
+        if any(map(lambda x: x not in residue, BACKBONE_ATOMS)):
+            warnings.warn(
+                f"Residue {residue.get_resname()} at {residue.id} not found some backbone atoms.")
         return True
-    if 'N' in residue and 'CA' in residue and 'C' in residue and 'O' in residue:
+    if all(map(lambda x: x in residue, BACKBONE_ATOMS)):
         warnings.warn(
 f"Residue {residue.get_resname()} has all amino acid backbone atom name, \
 but is not in the amino acid list. We assume it is an amino acid, \
