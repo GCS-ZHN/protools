@@ -12,8 +12,15 @@ except ImportError:
     pass
 
 from antpack import SingleChainAnnotator
-_HC_ANNOTATOR = SingleChainAnnotator(chains=['H'], scheme='imgt')
-_LC_ANNOTATOR = SingleChainAnnotator(chains=['K', 'L'], scheme='imgt')
+
+_ANTIBODY_HC_IDS = ['H']
+_ANTIBODY_LC_IDS = ['K', 'L']
+_TCR_HC_IDS = ['B', 'D']
+_TCR_LC_IDS = ['A', 'G']
+_ANTIBODY_HC_ANNOTATOR = SingleChainAnnotator(chains=_ANTIBODY_HC_IDS, scheme='imgt')
+_ANTIBODY_LC_ANNOTATOR = SingleChainAnnotator(chains=_ANTIBODY_LC_IDS, scheme='imgt')
+_TCR_HC_ANNOTATOR = SingleChainAnnotator(chains=_TCR_HC_IDS, scheme='imgt')
+_TCR_LC_ANNOTATOR = SingleChainAnnotator(chains=_TCR_LC_IDS, scheme='imgt')
 
 
 IMGT_BORDERS = [27, 39, 56, 66, 105, 118, 129]
@@ -54,17 +61,20 @@ def annotate_chain_type(fasta_file: Path):
             yield {"id": seq_id, "chain_type": "unknown"}
 
 
-def numbering_seq(seq: str, chain: str) -> tuple:
+def numbering_seq(seq: str, chain: str, is_tcr: bool = False) -> tuple:
     if chain == 'H':
-        numbering, percent_identity, chain_type, err_message = _HC_ANNOTATOR.analyze_seq(seq)
-        assert chain_type == 'H', f"Chain type {chain_type} != H"
+        annnotator = _TCR_HC_ANNOTATOR if is_tcr else _ANTIBODY_HC_ANNOTATOR
+        valid_chains = _TCR_HC_IDS if is_tcr else _ANTIBODY_HC_IDS
     else:
-        numbering, percent_identity, chain_type, err_message = _LC_ANNOTATOR.analyze_seq(seq)
-        assert chain_type in ['K', 'L'], f"Chain type {chain_type} != K or L"
+        annnotator = _TCR_LC_ANNOTATOR if is_tcr else _ANTIBODY_LC_ANNOTATOR
+        valid_chains = _TCR_LC_IDS if is_tcr else _ANTIBODY_LC_IDS
+    
+    numbering, percent_identity, chain_type, err_message = annnotator.analyze_seq(seq)
+    assert chain_type in valid_chains, f"Chain type {chain_type} not in {valid_chains}, detail: {err_message}"
     return numbering, percent_identity
 
 
-def anno_cdr(seq: str, chain: str) -> dict:
+def anno_cdr(seq: str, chain: str, is_tcr: bool = False) -> dict:
     """
     Annotate Antibody CDR regions based antpack package
 
@@ -76,13 +86,16 @@ def anno_cdr(seq: str, chain: str) -> dict:
     chain : str
         Chain type, 'H' for heavy chain, 'K' for kappa light chain, 'L' for lambda light chain
 
+    is_tcr: str
+        Whether the sequence is TCR or not. Default is False. supported since antpack v0.3.8
+
     Returns
     ----------
     dict
         A dictionary containing CDR regions and their sequences
     """
 
-    numbering, percent_identity = numbering_seq(seq, chain)
+    numbering, percent_identity = numbering_seq(seq, chain, is_tcr=is_tcr)
     if len(numbering) != len(seq):
         raise ValueError(f"Numbering length {len(numbering)} != sequence length {len(seq)}")
     res = [''] * len(IMGT_BORDERS)
