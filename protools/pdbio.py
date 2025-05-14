@@ -7,12 +7,12 @@ PDB standard: https://files.wwpdb.org/pub/pdb/doc/format_descriptions/Format_v33
 """
 
 from io import StringIO
-import logging
 import warnings
+import numpy as np
 import requests
 import gzip
 from pathlib import Path
-from typing import Callable, Dict, Iterable, Optional, Tuple, Union
+from typing import Dict, Iterable, List, Optional, Tuple, Union
 from collections import OrderedDict
 from itertools import product
 
@@ -28,7 +28,7 @@ from Bio.PDB.Structure import Structure
 from Bio.PDB.Chain import Chain
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
-from Bio.Data import PDBData
+from Bio.Data import PDBData, IUPACData
 
 from .seqio import save_fasta, read_seqres, Fasta
 from .typedef import FilePathType, FilePathOrIOType, StructureFragmentAAType, StructureFragmentType
@@ -836,6 +836,59 @@ def generate_missing_atoms_remarks(data: pd.DataFrame) -> Dict[int, list]:
         ))
     return {470: remarks}
 
+
+def coord2chain(
+        coord: np.ndarray, seq: str, chain_id: str = 'A', atoms: List[str] = None,
+        init_residue_number: int = 1, init_serial_number: int = 1) -> Chain:
+    """
+    Convert coordinates to a Chain object. It's useful to build a new structure
+    from scratch.
+
+    Parameters
+    ----------
+    coord : np.ndarray
+        Coordinates of the atoms.
+    seq : str
+        Sequence of the chain.
+    chain_id : str, optional
+        ID of the chain, by default 'A'.
+    atoms : List[str], optional
+        List of atom names, by default None.
+    init_residue_number : int, optional
+       Initial residue number, by default 1.
+    init_serial_number : int, optional
+        Initial serial number, by default 1.
+
+
+    Returns
+    ----------
+    chain : Chain
+        Chain object with the coordinates and sequence.
+    """
+    if atoms is None:
+        atoms = BACKBONE_ATOMS
+    chain = Chain(chain_id)
+    coord = coord.reshape(len(seq), len(atoms), 3).astype(np.float32)
+    serial_number = init_serial_number
+    for res_idx, res_letter in enumerate(seq):
+        res_name = IUPACData.protein_letters_1to3[res_letter.upper()].upper()
+        residue = Residue((' ', res_idx + init_residue_number, ' '), res_name, '    ')
+        chain.add(residue)
+        residue_coord = coord[res_idx]
+        for atom_idx, atom_name in enumerate(atoms):
+            atom = Atom(
+                name=atom_name,
+                coord=residue_coord[atom_idx],
+                bfactor=0.0,
+                occupancy=1.0,
+                altloc=' ',
+                fullname=f' {atom_name:<3s}',
+                serial_number=serial_number,
+                element=atom_name[0],
+            )
+            residue.add(atom)
+            serial_number += 1
+    return chain
 
 
 if __name__ == "__main__":
