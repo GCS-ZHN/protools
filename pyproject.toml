@@ -26,7 +26,7 @@ dependencies = [
     "tqdm",
     "scipy",
     "dnachisel",
-    "antpack>=0.3.8",
+    "antpack>=0.3.8,<0.3.9",
     "requests"
 ]
 dynamic = ["version"]
