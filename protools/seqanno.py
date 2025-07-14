@@ -11,7 +11,7 @@ try:
 except ImportError:
     pass
 
-from antpack import SingleChainAnnotator
+from antpack import SingleChainAnnotator, VJGeneTool
 
 _ANTIBODY_HC_IDS = ['H']
 _ANTIBODY_LC_IDS = ['K', 'L']
@@ -71,7 +71,7 @@ def numbering_seq(seq: str, chain: str, is_tcr: bool = False) -> tuple:
     
     numbering, percent_identity, chain_type, err_message = annnotator.analyze_seq(seq)
     assert chain_type in valid_chains, f"Chain type {chain_type} not in {valid_chains}, detail: {err_message}"
-    return numbering, percent_identity
+    return numbering, percent_identity, chain_type, err_message
 
 
 def anno_cdr(seq: str, chain: str, is_tcr: bool = False) -> dict:
@@ -95,7 +95,7 @@ def anno_cdr(seq: str, chain: str, is_tcr: bool = False) -> dict:
         A dictionary containing CDR regions and their sequences
     """
 
-    numbering, percent_identity = numbering_seq(seq, chain, is_tcr=is_tcr)
+    numbering, percent_identity, _, _ = numbering_seq(seq, chain, is_tcr=is_tcr)
     if len(numbering) != len(seq):
         raise ValueError(f"Numbering length {len(numbering)} != sequence length {len(seq)}")
     res = [''] * len(IMGT_BORDERS)
@@ -182,6 +182,59 @@ def anno_tcr_cdr(seq: str) -> dict:
             result[name] = seq[border]
         result[name + '_slice'] = border
     return result
+
+
+def anno_vj_gene(seq: str,
+                 chain_type: str,
+                 species: str,
+                 is_tcr: bool = False) -> dict:
+    """
+    Annotate VJ gene for antibody or TCR sequence.
+    
+    Parameters
+    ----------
+    seq : str
+        Amino acid sequence of antibody or TCR.
+    
+    chain_type : str
+        Chain type, 'H' for heavy chain, 'K' for kappa light chain, 'L' for lambda light chain,
+        'A' for alpha TCR chain, 'B' for beta TCR chain, 'D' for delta TCR chain, 'G' for gamma TCR chain.
+    species : str
+        Species of the sequence, can be 'human', 'mouse', 'alpaca', 'rabbit', or 'unknown'.
+        if is_tcr is True, species must be 'human', 'mouse', or 'unknown'.
+    is_tcr : bool
+        Whether the sequence is TCR or not. Default is False.
+    Returns
+    -------
+    dict
+        A dictionary containing VJ gene information.
+    """
+    vj_tool = VJGeneTool()
+    alignment = numbering_seq(seq, chain_type, is_tcr=is_tcr)
+    if is_tcr:
+        assert species in ['human', 'mouse', 'unknown'], \
+            "Species must be 'human', 'mouse' or 'unknown' for TCR"
+    else:
+        assert species in ['human', 'mouse', 'alpaca', 'rabbit', 'unknown'], \
+            "Species must be 'human', 'mouse', 'alpaca', 'rabbit' or 'unknown' for antibody"
+    v_gene, j_gene, v_pident, j_pident, species_matched = vj_tool.assign_vj_genes(
+        alignment=alignment,
+        sequence=seq,
+        species=species,
+        mode='identity'
+    )
+    if species != 'unknown':
+        assert species_matched == species, \
+            f"Species {species_matched} does not match the input species {species}"
+    v_genes = v_gene.split('_')
+    j_genes = j_gene.split('_')
+    return {
+        'v_genes': v_genes if len(v_genes) > 1  else v_genes[0],
+        'j_genes': j_genes if len(j_genes) > 1 else j_genes[0],
+        'v_pident': v_pident,
+        'j_pident': j_pident,
+        'species': species_matched,
+    }
 
 
 if __name__ == "__main__":
