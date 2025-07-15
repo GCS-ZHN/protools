@@ -698,14 +698,28 @@ def read_residue(pdb: Union[FilePathType, str, Entity], mode='centroid') -> pd.D
     raise ValueError('mode must be one of "centroid", "fuc", "CA"')
 
 
-def read_remarks(pdbfile: Path) -> Dict[int, str]:
+def read_remarks(pdbfile: Path, ignore_non_standard: bool = False) -> Dict[int, str]:
     """
     Read all remarks defined in PDB.
+
+    Parameters
+    ----------
+    pdbfile : Path
+        Path to the PDB file.
+    ignore_non_standard : bool, optional
+        If True, ignore remarks that are not standard PDB remarks.
+
+    Returns
+    ----------
+    remarks : Dict[int, str]
+        A dictionary where the keys are the remark type codes
     """
     remarks = {}
     with open(pdbfile) as f:
         for line in f:
             if line.startswith('REMARK'):
+                if ignore_non_standard and not line[7:10].isdigit():
+                    continue
                 remark_type_code = int(line[7:10])
                 remark_content = line[11:]
                 if remark_type_code not in remarks:
