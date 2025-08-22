@@ -523,9 +523,9 @@ class Intervals(object):
         res.dynamic = dynamic
         return res
 
-    def reverse(self, low: int = None, high: int = None) -> 'Intervals':
+    def invert(self, low: int = None, high: int = None) -> 'Intervals':
         """
-        Reverse the intervals.
+        Invert the intervals.
 
         Parameters
         ----------
@@ -561,6 +561,20 @@ class Intervals(object):
             end_inclusive=self.end_inclusive)
         new_interval = new_interval.intersect(bound_interval)
         return new_interval
+
+    def union(self, other: 'Intervals') -> 'Intervals':
+        """
+        Calculate the union of two intervals.
+
+        Parameters
+        ----------
+        other : Intervals
+            The other intervals to be united with.
+        """
+        return self.__class__.from_slices(
+            self._interval_slices + other._interval_slices,
+            zero_based=self.zero_based,
+            end_inclusive=self.end_inclusive)
 
     def __str__(self):
         patterns = []
@@ -646,3 +660,12 @@ class Intervals(object):
             value = self.__class__.from_slices([value])
             return self.__contains__(value)
         raise TypeError('Element value must be int, slice or Intervals')
+
+    def __invert__(self) -> 'Intervals':
+        """
+        Default behavior of `~` operator is to invert the intervals.
+        """
+        return self.invert()
+
+    __and__ = intersect
+    __or__ = union

@@ -157,7 +157,7 @@ def chain_split(
     matches = pattern.finditer(aa_sequence)
     linker_slices = [slice(*m.span()) for m in matches]
     linker_intervals = utils.Intervals.from_slices(linker_slices)
-    new_chain_intervals = linker_intervals.reverse(high=sequence_size)
+    new_chain_intervals = linker_intervals.invert(high=sequence_size)
     new_chains = []
     idx = 0
     for interval in new_chain_intervals:

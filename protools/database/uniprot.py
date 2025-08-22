@@ -119,7 +119,7 @@ def extract_extracellular_chains(record: SwissProt.Record) -> pd.DataFrame:
         return pd.DataFrame(results)
 
     for extracellular in Intervals.from_slices(
-            non_extracellular_slices).reverse(high=len(record.sequence)):
+            non_extracellular_slices).invert(high=len(record.sequence)):
         extracellular_seq = record.sequence[extracellular]
         results.append({
             'seq': extracellular_seq,
