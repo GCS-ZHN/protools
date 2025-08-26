@@ -496,6 +496,14 @@ class Intervals(object):
             interval_slices.append(slice(start, stop))
         return self._merge_intervals(interval_slices)
 
+    def size(self) -> int:
+        """
+        Return intervals' total size.
+        """
+        if self.dynamic:
+            raise ValueError("Dynamic interval does not have length")
+        return sum([i.stop - i.start for i in self._interval_slices])
+
     def intersect(self, intervals: 'Intervals') -> 'Intervals':
         """
         Calculate the intersection of two intervals.
@@ -596,14 +604,6 @@ class Intervals(object):
 
     def __repr__(self):
         return f"'{self}' (zero_based={self.zero_based}, end_inclusive={self.end_inclusive}, dynamic={self.dynamic})"
-
-    def size(self) -> int:
-        """
-        Return intervals' total size.
-        """
-        if self.dynamic:
-            raise ValueError("Dynamic interval does not have length")
-        return sum([i.stop - i.start for i in self._interval_slices])
 
     def __eq__(self, other: 'Intervals') -> bool:
         return self._interval_slices == other._interval_slices
