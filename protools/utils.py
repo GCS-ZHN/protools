@@ -504,6 +504,32 @@ class Intervals(object):
             raise ValueError("Dynamic interval does not have length")
         return sum([i.stop - i.start for i in self._interval_slices])
 
+    def create_view_symbol(self, seq: str, mark_symbol: str = '*', other_symbol: str = ' ') -> str:
+        """
+        Create a view symbol for the intervals in a sequence.
+
+        Parameters
+        ----------
+        seq : str
+            The sequence to create the view symbol.
+        mark_symbol : str, optional
+            The symbol to mark the intervals. Default is '*'.
+        other_symbol : str, optional
+            The symbol to mark the other positions. Default is ' '.
+
+        Returns
+        -------
+        str
+            The view symbol of the intervals in the sequence.
+        """
+        seq_len = len(seq)
+        marks = [other_symbol] * seq_len
+        for interval in self._interval_slices:
+            stop = seq_len if interval.stop is None else min(seq_len, interval.stop)
+            for i in range(interval.start, stop):
+                marks[i] = mark_symbol
+        return ''.join(marks)
+
     def intersect(self, intervals: 'Intervals') -> 'Intervals':
         """
         Calculate the intersection of two intervals.
