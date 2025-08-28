@@ -30,7 +30,7 @@ def aa_heatmap(
         display_intervals: Optional[Intervals] = None,
         title: Optional[str] = None,
         ax: Optional[plt.Axes] = None,
-        height: int = 10) -> plt.Axes:
+        height: float = 10.0) -> plt.Axes:
     """
     Draw a heatmap of amino acid sequences.
 
@@ -53,7 +53,7 @@ def aa_heatmap(
     ax : Optional[plt.Axes], default=None
         Matplotlib Axes to plot on. If None, a new figure and axes will be
         created.
-    height : int, default=10
+    height : float, default=10.0
         Height of the figure if a new figure is created.
     """
 
@@ -93,7 +93,9 @@ def aa_heatmap(
     )
 
     if ax is None:
-        fig, ax = plt.subplots(figsize=(len(positions) * height // 20, height))
+        fig, ax = plt.subplots(figsize=(len(positions) * height / 20, height))
+    else:
+        height = ax.figure.get_size_inches()[1]
 
     ax = sns.heatmap(
         probs,
