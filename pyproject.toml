@@ -27,7 +27,8 @@ dependencies = [
     "scipy",
     "dnachisel",
     "antpack>=0.3.8,<0.3.9",
-    "requests"
+    "requests",
+    "seaborn"
 ]
 dynamic = ["version"]
 
