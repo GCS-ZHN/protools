@@ -8,7 +8,7 @@ import logging
 import warnings
 
 from pathlib import Path
-from typing import Optional, List, Callable
+from typing import Optional, List, Callable, Generator
 from io import IOBase
 from .typedef import FilePathType, FilePathOrIOType
 from collections import namedtuple
@@ -595,6 +595,18 @@ class Intervals(object):
             end_inclusive=self.end_inclusive)
         new_interval = new_interval.intersect(bound_interval)
         return new_interval
+
+    def iterpos(self) -> Generator[int, None, None]:
+        """
+        Iterate the 0-based positions in the intervals.
+
+        Yields
+        ------
+        int
+            The 0-based position in the intervals.
+        """
+        for s in self:
+            yield from range(s.start, s.stop)
 
     def union(self, other: 'Intervals') -> 'Intervals':
         """
