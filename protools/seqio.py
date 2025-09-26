@@ -3,11 +3,12 @@ import tempfile
 import csv
 
 from Bio import SeqIO
+from Bio.SeqIO import FastaIO
 from Bio.Seq import Seq 
 from Bio.SeqRecord import SeqRecord
 from Bio.PDB.MMCIF2Dict import MMCIF2Dict
 from pathlib import Path
-from typing import Iterable, Union, Dict, Tuple, Optional
+from typing import Generator, Iterable, Union, Dict, Tuple, Optional
 from collections import OrderedDict
 from itertools import product
 
@@ -101,6 +102,14 @@ class Fasta(OrderedDict):
         """
         save_fasta(self.values(), 
             path=path, mkdir=mkdir, mode=mode, **kwargs)
+
+    def to_fasta_str(self, two_line_mode = False) -> Generator[str, None, None]:
+        """
+        Generate fasta format for each record.
+        """
+        fmt_func = FastaIO.as_fasta_2line if two_line_mode else FastaIO.as_fasta
+        for v in self.values():
+            yield fmt_func(v)
 
     def to_csv(self, path: FilePathOrIOType,
                mkdir: bool = False, mode: str = 'w'):
