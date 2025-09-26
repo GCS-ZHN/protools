@@ -5,8 +5,8 @@ from typing import Iterable
 
 import pandas as pd
 
-from ..seqio import read_fasta, save_fasta, temp_fasta
-from ..utils import CmdWrapperBase
+from protools.seqio import read_fasta, save_fasta, temp_fasta
+from protools.utils import CmdWrapperBase
 
 
 def _iter_cluster(cluster_file: str) -> Iterable[dict]:
