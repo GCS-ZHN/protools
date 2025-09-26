@@ -8,7 +8,7 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio.PDB.MMCIF2Dict import MMCIF2Dict
 from pathlib import Path
-from typing import Generator, Iterable, Union, Dict, Tuple, Optional
+from typing import Iterable, Union, Dict, Tuple, Optional
 from collections import OrderedDict
 from itertools import product
 
@@ -103,7 +103,7 @@ class Fasta(OrderedDict):
         save_fasta(self.values(), 
             path=path, mkdir=mkdir, mode=mode, **kwargs)
 
-    def to_fasta_str(self, two_line_mode = False) -> Generator[str, None, None]:
+    def to_fasta_str(self, two_line_mode = False) -> Iterable[str]:
         """
         Generate fasta format for each record.
         """
@@ -343,7 +343,7 @@ def read_mmcif_seqres(path: Path, auth: bool = True) -> Dict[str, Iterable[str]]
     return data
 
 
-def read_seqres(path: Path, auth: bool = True) -> Fasta:
+def read_seqres(path: FilePathType, auth: bool = True) -> Fasta:
     """
     Read sequence from PDB or mmCIF file.
     Extended from BioPython. Only support
@@ -351,7 +351,7 @@ def read_seqres(path: Path, auth: bool = True) -> Fasta:
 
     Parameters
     ----------
-    path : Path
+    path : FilePathType
         The path of the PDB or mmCIF file.
     auth : bool, optional
         Whether to use the auth chain id.
@@ -369,8 +369,7 @@ def read_seqres(path: Path, auth: bool = True) -> Fasta:
     return one-letter amino acid sequence as Fasta object,
     which may result in loss of information.
     """
-    if not isinstance(path, Path):
-        path = Path(path)
+    path = ensure_path(path)
     if path.suffix.lower() == '.pdb':
         seqres = SeqIO.parse(path, 'pdb-seqres')
         seqres_iter = (

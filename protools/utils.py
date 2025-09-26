@@ -8,7 +8,7 @@ import logging
 import warnings
 
 from pathlib import Path
-from typing import Dict, Optional, List, Callable, Generator
+from typing import Dict, Iterable, Optional, List, Callable
 from io import IOBase
 from protools.typedef import FilePathType, FilePathOrIOType
 from collections import namedtuple
@@ -642,7 +642,7 @@ class Intervals(object):
         new_interval = new_interval.intersect(bound_interval)
         return new_interval
 
-    def iterpos(self) -> Generator[int, None, None]:
+    def iterpos(self) -> Iterable[int]:
         """
         Iterate the 0-based positions in the intervals.
 

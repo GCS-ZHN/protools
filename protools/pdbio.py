@@ -463,7 +463,7 @@ def read_pdb_seq(entity: StructureFragmentType, standard: bool = True, unknown_a
     """
     Extract the sequence of a S.
 
-    Parameters
+    Yields
     ----------
     entity : StructureFragmentType
         Structure, Model or Chain object.
@@ -472,10 +472,9 @@ def read_pdb_seq(entity: StructureFragmentType, standard: bool = True, unknown_a
     unknown_aa : str, optional
         Symbol to represent unknown amino acids, by default 'X'.
 
-    Returns
-    ----------
-    seq_iter : Iterable[Tuple[str, str, Seq]]
-        An iterable of tuples (model_id, chain_id, seq).
+    Yields
+    ------
+    An tuples (model_id, chain_id, seq).
     """
     if entity.level not in ['S', 'M', 'C']:
         raise ValueError("Require Structure, Model or Chain object")
@@ -574,12 +573,21 @@ def pdb2seq(path: FilePathType) -> Fasta:
     fasta : Fasta
         Fasta object of the PDB file.
     """
-    seqs = read_seqres(path)
-    if len(seqs) == 0:
-        seqs = read_pdb_seq(get_structure(path))
-        seqs = Fasta((x[1], x[2]) for x in seqs)
+    path = ensure_path(path)
+    if path.is_dir():
+        paths = filter(lambda x: x.suffix.lower() in ['.pdb', '.cif'] and x.is_file, path.iterdir())
+    else:
+        paths = [path]
+    seqs = Fasta()
+    for p in paths:
+        s = read_seqres(p)
+        if len(s) == 0:
+            s = read_pdb_seq(get_structure(p))
+            s = ((x[1], x[2]) for x in s)
+        else:
+            s = ((k, v.seq) for k, v in s.items())
+        seqs.update({f"{p.stem}_{k}": v for k, v in s})
     return seqs
-
 
 def pdb2df(entity: Union[Structure, Model, Chain, Residue], *extra_attrs: str) -> pd.DataFrame:
     """
