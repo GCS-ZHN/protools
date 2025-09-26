@@ -136,6 +136,23 @@ class CmdWrapperBase(object):
         Whether the boolean value will be converted to flag.
         If it is True, the boolean argument will be converted
         to a flag without value.
+        For example, `flag=True` will be converted to `--flag`,
+        and `flag=False` will be ignored.
+        Default is False.
+    list2nargs : bool, optional
+        Whether the list or tuple value will be converted to
+        multiple arguments.
+        If it is True, the list or tuple argument will be converted
+        to multiple arguments.
+        For example, `arg=[1, 2, 3]` will be converted
+        to `--arg 1 2 3`.
+    underline2hyphen : bool, optional
+        Whether the underline in the argument name will be
+        converted to hyphen.
+        If it is True, the underline in the argument name will be
+        converted to hyphen.
+        For example, `arg_name` will be converted to `--arg-name`.
+        Default is True.
     """
     def __init__(self, 
                  cmd: str,
@@ -143,12 +160,14 @@ class CmdWrapperBase(object):
                  num_workers: int = 1,
                  install_help: Optional[str] = None,
                  list2nargs: bool = True,
-                 bool2flag: bool = False):
+                 bool2flag: bool = False,
+                 underline2hyphen: bool = False):
         self.cmd = self.find_command(cmd, install_help)
         self.short_mode = short_mode
         self.semaphore = asyncio.Semaphore(num_workers)
         self.bool2flag = bool2flag
         self.list2nargs = list2nargs
+        self.underline2hyphen = underline2hyphen
 
     @classmethod
     def _check_mod(cls, cmd) -> str:
@@ -198,6 +217,8 @@ class CmdWrapperBase(object):
         cmds = [self.cmd]
         cmds.extend(map(str, args))
         for k, v in kwargs.items():
+            if self.underline2hyphen:
+                k = k.replace('_', '-')
             if len(k) == 1 or self.short_mode:
                 cmds.append(f'-{k}')
             else:
@@ -318,9 +339,13 @@ class CmdWrapperBase(object):
                 f"'{self.__class__.__name__}' object has no attribute '{name}'")
         if name.startswith('async_'):
             name = name[6:]
+            if self.underline2hyphen:
+                name = name.replace('_', '-')
             async def wrapper(*args, **kwargs):
                 return await self.async_call(name, *args, **kwargs)
         else:
+            if self.underline2hyphen:
+                name = name.replace('_', '-')
             def wrapper(*args, **kwargs):
                 return self(name, *args, **kwargs)
         return wrapper
