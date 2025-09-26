@@ -8,9 +8,9 @@ import logging
 import warnings
 
 from pathlib import Path
-from typing import Optional, List, Callable, Generator
+from typing import Dict, Optional, List, Callable, Generator
 from io import IOBase
-from .typedef import FilePathType, FilePathOrIOType
+from protools.typedef import FilePathType, FilePathOrIOType
 from collections import namedtuple
 from contextlib import contextmanager
 
@@ -235,12 +235,13 @@ class CmdWrapperBase(object):
     
     def __call__(
             self, 
-            *args, 
-            stdout=None,
-            stderr=None,
-            stdin=None,
-            cwd=None,
-            env=None,
+            *args,
+            pipe_input: Optional[bytes] = None,
+            stdout: Optional[IOBase] = None,
+            stderr: Optional[IOBase] = None,
+            stdin: Optional[IOBase] = None,
+            cwd: Optional[FilePathType] = None,
+            env: Optional[Dict[str, str]] = None,
             **kwargs):
         """
         Run the command.
@@ -249,6 +250,8 @@ class CmdWrapperBase(object):
         ----------
         *args
             The positional arguments.
+        pipe_input
+            The input to be passed to the command's stdin.
         stdout
             The stdout of the command. See subprocess.run for more details.
         stderr
@@ -264,7 +267,8 @@ class CmdWrapperBase(object):
         """
         cmds = self._format_args(*args, **kwargs)
         process = subprocess.run(
-            cmds, 
+            cmds,
+            input=pipe_input,
             stdout=stdout, 
             stderr=stderr, 
             stdin=stdin,
@@ -276,9 +280,12 @@ class CmdWrapperBase(object):
     async def async_call(
             self, 
             *args,
-            stdout=None,
-            stderr=None,
-            stdin=None,
+            pipe_input: Optional[bytes] = None,
+            stdout: Optional[IOBase] = None,
+            stderr: Optional[IOBase] = None,
+            stdin: Optional[IOBase] = None,
+            cwd: Optional[FilePathType] = None,
+            env: Optional[Dict[str, str]] = None,
             **kwargs) -> AsyncCompletedProcess:
         """
         Run the command asynchronously.
@@ -289,12 +296,18 @@ class CmdWrapperBase(object):
         ----------
         *args
             The positional arguments.
+        pipe_input
+            The input to be passed to the command's stdin.
         stdout
             The stdout of the command. See subprocess.run for more details.
         stderr
             The stderr of the command. See subprocess.run for more details.
         stdin
             The stdin of the command. See subprocess.run for more details.
+        cwd
+            The current working directory of the command.
+        env
+            The environment variables of the command.
         **kwargs
             The keyword arguments.
 
@@ -303,14 +316,22 @@ class CmdWrapperBase(object):
         AsyncCompletedProcess
             The result of the command.
         """
+        # asyncio subprocess not check pipe_input and stdin, 
+        # so we need to check them here
+        if pipe_input is not None:
+            if stdin is not None:
+                raise ValueError('stdin and pipe_input cannot be set at the same time.')
+            stdin = subprocess.PIPE
         async with self.semaphore:
             cmds = self._format_args(*args, **kwargs)
             process = await asyncio.create_subprocess_exec(
                 *cmds, 
                 stdout=stdout, 
                 stderr=stderr, 
-                stdin=stdin)
-            async_stdout, async_stderr = await process.communicate()
+                stdin=stdin,
+                cwd=cwd,
+                env=env)
+            async_stdout, async_stderr = await process.communicate(input=pipe_input)
             return AsyncCompletedProcess(async_stdout, async_stderr)
     
     def __getattr__(self, name: str):
