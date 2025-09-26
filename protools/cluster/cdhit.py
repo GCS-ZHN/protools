@@ -5,8 +5,8 @@ from typing import Iterable
 
 import pandas as pd
 
-from .seqio import read_fasta, save_fasta, temp_fasta
-from .utils import CmdWrapperBase
+from ..seqio import read_fasta, save_fasta, temp_fasta
+from ..utils import CmdWrapperBase
 
 
 def _iter_cluster(cluster_file: str) -> Iterable[dict]:
@@ -46,9 +46,14 @@ def parse_cluster(cluster_file: Path) -> pd.DataFrame:
     return pd.DataFrame(_iter_cluster(cluster_file))
 
 class CdHit(CmdWrapperBase):
-    
-    def __init__(self, cmd: str = 'cd-hit'):
-        super().__init__(cmd)
+    """
+    A Basical wrapper for CD-HIT command line tool.
+    """
+    def __init__(self, cmd: str = 'cd-hit', num_workers: int = 1):
+        super().__init__(
+            cmd,
+            num_workers=num_workers,
+            install_help="Please refer to https://github.com/weizhongli/cdhit for installation instructions.")
     
     def __call__(self, 
             input_file: Path,
