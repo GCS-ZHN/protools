@@ -64,9 +64,16 @@ class MMseqs2(CmdWrapperBase):
                  threads=threads,
                  cov_mode=coverage_mode,
                  **kwargs)
-            self.createtsv(db_path, clu_path, tsv_path, threads=threads)
+            idx2name = dict(enumerate(seqs.keys()))
+            self.createtsv(db_path, clu_path, tsv_path,
+                        threads=threads, first_seq_as_repr=1)
             df = pd.read_table(tsv_path, header=None,
                              names=['cluster_id', 'sequence_id'])
+            df['cluster_id'] = df['cluster_id'].map(idx2name)
+            df['sequence_id'] = df['sequence_id'].map(idx2name)
+            for n, d in df.groupby('cluster_id'):
+                assert n == d['cluster_id'].iloc[0], \
+                f"cluster {d}'s first seq is not repr seq {n}"
             if output:
                 df.to_csv(output, index=False)
             return df
