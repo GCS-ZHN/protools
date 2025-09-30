@@ -30,9 +30,9 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio.Data import PDBData, IUPACData
 
-from .seqio import save_fasta, read_seqres, Fasta
-from .typedef import FilePathType, FilePathOrIOType, StructureFragmentAAType, StructureFragmentType
-from .utils import ensure_path, ensure_fileio
+from protools.seqio import save_fasta, read_seqres, Fasta
+from protools.typedef import FilePathType, FilePathOrIOType, StructureFragmentAAType, StructureFragmentType
+from protools.utils import ensure_path, ensure_fileio
 from tqdm.auto import tqdm
 
 
@@ -589,13 +589,13 @@ def pdb2seq(path: FilePathType) -> Fasta:
         seqs.update({f"{p.stem}_{k}": v for k, v in s})
     return seqs
 
-def pdb2df(entity: Union[Structure, Model, Chain, Residue], *extra_attrs: str) -> pd.DataFrame:
+def pdb2df(entity: StructureFragmentAAType, *extra_attrs: str) -> pd.DataFrame:
     """
     Convert an entity to a pandas DataFrame.
 
     Parameters
     ----------
-    entity : Union[Structure, Model, Chain, Residue]
+    entity : StructureFragmentAAType
         Entity to be converted.
 
     extra_attrs : str

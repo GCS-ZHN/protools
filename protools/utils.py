@@ -18,7 +18,7 @@ from contextlib import contextmanager
 AsyncCompletedProcess = namedtuple('AsyncCompletedProcess', ['stdout', 'stderr'])
 
 
-def ensure_path(path: FilePathType) -> Path:
+def ensure_path(path: FilePathType, mk_parents: bool = False) -> Path:
     """
     Convert the input to a Path object.
 
@@ -26,6 +26,8 @@ def ensure_path(path: FilePathType) -> Path:
     ----------
     path : FilePathType
         The input path.
+    mk_parents : bool, optional
+        Whether to create the parent directories if they do not exist, by default False.
 
     Returns
     ----------
@@ -34,6 +36,8 @@ def ensure_path(path: FilePathType) -> Path:
     """
     if not isinstance(path, Path):
         path = Path(path)
+    if mk_parents:
+        path.parent.mkdir(parents=True, exist_ok=True)
     return path.expanduser().resolve().absolute()
 
 
@@ -65,7 +69,7 @@ def ensure_fileio(path_or_io: FilePathOrIOType, mode: str = 'r') -> IOBase:
         If the input is a closed IO object or the mode is not matched.
     """
     if isinstance(path_or_io, (str, Path)):
-        return ensure_path(path_or_io).open(mode), True
+        return ensure_path(path_or_io, mk_parents=True).open(mode), True
     elif isinstance(path_or_io, IOBase):
         if path_or_io.closed:
             raise ValueError('The input handler is closed.')

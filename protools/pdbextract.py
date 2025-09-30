@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import pandas as pd
+
 from multiprocessing import Pool
 from pathlib import Path
 from typing import Iterable, Tuple
+from scipy.spatial.distance import cdist
 
-from .pdbio import Structure, get_structure, save_pdb
-from .typedef import FilePathType
-from .utils import ensure_path
+from protools.aa import RESIDUE2SIDECHAIN_3LETTER
+from protools.pdbio import Structure, get_structure, save_pdb, pdb2df
+from protools.typedef import FilePathType, StructureFragmentAAType
+from protools.utils import ensure_path
 
 
 def parser_resi(resi: str) -> Iterable[Tuple]:
@@ -130,6 +134,80 @@ def batch_extract(
     pool.close()
     pool.join()
 
+
+def _get_sidechain_radius(data: pd.DataFrame) -> pd.Series:
+    """
+    Get the sidechain radius of each residue in the dataframe.
+    The sidechain radius is defined as the maximum distance between
+    the CA atom and any sidechain atom.
+    If the residue has no sidechain atoms, the radius is 0.
+    If the residue has no CA atom, the radius is infinity."""
+    def _get_radius(grouped_data: pd.DataFrame) -> float:
+        resn = grouped_data.name[3].capitalize()
+        if resn not in RESIDUE2SIDECHAIN_3LETTER:
+            raise ValueError(f"Unknown residue name: {resn}")
+        sidechain_atoms = RESIDUE2SIDECHAIN_3LETTER[resn]
+        if len(sidechain_atoms) == 0:
+            return 0.0
+        sidechain_data = grouped_data[grouped_data['name'].isin(sidechain_atoms)]
+        ca_data = grouped_data[grouped_data['name'] == 'CA']
+        if len(ca_data) == 0 or len(sidechain_data) == 0:
+            return float('inf')
+        ca_coord = ca_data[['x', 'y', 'z']].to_numpy()
+        sidechain_coord = sidechain_data[['x', 'y', 'z']].to_numpy()
+        dists = cdist(ca_coord, sidechain_coord)
+        return dists.max()
+    return data.groupby(data.index).apply(_get_radius)
+
+
+def distance(
+        entity1: StructureFragmentAAType,
+        entity2: StructureFragmentAAType,
+        dist_type: str = 'ca') -> pd.DataFrame:
+    entity1_df = pdb2df(entity1)
+    entity2_df = pdb2df(entity2)
+    entity1_df.set_index(['model', 'chain', 'seqid', 'resn'], inplace=True)
+    entity2_df.set_index(['model', 'chain', 'seqid', 'resn'], inplace=True)
+
+    if dist_type == 'ca':
+        entity1_ca_df = entity1_df[entity1_df['name'] == 'CA']
+        entity2_ca_df = entity2_df[entity2_df['name'] == 'CA']
+        dist = cdist(
+            entity1_ca_df[['x', 'y', 'z']].to_numpy(),
+            entity2_ca_df[['x', 'y', 'z']].to_numpy())
+        # ['model', 'chain', 'seqid', 'resn']
+        dist_df = pd.DataFrame(
+            dist,
+            index=entity1_ca_df.index,
+            columns=entity2_ca_df.index
+            )
+    elif dist_type == 'full_atom':
+        dist = cdist(
+            entity1_df[['x', 'y', 'z']].to_numpy(),
+            entity2_df[['x', 'y', 'z']].to_numpy())
+        dist_df = pd.DataFrame(
+            dist,
+            index=entity1_df.index,
+            columns=entity2_df.index)
+        dist_df = dist_df.groupby(dist_df.index).min().T.groupby(dist_df.columns).min().T
+    elif dist_type == 'sidechain_radius':
+        entity1_ca_df = entity1_df[entity1_df['name'] == 'CA']
+        entity2_ca_df = entity2_df[entity2_df['name'] == 'CA']
+        entity1_sidechain_radius = _get_sidechain_radius(entity1_df)
+        entity2_sidechain_radius = _get_sidechain_radius(entity2_df)
+        dist = cdist(
+            entity1_ca_df[['x', 'y', 'z']].to_numpy(),
+            entity2_ca_df[['x', 'y', 'z']].to_numpy())
+        dist -= entity1_sidechain_radius.values[:, None]
+        dist -= entity2_sidechain_radius.values[None, :]
+        dist[dist < 0] = 0
+        dist_df = pd.DataFrame(
+            dist,
+            index=entity1_ca_df.index,
+            columns=entity2_ca_df.index)
+    else:
+        raise ValueError(f"Unknown distance type: {dist_type}")
+    return dist_df
 
 
 if __name__ == "__main__":
