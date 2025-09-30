@@ -175,7 +175,6 @@ def distance(
         dist = cdist(
             entity1_ca_df[['x', 'y', 'z']].to_numpy(),
             entity2_ca_df[['x', 'y', 'z']].to_numpy())
-        # ['model', 'chain', 'seqid', 'resn']
         dist_df = pd.DataFrame(
             dist,
             index=entity1_ca_df.index,
@@ -189,7 +188,9 @@ def distance(
             dist,
             index=entity1_df.index,
             columns=entity2_df.index)
-        dist_df = dist_df.groupby(dist_df.index).min().T.groupby(dist_df.columns).min().T
+        dist_df = dist_df.groupby(dist_df.index).min().groupby(dist_df.columns, axis=1).min()
+        dist_df.index = pd.MultiIndex.from_tuples(dist_df.index)
+        dist_df.columns = pd.MultiIndex.from_tuples(dist_df.columns)
     elif dist_type == 'sidechain_radius':
         entity1_ca_df = entity1_df[entity1_df['name'] == 'CA']
         entity2_ca_df = entity2_df[entity2_df['name'] == 'CA']
