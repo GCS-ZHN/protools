@@ -188,7 +188,7 @@ def distance(
             dist,
             index=entity1_df.index,
             columns=entity2_df.index)
-        dist_df = dist_df.groupby(dist_df.index).min().groupby(dist_df.columns, axis=1).min()
+        dist_df = dist_df.groupby(dist_df.index).min().T.groupby(dist_df.columns).min().T
         dist_df.index = pd.MultiIndex.from_tuples(
             dist_df.index, names=entity1_df.index.names)
         dist_df.columns = pd.MultiIndex.from_tuples(
