@@ -180,6 +180,12 @@ class Fasta(OrderedDict):
     def __del__(self):
         self.unbind()
 
+    def __repr__(self):
+        return f"Fasta(len={len(self)})"
+    
+    def __str__(self):
+        return '\n'.join(self.to_fasta_str())
+
 
 def read_fasta(path: FilePathOrIOType, mode: str = 'r') -> Fasta:
     """
