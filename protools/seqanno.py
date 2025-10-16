@@ -239,7 +239,7 @@ def anno_vj_gene(seq: str,
     }
 
 
-def calc_seq_identity(s1: SeqLikeType, s2: SeqLikeType, mode: str = 'global', strategy: str = 'min_aligned_length') -> float:
+def calc_seq_identity(s1: SeqLikeType, s2: SeqLikeType, mode: str = 'global', strategy: str = 'min_aligned_length', max_alignments_size: int = 0) -> float:
     """
     Calculate sequence identity between two sequences.
 
@@ -256,7 +256,11 @@ def calc_seq_identity(s1: SeqLikeType, s2: SeqLikeType, mode: str = 'global', st
         'avg_aligned_length', 'min_total_length', 'max_total_length', 'avg_total_length', 'min_sequence_length',
         'max_sequence_length', 'first_alignment_length',
         by default 'min_aligned_length'.
-
+    max_alignments_size : int, optional
+        Maximum number of alignments to consider, by default 0, which means all alignments.
+        For large sequences, the number of alignments can be very large, which may cause
+        memory overflow. In this case, you can set this parameter to a smaller value to limit
+        the number of alignments to consider.
     Returns
     -------
     float
@@ -271,14 +275,22 @@ def calc_seq_identity(s1: SeqLikeType, s2: SeqLikeType, mode: str = 'global', st
         raise ValueError(f"Invalid mode: {mode}, must be 'global' or 'local'")
     
     alignments = aligner.align(s1, s2)
-    if len(alignments) == 0:
-        return 0.0
+    try:
+        alignments_size = len(alignments)
+        if alignments_size == 0:
+            return 0.0
+        max_alignments_size = min(max_alignments_size, alignments_size) if max_alignments_size > 0 else alignments_size
+        
+    except OverflowError:
+        if max_alignments_size == 0:
+            max_alignments_size = 1000
+
     if strategy == 'min_aligned_length':
-        length = min(alignment.length for alignment in alignments)
+        length = min(alignment.length for i, alignment in enumerate(alignments) if i < max_alignments_size)
     elif strategy == 'max_aligned_length':
-        length = max(alignment.length for alignment in alignments)
+        length = max(alignment.length for i, alignment in enumerate(alignments) if i < max_alignments_size)
     elif strategy == 'avg_aligned_length':
-        length = sum(alignment.length for alignment in alignments) / len(alignments)
+        length = sum(alignment.length for i, alignment in enumerate(alignments) if i < max_alignments_size) / max_alignments_size
     elif strategy == 'min_sequence_length':
         length = min(len(s1), len(s2))
     elif strategy == 'max_sequence_length':
