@@ -2,6 +2,7 @@ import pandas as pd
 
 from protools.utils import require_package
 from protools.seqio import read_fasta, df2fasta
+from protools.typedef import SeqLikeType
 from pathlib import Path
 try:
     require_anarci = require_package('anarci', 'conda install -c bioconda anarci')
@@ -12,6 +13,7 @@ except ImportError:
     pass
 
 from antpack import SingleChainAnnotator, VJGeneTool
+from Bio import Align
 
 _ANTIBODY_HC_IDS = ['H']
 _ANTIBODY_LC_IDS = ['K', 'L']
@@ -235,6 +237,57 @@ def anno_vj_gene(seq: str,
         'j_pident': j_pident,
         'species': species_matched,
     }
+
+
+def calc_seq_identity(s1: SeqLikeType, s2: SeqLikeType, mode: str = 'global', strategy: str = 'min_aligned_length') -> float:
+    """
+    Calculate sequence identity between two sequences.
+
+    Parameters
+    ----------
+    s1 : SeqLikeType
+        First sequence.
+    s2 : SeqLikeType
+        Second sequence.
+    mode : str, optional
+        Alignment mode, can be 'global' or 'local', by default 'global'.
+    strategy : str, optional
+        Strategy to calculate sequence identity, can be 'min_aligned_length', 'max_aligned_length',
+        'avg_aligned_length', 'min_total_length', 'max_total_length', 'avg_total_length', 'min_sequence_length',
+        'max_sequence_length', 'first_alignment_length',
+        by default 'min_aligned_length'.
+
+    Returns
+    -------
+    float
+        Sequence identity between two sequences.
+    """
+    aligner = Align.PairwiseAligner(match_score = 1.0)
+    if mode == 'global':
+        aligner.mode = 'global'
+    elif mode == 'local':
+        aligner.mode = 'local'
+    else:
+        raise ValueError(f"Invalid mode: {mode}, must be 'global' or 'local'")
+    
+    alignments = aligner.align(s1, s2)
+    if len(alignments) == 0:
+        return 0.0
+    if strategy == 'min_aligned_length':
+        length = min(alignment.length for alignment in alignments)
+    elif strategy == 'max_aligned_length':
+        length = max(alignment.length for alignment in alignments)
+    elif strategy == 'avg_aligned_length':
+        length = sum(alignment.length for alignment in alignments) / len(alignments)
+    elif strategy == 'min_sequence_length':
+        length = min(len(s1), len(s2))
+    elif strategy == 'max_sequence_length':
+        length = max(len(s1), len(s2))
+    elif strategy == 'first_alignment_length':
+        length = alignments[0].length
+    else:
+        raise ValueError(f"Invalid strategy: {strategy}, must be 'min_aligned_length', 'max_aligned_length', 'avg_aligned_length', 'min_total_length', 'max_total_length', 'avg_total_length'")
+    return alignments.score / length
 
 
 if __name__ == "__main__":
