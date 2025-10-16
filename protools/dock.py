@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 from typing import Optional
 
-from .utils import CmdWrapperBase, ensure_path, local_cwd
+from protools.utils import CmdWrapperBase, ensure_path, local_cwd
 
 
 class DockBase(object, metaclass=abc.ABCMeta):

@@ -12,8 +12,8 @@ from typing import Iterable, Union, Dict, Tuple, Optional
 from collections import OrderedDict
 from itertools import product
 
-from .utils import ensure_fileio, ensure_path
-from .typedef import FilePathType, FilePathOrIOType, SeqLikeType
+from protools.utils import ensure_fileio, ensure_path
+from protools.typedef import FilePathType, FilePathOrIOType, SeqLikeType
 
 
 class Fasta(OrderedDict):

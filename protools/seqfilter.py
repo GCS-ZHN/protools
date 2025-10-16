@@ -1,5 +1,5 @@
 
-from .seqio import read_fasta, Fasta
+from protools.seqio import read_fasta, Fasta
 from Bio.SeqUtils import IUPACData
 from Bio.SeqRecord import SeqRecord
 from typing import Tuple

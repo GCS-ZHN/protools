@@ -1,7 +1,7 @@
 import pandas as pd
 
-from .utils import require_package
-from .seqio import read_fasta, df2fasta
+from protools.utils import require_package
+from protools.seqio import read_fasta, df2fasta
 from pathlib import Path
 try:
     require_anarci = require_package('anarci', 'conda install -c bioconda anarci')

@@ -5,7 +5,7 @@ import logging
 from Bio import ExPASy, SwissProt
 from Bio.Seq import Seq
 from pathlib import Path
-from ..utils import (
+from protools.utils import (
     max_retry, FilePathType, ensure_path, catch_error, Intervals)
 from multiprocessing import Pool
 from itertools import starmap, product

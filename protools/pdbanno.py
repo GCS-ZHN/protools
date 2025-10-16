@@ -14,9 +14,9 @@ from Bio.PDB.Residue import Residue
 from Bio.SeqUtils import IUPACData
 from scipy.spatial import distance
 
-from . import pdbio
-from .typedef import FilePathType, StructureFragmentType
-from .utils import ensure_path, CmdWrapperBase
+from protools import pdbio
+from protools.typedef import FilePathType, StructureFragmentType
+from protools.utils import ensure_path, CmdWrapperBase
 
 _LOGGER = logging.getLogger(__name__)
 

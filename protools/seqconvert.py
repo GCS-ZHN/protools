@@ -4,11 +4,11 @@ A module for converting between different sequence type.
 import numpy as np
 import pandas as pd
 
-from .seqio import Fasta, read_fasta, save_fasta
+from protools.seqio import Fasta, read_fasta, save_fasta
 from Bio.Data import CodonTable, IUPACData
 from Bio.Seq import Seq
-from .typedef import FilePathType
-from .utils import ensure_path
+from protools.typedef import FilePathType
+from protools.utils import ensure_path
 from Bio.SeqRecord import SeqRecord
 from collections import OrderedDict
 from dnachisel import DnaOptimizationProblem, AvoidPattern, EnforceGCContent, EnforceTranslation, CodonOptimize

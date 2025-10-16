@@ -1,6 +1,6 @@
-from .seqio import read_fasta, save_fasta
-from .utils import ensure_path
-from .typedef import FilePathType
+from protools.seqio import read_fasta, save_fasta
+from protools.utils import ensure_path
+from protools.typedef import FilePathType
 from pathlib import Path
 
 

@@ -1,4 +1,4 @@
-from .utils import require_package
+from protools.utils import require_package
 from pathlib import Path
 from typing import Optional
 import logging

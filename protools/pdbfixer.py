@@ -3,8 +3,8 @@ from typing import Optional
 
 from Bio import BiopythonWarning
 
-from .pdbio import save_pdb, get_structure
-from .utils import ensure_path
+from protools.pdbio import save_pdb, get_structure
+from protools.utils import ensure_path
 
 warnings.simplefilter('ignore', BiopythonWarning)
 
