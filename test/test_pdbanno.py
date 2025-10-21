@@ -1,14 +1,25 @@
-from protools import pdbanno
+import pytest
+
+from protools import pdbanno, utils
 from shutil import rmtree
 from pathlib import Path
 
+try:
+    pdbanno.TMalign()
+    tm_available = True
+    helper_msg = ""
+except utils.CmdNotFoundError as e:
+    tm_available = False
+    helper_msg = str(e)
 
+@pytest.mark.skipif(not tm_available, reason=helper_msg)
 def test_tmalign():
     tmalign = pdbanno.TMalign()
     v = tmalign("data/gen.pdb", "data/native.pdb", 'data', 'aligned_gen')
     assert v == (0.95422, 0.99)
 
 
+@pytest.mark.skipif(not tm_available, reason=helper_msg)
 def test_batch_tmalign_paral():
     target_dir = Path('data/tmalign_batch')
     try:
@@ -27,6 +38,7 @@ def test_batch_tmalign_paral():
             rmtree(target_dir)
 
 
+@pytest.mark.skipif(not tm_available, reason=helper_msg)
 def test_batch_tmalign():
     target_dir = Path('data/tmalign_batch')
     try:
@@ -45,6 +57,7 @@ def test_batch_tmalign():
             rmtree(target_dir)
 
 
+@pytest.mark.skipif(not tm_available, reason=helper_msg)
 def test_batch_tmalign_async():
     import asyncio
     loop = asyncio.get_event_loop()
