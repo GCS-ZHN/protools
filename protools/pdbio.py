@@ -31,7 +31,7 @@ from Bio.SeqRecord import SeqRecord
 from Bio.Data import PDBData, IUPACData
 
 from protools.seqio import save_fasta, read_seqres, Fasta
-from protools.typedef import FilePathType, FilePathOrIOType, StructureFragmentAAType, StructureFragmentType
+from protools.typedef import FilePathType, FilePathOrIOType, StructureFragmentAAType, StructureFragmentType, SeqLikeType
 from protools.utils import ensure_path, ensure_fileio
 from tqdm.auto import tqdm
 
@@ -204,7 +204,7 @@ def _write_seqres(target_path: FilePathOrIOType, seqres: dict):
     format_line = lambda k: 'SEQRES {:>3d} {:1s} {:>4d} ' + ''.join([' {:>3s}'] * k)
     f, need_close = ensure_fileio(target_path, 'w')
     for chain, seq in seqres.items():
-        if isinstance(seq, (str, Seq)):
+        if isinstance(seq, SeqLikeType):
             seq = [PDBData.protein_letters_1to3.get(aa, 'UNK') for aa in seq]
         elif isinstance(seq, (list, tuple)):
             pass
@@ -677,7 +677,7 @@ def read_residue(pdb: Union[FilePathType, str, Entity], mode='centroid') -> pd.D
     """
     if isinstance(pdb, Entity):
         structure = pdb
-    elif isinstance(pdb, (str, Path)):
+    elif isinstance(pdb, FilePathType):
         structure = get_structure(pdb)
     else:
         raise TypeError(f"Unsupported type {type(pdb)}")

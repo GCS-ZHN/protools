@@ -65,7 +65,7 @@ def neighbor_water_count(
     """
     if isinstance(pdb, Structure):
         structure = pdb
-    elif isinstance(pdb, (str, Path)):
+    elif isinstance(pdb, FilePathType):
         structure = pdbio.get_structure(pdb)
     else:
         raise TypeError(f"Unknown type: {type(pdb)}")

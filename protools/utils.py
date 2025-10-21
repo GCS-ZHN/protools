@@ -68,7 +68,7 @@ def ensure_fileio(path_or_io: FilePathOrIOType, mode: str = 'r') -> IOBase:
     ValueError
         If the input is a closed IO object or the mode is not matched.
     """
-    if isinstance(path_or_io, (str, Path)):
+    if isinstance(path_or_io, FilePathType):
         return ensure_path(path_or_io, mk_parents=True).open(mode), True
     elif isinstance(path_or_io, IOBase):
         if path_or_io.closed:
