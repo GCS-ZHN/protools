@@ -1,4 +1,28 @@
+import pytest
 from protools import utils
+
+
+def test_ensure_seq_string_type_err():
+    with pytest.raises(TypeError):
+        utils.ensure_seq_string(123)  # type: ignore
+
+    with pytest.raises(TypeError):
+        utils.ensure_seq_string(None)  # type: ignore
+
+
+def test_ensure_seq_string():
+    """
+    Test the ensure_seq_string function.
+    """
+    seq1 = 'ACDEFGHIKLMNPQRSTVWY'
+    from Bio.Seq import Seq
+    seq2 = Seq(seq1)
+    from Bio.SeqRecord import SeqRecord
+    seq3 = SeqRecord(Seq(seq1))
+
+    assert utils.ensure_seq_string(seq1) == seq1, "Failed on string input"
+    assert utils.ensure_seq_string(seq2) == seq1, "Failed on Seq input"
+    assert utils.ensure_seq_string(seq3) == seq1, "Failed on SeqRecord input"
 
 
 def test_intervals_parse():

@@ -32,7 +32,7 @@ from Bio.Data import PDBData, IUPACData
 
 from protools.seqio import save_fasta, read_seqres, Fasta
 from protools.typedef import FilePathType, FilePathOrIOType, StructureFragmentAAType, StructureFragmentType, SeqLikeType
-from protools.utils import ensure_path, ensure_fileio
+from protools.utils import ensure_path, ensure_fileio, ensure_seq_string
 from tqdm.auto import tqdm
 
 
@@ -860,7 +860,7 @@ def generate_missing_atoms_remarks(data: pd.DataFrame) -> Dict[int, list]:
 
 
 def coord2chain(
-        coord: np.ndarray, seq: str, chain_id: str = 'A', atoms: List[str] = None,
+        coord: np.ndarray, seq: SeqLikeType, chain_id: str = 'A', atoms: List[str] = None,
         init_residue_number: int = 1, init_serial_number: int = 1) -> Chain:
     """
     Convert coordinates to a Chain object. It's useful to build a new structure
@@ -870,7 +870,7 @@ def coord2chain(
     ----------
     coord : np.ndarray
         Coordinates of the atoms.
-    seq : str
+    seq : SeqLikeType
         Sequence of the chain.
     chain_id : str, optional
         ID of the chain, by default 'A'.
@@ -890,6 +890,7 @@ def coord2chain(
     if atoms is None:
         atoms = BACKBONE_ATOMS
     chain = Chain(chain_id)
+    seq = ensure_seq_string(seq)
     coord = coord.reshape(len(seq), len(atoms), 3).astype(np.float32)
     serial_number = init_serial_number
     for res_idx, res_letter in enumerate(seq):

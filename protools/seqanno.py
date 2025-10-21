@@ -1,6 +1,6 @@
 import pandas as pd
 
-from protools.utils import require_package
+from protools.utils import require_package, ensure_seq_string
 from protools.seqio import read_fasta, df2fasta
 from protools.typedef import SeqLikeType
 from pathlib import Path
@@ -63,7 +63,8 @@ def annotate_chain_type(fasta_file: Path):
             yield {"id": seq_id, "chain_type": "unknown"}
 
 
-def numbering_seq(seq: str, chain: str, is_tcr: bool = False) -> tuple:
+def numbering_seq(seq: SeqLikeType, chain: str, is_tcr: bool = False) -> tuple:
+    seq = ensure_seq_string(seq)
     if chain == 'H':
         annnotator = _TCR_HC_ANNOTATOR if is_tcr else _ANTIBODY_HC_ANNOTATOR
         valid_chains = _TCR_HC_IDS if is_tcr else _ANTIBODY_HC_IDS
@@ -76,13 +77,13 @@ def numbering_seq(seq: str, chain: str, is_tcr: bool = False) -> tuple:
     return numbering, percent_identity, chain_type, err_message
 
 
-def anno_cdr(seq: str, chain: str, is_tcr: bool = False) -> dict:
+def anno_cdr(seq: SeqLikeType, chain: str, is_tcr: bool = False) -> dict:
     """
     Annotate Antibody CDR regions based antpack package
 
     Parameters
     ----------
-    seq : str
+    seq : SeqLikeType
         Amino acid sequence of antibody
 
     chain : str
@@ -96,7 +97,7 @@ def anno_cdr(seq: str, chain: str, is_tcr: bool = False) -> dict:
     dict
         A dictionary containing CDR regions and their sequences
     """
-
+    seq = ensure_seq_string(seq)
     numbering, percent_identity, _, _ = numbering_seq(seq, chain, is_tcr=is_tcr)
     if len(numbering) != len(seq):
         raise ValueError(f"Numbering length {len(numbering)} != sequence length {len(seq)}")
@@ -136,10 +137,21 @@ def anno_cdr(seq: str, chain: str, is_tcr: bool = False) -> dict:
 
 
 @require_anarci
-def anno_tcr_cdr(seq: str) -> dict:
+def anno_tcr_cdr(seq: SeqLikeType) -> dict:
     """
     Annoate TCR CDR info.
+
+    Parameters
+    ----------
+    seq : SeqLikeType
+        Amino acid sequence of TCR. 
+
+    Returns
+    -------
+    dict
+        A dictionary containing TCR CDR regions and their sequences.
     """
+    seq = ensure_seq_string(seq)
     _, numbered, alignment_details, _ = run_anarci([('A', seq)], scheme='imgt')
     assert len(numbered) == len(alignment_details) == 1
     assert numbered[0] is not None, 'No domain found!'
@@ -186,7 +198,7 @@ def anno_tcr_cdr(seq: str) -> dict:
     return result
 
 
-def anno_vj_gene(seq: str,
+def anno_vj_gene(seq: SeqLikeType,
                  chain_type: str,
                  species: str,
                  is_tcr: bool = False) -> dict:
@@ -195,7 +207,7 @@ def anno_vj_gene(seq: str,
     
     Parameters
     ----------
-    seq : str
+    seq : SeqLikeType
         Amino acid sequence of antibody or TCR.
     
     chain_type : str
@@ -211,6 +223,7 @@ def anno_vj_gene(seq: str,
     dict
         A dictionary containing VJ gene information.
     """
+    seq = ensure_seq_string(seq)
     vj_tool = VJGeneTool()
     alignment = numbering_seq(seq, chain_type, is_tcr=is_tcr)
     if is_tcr:

@@ -10,7 +10,7 @@ import warnings
 from pathlib import Path
 from typing import Dict, Iterable, Optional, List, Callable
 from io import IOBase
-from protools.typedef import FilePathType, FilePathOrIOType
+from protools.typedef import FilePathType, FilePathOrIOType, SeqLikeType
 from collections import namedtuple
 from contextlib import contextmanager
 
@@ -78,6 +78,27 @@ def ensure_fileio(path_or_io: FilePathOrIOType, mode: str = 'r') -> IOBase:
         return path_or_io, False
     else:
         raise TypeError(f'Unsupported type: {type(path_or_io)}')
+
+
+def ensure_seq_string(seq: SeqLikeType) -> str:
+    """
+    Ensure the input is a valid seq object and convert it to string.
+
+    Parameters
+    ----------
+    seq : SeqLikeType (str, Seq, SeqRecord)
+        The input sequence-like object.
+    Returns
+    ----------
+    str
+        The string representation of the sequence.
+    """
+    if not isinstance(seq, SeqLikeType):
+        raise TypeError(
+            f'Input should be a sequence-like object, got {type(seq)}')
+    if isinstance(seq, str):
+        return seq
+    return ''.join(seq)
 
 
 def max_retry(max: int = 3, err_types: Exception =(RuntimeError,), interval: int = 1):
@@ -554,13 +575,13 @@ class Intervals(object):
             raise ValueError("Dynamic interval does not have length")
         return sum([i.stop - i.start for i in self._interval_slices])
 
-    def create_view_symbol(self, seq: str, mark_symbol: str = '*', other_symbol: str = ' ') -> str:
+    def create_view_symbol(self, seq: SeqLikeType, mark_symbol: str = '*', other_symbol: str = ' ') -> str:
         """
         Create a view symbol for the intervals in a sequence.
 
         Parameters
         ----------
-        seq : str
+        seq : SeqLikeType
             The sequence to create the view symbol.
         mark_symbol : str, optional
             The symbol to mark the intervals. Default is '*'.
@@ -572,6 +593,7 @@ class Intervals(object):
         str
             The view symbol of the intervals in the sequence.
         """
+        seq = ensure_seq_string(seq)
         seq_len = len(seq)
         marks = [other_symbol] * seq_len
         for interval in self._interval_slices:
