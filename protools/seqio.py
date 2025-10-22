@@ -1,6 +1,7 @@
 import pandas as pd
 import tempfile
 import csv
+import warnings
 
 from Bio import SeqIO
 from Bio.SeqIO import FastaIO
@@ -10,7 +11,7 @@ from Bio.PDB.MMCIF2Dict import MMCIF2Dict
 from pathlib import Path
 from typing import Iterable, Union, Dict, Tuple, Optional
 from collections import OrderedDict
-from itertools import product
+from itertools import product, islice
 
 from protools.utils import ensure_fileio, ensure_path
 from protools.typedef import FilePathType, FilePathOrIOType, SeqLikeType
@@ -44,18 +45,50 @@ class Fasta(OrderedDict):
             data = []
         super().__init__(data, **kwargs)
 
-    def __getitem__(self, __key: Union[str, Iterable[str]]) -> Union[SeqRecord, 'Fasta']:
-        try:
-            return super().__getitem__(__key)
-        except TypeError as e:
+    def __getitem__(self, __key: Union[str, Iterable[str], slice, int]) -> Union[SeqRecord, 'Fasta']:
+            """
+            Get item by key, slice or index. For string key, return the corresponding.
+            For integer index, return the sequence record at that index.
+            For slice, return a sub Fasta object with the sliced keys.
+            For iterable of keys, return a sub Fasta object with the specified keys.
+           
+            Parameters
+            ----------
+            __key : Union[str, Iterable[str], slice, int]
+                The key, slice or index to get.
+
+            Returns
+            ----------
+            Union[SeqRecord, Fasta]
+                The sequence record or sub Fasta object.
+
+            Raises
+            ----------
+            IndexError
+                If the index is out of range.
+            TypeError
+                If the key type is not supported.
+            """
+            if isinstance(__key, str):
+                return super().__getitem__(__key)
+            if isinstance(__key, int):
+                _s = slice(__key, __key + 1 if __key != -1 else None)
+                try:
+                    return next(islice(self.values(), *_s.indices(len(self))))
+                except StopIteration:
+                    raise IndexError(f'Fasta index {__key} out of range')
+            if isinstance(__key, slice):
+                start, stop, step = __key.indices(len(self))
+                __key = islice(self.keys(), start, stop, step)
             if isinstance(__key, Iterable):
-                sub_fasta = Fasta()
-                sub_fasta.update(map(lambda x: (x, self[x]), __key))
+                sub_fasta = Fasta(map(lambda x: (x, self[x]), __key))
                 return sub_fasta
-            raise e
+            raise TypeError(f"Unsupported key type: {type(__key)}")
 
     def __setitem__(self, __key: str, __value: SeqLikeType) -> None:
-        __key = str(__key)
+        if not isinstance(__key, str):
+            warnings.warn(f"Key {__key} is not a string, force converting to string")
+            __key = str(__key)
         if isinstance(__value, str):
             __value = Seq(__value)
         if isinstance(__value, Seq):
@@ -103,12 +136,15 @@ class Fasta(OrderedDict):
         save_fasta(self.values(), 
             path=path, mkdir=mkdir, mode=mode, **kwargs)
 
-    def to_fasta_str(self, two_line_mode = False) -> Iterable[str]:
+    def to_fasta_str(self, two_line_mode = False, start: int = 0, end: int|None = None) -> Iterable[str]:
         """
         Generate fasta format for each record.
         """
         fmt_func = FastaIO.as_fasta_2line if two_line_mode else FastaIO.as_fasta
-        for v in self.values():
+        start, end, _ = slice(start, end).indices(len(self))
+        for i, v in enumerate(self.values()):
+            if i < start or i >= end:
+                continue
             yield fmt_func(v)
 
     def to_csv(self, path: FilePathOrIOType,
@@ -181,10 +217,15 @@ class Fasta(OrderedDict):
         self.unbind()
 
     def __repr__(self):
-        return f"Fasta(len={len(self)})"
-    
+        head = f"Fasta(len={len(self)})\n"
+        if len(self) <= 10:
+            return head + str(self)
+        hidden_size = len(self) - 10
+        return head + ''.join(self.to_fasta_str(end=5)) + \
+            f'...{hidden_size} hidden records...\n' + ''.join(self.to_fasta_str(start=-5))
+
     def __str__(self):
-        return '\n'.join(self.to_fasta_str())
+        return ''.join(self.to_fasta_str())
 
 
 def read_fasta(path: FilePathOrIOType, mode: str = 'r') -> Fasta:
