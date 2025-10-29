@@ -14,7 +14,8 @@ def renumber_residue(
         out_file: Optional[str] = None,
         model_idx: int = 0, 
         chain_order: Optional[list] = None, 
-        start: int = 1):
+        start: int = 1,
+        restart_by_chain: bool = False):
     """
     Renumber the residue index (resi) of a pdb file
     with continuous numbers (start from `start`)
@@ -41,6 +42,9 @@ def renumber_residue(
     start : int, optional
         The start number of the renumbering.
         The default is 1.
+    restart_by_chain: bool, default is False.
+        Set True to make resi restart for `start` for
+        each chain.
 
     Raises
     ----------
@@ -72,6 +76,8 @@ def renumber_residue(
             old_id = residue.id
             residue.id = (' ', start + i, 'TMP')
             i += 1
+        if restart_by_chain:
+            i = 0
     
     # loop twice to avoid duplicate residue id
     for chain_id in chain_order:
@@ -82,7 +88,8 @@ def renumber_residue(
     if out_file is None:
         out_file = pdb_file.parent / f"{pdb_file.stem}_renumbered{pdb_file.suffix}" 
     
-    save_pdb(out_file, *[model[chain_id] for chain_id in chain_order], remarks=[f"Renumbered from {pdb_file}"])
+    save_pdb(out_file, *[model[chain_id] for chain_id in chain_order], remarks=
+             {220: [f"Renumbered from {pdb_file.name}"]})
 
 
 if __name__ == '__main__':
