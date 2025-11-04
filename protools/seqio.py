@@ -152,19 +152,15 @@ class Fasta(OrderedDict):
         """
         Save as CSV format.
         """
-        f, need_close = ensure_fileio(path, mode)
-        if mkdir:
-            path.parent.mkdir(parents=True, exist_ok=True)
-        writer = csv.DictWriter(
-            f, 
-            fieldnames=['id', 'sequence', 'description'],
-            lineterminator='\n')
-        writer.writeheader()
-        writer.writerows(self.to_dict())
-        if need_close:
-            f.close()
-        else:
-            f.flush()
+        with ensure_fileio(path, mode) as f:
+            if mkdir:
+                path.parent.mkdir(parents=True, exist_ok=True)
+            writer = csv.DictWriter(
+                f, 
+                fieldnames=['id', 'sequence', 'description'],
+                lineterminator='\n')
+            writer.writeheader()
+            writer.writerows(self.to_dict())
 
     def __add__(self, other: 'Fasta') -> 'Fasta':
         """
@@ -241,11 +237,8 @@ def read_fasta(path: FilePathOrIOType, mode: str = 'r') -> Fasta:
     ----------
     Fasta object.
     """
-    path, need_close = ensure_fileio(path, mode)
-    res = Fasta(map(lambda x: (x.id, x), SeqIO.parse(path, 'fasta')))
-    if need_close:
-        path.close()
-    return res
+    with ensure_fileio(path, mode) as f:
+        return Fasta(map(lambda x: (x.id, x), SeqIO.parse(f, 'fasta')))
 
 
 def read_a3m(path: FilePathOrIOType, is_multimer: bool = False) -> Fasta:
@@ -266,63 +259,60 @@ def read_a3m(path: FilePathOrIOType, is_multimer: bool = False) -> Fasta:
     if not is_multimer:
         return read_fasta(path)
     
-    path, need_close = ensure_fileio(path)
-    # seqeunce size record in first line, e.g. #121,221,33
-    size = path.readline()[1:].split()[0].split(',')
-    size = list(map(int, size))
-    res = [Fasta() for _ in size]
-    query_names = None
-    # only for not paired msa
-    current_query = None
-    for rid, heads in enumerate(map(lambda x: x.strip()[1:].split(), path)):
-        # must before any continue block to be sure paired
-        seq = path.readline().strip()
+    with ensure_fileio(path) as f:
+        # seqeunce size record in first line, e.g. #121,221,33
+        size = f.readline()[1:].split()[0].split(',')
+        size = list(map(int, size))
+        res = [Fasta() for _ in size]
+        query_names = None
+        # only for not paired msa
+        current_query = None
+        for rid, heads in enumerate(map(lambda x: x.strip()[1:].split(), f)):
+            # must before any continue block to be sure paired
+            seq = f.readline().strip()
 
-        if rid == 0:
-            query_names = heads
+            if rid == 0:
+                query_names = heads
 
-        if len(heads) == 1 and heads[0] in query_names:
-            current_query = heads[0]
-            continue
-        
-        # means follow seq are note paired
-        if current_query is not None:
-            head = heads[0]
-            heads = ['DUMMY'] * 3
-            heads[query_names.index(current_query)] = head
+            if len(heads) == 1 and heads[0] in query_names:
+                current_query = heads[0]
+                continue
+            
+            # means follow seq are note paired
+            if current_query is not None:
+                head = heads[0]
+                heads = ['DUMMY'] * 3
+                heads[query_names.index(current_query)] = head
 
-        aligned_length = 0
-        start_idx = 0
-        current_no = 0
-        for idx, s in enumerate(seq):
-            if s.isupper() or s == '-':
-                aligned_length += 1
-            elif not s.islower():
-                raise ValueError(f'Invalid symol for seq {heads} at position {idx+1}')
-            if aligned_length == size[current_no]:
-                current_seq = seq[start_idx: idx + 1]
-                if heads[current_no] != 'DUMMY':
-                    assert any(s!='-' for s in current_seq)
-                    head = heads[current_no]
-                    uid = 1
-                    # add different fragments from the same database entry
-                    while head in res[current_no] and \
-                    str(res[current_no][head].seq) != current_seq:
-                        head = f'{heads[current_no]}--unique-{uid}'
-                        uid += 1
-                    res[current_no][head] = current_seq
-                else:
-                    assert all(s=='-' for s in current_seq)
-                start_idx = idx + 1
-                current_no += 1
-                aligned_length = 0
-        assert current_no == len(size)
-        assert aligned_length == 0
-        assert start_idx == len(seq)
-    assert current_query == query_names[-1]
-
-    if need_close:
-        path.close()
+            aligned_length = 0
+            start_idx = 0
+            current_no = 0
+            for idx, s in enumerate(seq):
+                if s.isupper() or s == '-':
+                    aligned_length += 1
+                elif not s.islower():
+                    raise ValueError(f'Invalid symol for seq {heads} at position {idx+1}')
+                if aligned_length == size[current_no]:
+                    current_seq = seq[start_idx: idx + 1]
+                    if heads[current_no] != 'DUMMY':
+                        assert any(s!='-' for s in current_seq)
+                        head = heads[current_no]
+                        uid = 1
+                        # add different fragments from the same database entry
+                        while head in res[current_no] and \
+                        str(res[current_no][head].seq) != current_seq:
+                            head = f'{heads[current_no]}--unique-{uid}'
+                            uid += 1
+                        res[current_no][head] = current_seq
+                    else:
+                        assert all(s=='-' for s in current_seq)
+                    start_idx = idx + 1
+                    current_no += 1
+                    aligned_length = 0
+            assert current_no == len(size)
+            assert aligned_length == 0
+            assert start_idx == len(seq)
+        assert current_query == query_names[-1]
     return res
 
 def read_pdb_seqres(path: Path) -> Dict[str, Iterable[str]]:
@@ -462,12 +452,8 @@ def save_fasta(
     """
     if mkdir and isinstance(path, Path):
         path.parent.mkdir(parents=True, exist_ok=True)
-    f, need_close = ensure_fileio(path, mode)
-    SeqIO.write(sequences, f, 'fasta-2line' if two_line_mode else 'fasta')
-    if need_close:
-        f.close()
-    else:
-        f.flush()
+    with ensure_fileio(path, mode) as f:
+        SeqIO.write(sequences, f, 'fasta-2line' if two_line_mode else 'fasta')
 
 
 def df2fasta(df:pd.DataFrame,

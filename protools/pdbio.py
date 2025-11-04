@@ -204,35 +204,27 @@ def _write_seqres(target_path: FilePathOrIOType, seqres: dict):
     of three-letter nucleotide.
     """
     format_line = lambda k: 'SEQRES {:>3d} {:1s} {:>4d} ' + ''.join([' {:>3s}'] * k)
-    f, need_close = ensure_fileio(target_path, 'w')
-    for chain, seq in seqres.items():
-        if isinstance(seq, SeqLikeType):
-            seq = [PDBData.protein_letters_1to3.get(aa, 'UNK') for aa in seq]
-        elif isinstance(seq, (list, tuple)):
-            pass
-        else:
-            raise ValueError("Invalid SEQRES format")
-        for i in range(0, len(seq), 13):
-            seq_slice = seq[i:i+13]
-            line = format_line(len(seq_slice)).format(i//13+1, chain, len(seq), *seq_slice)
-            f.write(_basic_pdb_column_format(line))
-    if need_close:
-        f.close()
-    else:
-        f.flush()
+    with ensure_fileio(target_path, 'w') as f:
+        for chain, seq in seqres.items():
+            if isinstance(seq, SeqLikeType):
+                seq = [PDBData.protein_letters_1to3.get(aa, 'UNK') for aa in seq]
+            elif isinstance(seq, (list, tuple)):
+                pass
+            else:
+                raise ValueError("Invalid SEQRES format")
+            for i in range(0, len(seq), 13):
+                seq_slice = seq[i:i+13]
+                line = format_line(len(seq_slice)).format(i//13+1, chain, len(seq), *seq_slice)
+                f.write(_basic_pdb_column_format(line))
 
 
 def _write_remark(target_path: FilePathOrIOType, remark_id: int, *remarks: str):
     format_line = lambda k: 'REMARK {:>3d} {:s}'
-    f, need_close = ensure_fileio(target_path, 'w')
-    if remark_id < 0 or remark_id > 999:
-        raise ValueError("Remark ID should be between 0 and 999")
-    for line in remarks:
-        f.write(_basic_pdb_column_format(format_line(remark_id).format(remark_id, line)))
-    if need_close:
-        f.close()
-    else:
-        f.flush()
+    with ensure_fileio(target_path, 'w') as f:
+        if remark_id < 0 or remark_id > 999:
+            raise ValueError("Remark ID should be between 0 and 999")
+        for line in remarks:
+            f.write(_basic_pdb_column_format(format_line(remark_id).format(remark_id, line)))
 
 
 def read_modified_residues(pdbfile: Path) -> pd.DataFrame:
@@ -275,13 +267,9 @@ def write_modified_residues(data: pd.DataFrame, target_path: FilePathOrIOType):
     if len(data) == 0:
         return
     format_line = 'MODRES {:<4s} {:<3s} {:<1s} {:>4d}{:<1s} {:<3s}  {:<s}'
-    f, need_close = ensure_fileio(target_path, 'w')
-    for _, row in data.iterrows():
-        f.write(_basic_pdb_column_format(format_line.format(*row.values)))
-    if need_close:
-        f.close()
-    else:
-        f.flush()
+    with ensure_fileio(target_path, 'w') as f:
+        for _, row in data.iterrows():
+            f.write(_basic_pdb_column_format(format_line.format(*row.values)))
 
 
 def save_pdb(

@@ -9,7 +9,7 @@ import warnings
 import gzip
 
 from pathlib import Path
-from typing import Dict, Iterable, Optional, List, Callable
+from typing import Dict, Generator, Iterable, Optional, List, Callable
 from io import IOBase
 from protools.typedef import FilePathType, FilePathOrIOType, SeqLikeType
 from collections import namedtuple
@@ -42,7 +42,8 @@ def ensure_path(path: FilePathType, mk_parents: bool = False) -> Path:
     return path.expanduser().resolve().absolute()
 
 
-def ensure_fileio(path_or_io: FilePathOrIOType, mode: str = 'r') -> IOBase:
+@contextmanager
+def ensure_fileio(path_or_io: FilePathOrIOType, mode: str = 'r') -> Generator[IOBase, None, None]:
     """
     Ensure the input is a IO object. If the input is a path,
     open the path as a IO object.
@@ -56,8 +57,6 @@ def ensure_fileio(path_or_io: FilePathOrIOType, mode: str = 'r') -> IOBase:
     ----------
     IOBase
         The IO object.
-    bool
-        Whether the IO object is created by this function.
 
     Notes
     ----------
@@ -70,13 +69,16 @@ def ensure_fileio(path_or_io: FilePathOrIOType, mode: str = 'r') -> IOBase:
         If the input is a closed IO object or the mode is not matched.
     """
     if isinstance(path_or_io, FilePathType):
-        return ensure_path(path_or_io, mk_parents=True).open(mode), True
+        f = ensure_path(path_or_io, mk_parents=True).open(mode)
+        yield f
+        f.close()
     elif isinstance(path_or_io, IOBase):
         if path_or_io.closed:
             raise ValueError('The input handler is closed.')
         if path_or_io.mode != mode:
             raise ValueError(f'The input handler is not in "{mode}" mode.')
-        return path_or_io, False
+        yield path_or_io
+        path_or_io.flush()
     else:
         raise TypeError(f'Unsupported type: {type(path_or_io)}')
 
@@ -783,7 +785,7 @@ class Intervals(object):
 
 
 @contextmanager
-def extract_compression(path: FilePathType):
+def extract_compression(path: FilePathType) -> Generator[tuple[str, IOBase], None, None]:
     """
     A context manager to extract compressed file temporarily.
     If the file is not compressed (with correct suffix),
