@@ -116,3 +116,20 @@ def test_intervals_or():
     expected_intervals = utils.Intervals('1-8,9-12')
     
     assert union_intervals == expected_intervals, f"Expected {expected_intervals}, got {union_intervals}"
+
+
+def test_extract_compression(tmp_path):
+    """
+    Test the extract_compression context manager.
+    """
+    import gzip
+    test_content = b"Test content for compression"
+    gz_file = tmp_path / "test.gz"
+    
+    with gzip.open(gz_file, 'wb') as f:
+        f.write(test_content)
+    
+    with utils.extract_compression(gz_file) as (name, f):
+        content = f.read()
+        assert content == test_content.decode(), \
+            "Content read from compressed file does not match original content"

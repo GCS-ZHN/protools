@@ -32,7 +32,7 @@ from Bio.Data import PDBData, IUPACData
 
 from protools.seqio import save_fasta, read_seqres, Fasta
 from protools.typedef import FilePathType, FilePathOrIOType, StructureFragmentAAType, StructureFragmentType, SeqLikeType
-from protools.utils import ensure_path, ensure_fileio, ensure_seq_string
+from protools.utils import ensure_path, ensure_fileio, ensure_seq_string, extract_compression
 from tqdm.auto import tqdm
 
 
@@ -170,13 +170,15 @@ def get_structure(pdb_file: FilePathType, structure_id: str = 'pdb') -> Structur
     if not pdb_file.exists():
         raise FileNotFoundError(f"Could not find PDB file {pdb_file}")
 
-    if pdb_file.suffix.lower() == '.cif':
-        parser = MMCIFParser(QUIET=True)
-    elif pdb_file.suffix.lower() == '.pdb':
-        parser = PDBParser(QUIET=True)
-    else:
-        raise ValueError(f"Unsupported file type {pdb_file.suffix}")
-    return parser.get_structure(structure_id, pdb_file)
+    with extract_compression(pdb_file) as (name, f):
+        suffix = Path(name).suffix
+        if suffix.lower() == '.cif':
+            parser = MMCIFParser(QUIET=True)
+        elif suffix.lower() == '.pdb':
+            parser = PDBParser(QUIET=True)
+        else:
+            raise ValueError(f"Unsupported file type {suffix}")
+        return parser.get_structure(structure_id, f)
 
 
 def _write_seqres(target_path: FilePathOrIOType, seqres: dict):

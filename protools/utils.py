@@ -6,6 +6,7 @@ import asyncio
 import functools
 import logging
 import warnings
+import gzip
 
 from pathlib import Path
 from typing import Dict, Iterable, Optional, List, Callable
@@ -779,3 +780,29 @@ class Intervals(object):
 
     __and__ = intersect
     __or__ = union
+
+
+@contextmanager
+def extract_compression(path: FilePathType):
+    """
+    A context manager to extract compressed file temporarily.
+    If the file is not compressed (with correct suffix),
+    it will be opened directly.
+
+    Parameters
+    ----------
+    path : FilePathType
+        The path to the compressed file.
+
+    Yields
+    -------
+    Tuple[str, IOBase]
+        The name and file object of the extracted file.
+    """
+    path = ensure_path(path)
+    if path.suffix == '.gz':
+        with gzip.open(path, 'rt') as f:
+            yield path.stem, f
+    else:
+        with path.open('r') as f:
+            yield path.name, f
