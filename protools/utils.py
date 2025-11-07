@@ -9,7 +9,7 @@ import warnings
 import gzip
 
 from pathlib import Path
-from typing import Dict, Generator, Iterable, Optional, List, Callable
+from typing import Any, Dict, Generator, Iterable, Optional, List, Callable
 from io import IOBase
 from protools.typedef import FilePathType, FilePathOrIOType, SeqLikeType
 from collections import namedtuple
@@ -43,15 +43,22 @@ def ensure_path(path: FilePathType, mk_parents: bool = False) -> Path:
 
 
 @contextmanager
-def ensure_fileio(path_or_io: FilePathOrIOType, mode: str = 'r') -> Generator[IOBase, None, None]:
+def ensure_fileio(path_or_io: FilePathOrIOType,
+                  mode: str = 'r',
+                  open_func: Callable[[Any, str], IOBase] = open) -> Generator[IOBase, None, None]:
     """
     Ensure the input is a IO object. If the input is a path,
-    open the path as a IO object.
+    open the path as a IO object. If the input is already
+    a IO object, return it directly with simple checking (not guaranteed).
 
     Parameters
     ----------
     path_or_io : FilePathOrIOType
         The input path or FileIO object.
+
+    open_func:
+        The function to open the file, by default is the built-in
+        open function.
 
     Returns
     ----------
@@ -69,14 +76,16 @@ def ensure_fileio(path_or_io: FilePathOrIOType, mode: str = 'r') -> Generator[IO
         If the input is a closed IO object or the mode is not matched.
     """
     if isinstance(path_or_io, FilePathType):
-        f = ensure_path(path_or_io, mk_parents=True).open(mode)
-        yield f
-        f.close()
+        with open_func(ensure_path(path_or_io, mk_parents=True), mode=mode) as f:
+            yield f
+        
     elif isinstance(path_or_io, IOBase):
         if path_or_io.closed:
             raise ValueError('The input handler is closed.')
-        if path_or_io.mode != mode:
-            raise ValueError(f'The input handler is not in "{mode}" mode.')
+        if 'r' in mode or '+' in mode:
+            assert path_or_io.readable(), 'The input handler is not readable.'
+        if 'w' in mode or 'a' in mode:
+            assert path_or_io.writable(), 'The input handler is not writable.'
         yield path_or_io
         path_or_io.flush()
     else:
@@ -785,9 +794,12 @@ class Intervals(object):
 
 
 @contextmanager
-def extract_compression(path: FilePathType) -> Generator[tuple[str, IOBase], None, None]:
+def auto_compression(
+    path: FilePathType,
+    mode: str = 'rt',
+    return_name: bool = False) -> Generator[tuple[str, IOBase], None, None]:
     """
-    A context manager to extract compressed file temporarily.
+    A context manager to automatical open compressed file temporarily.
     If the file is not compressed (with correct suffix),
     it will be opened directly.
 
@@ -802,9 +814,14 @@ def extract_compression(path: FilePathType) -> Generator[tuple[str, IOBase], Non
         The name and file object of the extracted file.
     """
     path = ensure_path(path)
-    if path.suffix == '.gz':
-        with gzip.open(path, 'rt') as f:
-            yield path.stem, f
+    if path.suffix.lower() == '.gz':
+        if '+' in mode:
+            raise ValueError('gzip file does not support read and write mode.')
+        if 'b' not in mode and 't' not in mode:
+            # gzip's default mode is binary, change it to text mode to be consistent
+            mode += 't'
+        with gzip.open(path, mode=mode) as f:
+            yield (path.stem, f) if return_name else f
     else:
-        with path.open('r') as f:
-            yield path.name, f
+        with path.open(mode) as f:
+            yield (path.name, f) if return_name else f

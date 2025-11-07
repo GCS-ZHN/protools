@@ -1,5 +1,6 @@
 import pytest
 from protools import utils
+from . import tools
 
 
 def test_ensure_seq_string_type_err():
@@ -118,7 +119,7 @@ def test_intervals_or():
     assert union_intervals == expected_intervals, f"Expected {expected_intervals}, got {union_intervals}"
 
 
-def test_extract_compression(tmp_path):
+def test_auto_compression_read(tmp_path):
     """
     Test the extract_compression context manager.
     """
@@ -129,7 +130,42 @@ def test_extract_compression(tmp_path):
     with gzip.open(gz_file, 'wb') as f:
         f.write(test_content)
     
-    with utils.extract_compression(gz_file) as (name, f):
+    with utils.auto_compression(gz_file, 'rb') as f:
         content = f.read()
-        assert content == test_content.decode(), \
-            "Content read from compressed file does not match original content"
+        assert content == test_content, \
+            "Coauto_compressionpressed file does not match original content"
+
+
+def test_auto_compression_read_text(tmp_path):
+    """
+    Test the extract_compression context manager for text files.
+    """
+    import gzip
+    test_content = "Test content for compression"
+    gz_file = tmp_path / "test.gz"
+    
+    with gzip.open(gz_file, 'wt') as f:
+        f.write(test_content)
+    
+    with utils.auto_compression(gz_file, 'rt') as f:
+        content = f.read()
+        assert content == test_content, \
+            "Compressed text file does not match original content"
+
+
+def test_auto_compression_write(tmp_path):
+    with open('data/4zqk.cif', 'rb') as f:
+        original_content = f.read()
+    with utils.auto_compression(tmp_path / "output.gz", 'wb') as f:
+        f.write(original_content)
+
+    tools.md5_equal_file(tmp_path / "output.gz", 'data/4zqk.cif.gz'), "Compressed file content does not match original content"
+
+
+def test_auto_compression_write_text(tmp_path):
+    with open('data/4zqk.cif', 'rt') as f:
+        original_content = f.read()
+    with utils.auto_compression(tmp_path / "output.gz", 'wt') as f:
+        f.write(original_content)
+    
+    tools.md5_equal_file(tmp_path / "output.gz", 'data/4zqk.cif.gz'), "Compressed text file content does not match original content"

@@ -59,6 +59,14 @@ def test_read_fasta():
     assert str(fasta['seq3'].seq) == 'RSTVWYACDEFGHIKLMNPQ'
 
 
+def test_read_fasta_with_gz():
+    fasta = seqio.read_fasta('data/test.fasta.gz')
+    assert len(fasta) == 3
+    assert str(fasta['seq1'].seq) == 'ACDEFGHIKLMNPQRSTVWY'
+    assert str(fasta['seq2'].seq) == 'WYACDEFGHIKLMNPQRSTV'
+    assert str(fasta['seq3'].seq) == 'RSTVWYACDEFGHIKLMNPQ'
+
+
 def test_read_a3m():
     msa = seqio.read_a3m('data/ab1218_0.a3m')
     assert len(msa) == 9933
@@ -82,3 +90,56 @@ def test_save_fasta(tmp_path):
     assert len(fasta2) == 2
     assert str(fasta2['seq1'].seq) == 'ACDEFGHIKLMNPQRSTVWY'
     assert str(fasta2['seq2'].seq) == 'WYACDEFGHIKLMNPQRSTV'
+
+
+def test_save_fasta_with_gz(tmp_path):
+    fasta = seqio.Fasta()
+    fasta['seq1'] = 'ACDEFGHIKLMNPQRSTVWY'
+    fasta['seq2'] = 'WYACDEFGHIKLMNPQRSTV'
+    out_file = tmp_path / 'out.fasta.gz'
+    seqio.save_fasta(fasta.values(), out_file)
+    fasta2 = seqio.read_fasta(out_file)
+    assert len(fasta2) == 2
+    assert str(fasta2['seq1'].seq) == 'ACDEFGHIKLMNPQRSTVWY'
+    assert str(fasta2['seq2'].seq) == 'WYACDEFGHIKLMNPQRSTV'
+
+
+def test_dataframe2fasta(tmp_path):
+    import pandas as pd
+    df = pd.DataFrame({
+        'id': ['seq1', 'seq2'],
+        'sequence': ['ACDEFGHIKLMNPQRSTVWY', 'WYACDEFGHIKLMNPQRSTV']
+    })
+    out_file = tmp_path / 'out.fasta'
+    seqio.df2fasta(df, out_file, 'sequence', id_col='id')
+    fasta = seqio.read_fasta(out_file)
+    assert len(fasta) == 2
+    assert str(fasta['seq1'].seq) == 'ACDEFGHIKLMNPQRSTVWY'
+    assert str(fasta['seq2'].seq) == 'WYACDEFGHIKLMNPQRSTV'
+
+
+def test_dataframe2fasta_no_id_col(tmp_path):
+    import pandas as pd
+    df = pd.DataFrame({
+        'sequence': ['ACDEFGHIKLMNPQRSTVWY', 'WYACDEFGHIKLMNPQRSTV']
+    })
+    out_file = tmp_path / 'out.fasta'
+    seqio.df2fasta(df, out_file, 'sequence')
+    fasta = seqio.read_fasta(out_file)
+    assert len(fasta) == 2
+    assert str(fasta['0'].seq) == 'ACDEFGHIKLMNPQRSTVWY'
+    assert str(fasta['1'].seq) == 'WYACDEFGHIKLMNPQRSTV'
+
+
+def test_dataframe2fasta_with_gz(tmp_path):
+    import pandas as pd
+    df = pd.DataFrame({
+        'id': ['seq1', 'seq2'],
+        'sequence': ['ACDEFGHIKLMNPQRSTVWY', 'WYACDEFGHIKLMNPQRSTV']
+    })
+    out_file = tmp_path / 'out.fasta.gz'
+    seqio.df2fasta(df, out_file, 'sequence', id_col='id')
+    fasta = seqio.read_fasta(out_file)
+    assert len(fasta) == 2
+    assert str(fasta['seq1'].seq) == 'ACDEFGHIKLMNPQRSTVWY'
+    assert str(fasta['seq2'].seq) == 'WYACDEFGHIKLMNPQRSTV'

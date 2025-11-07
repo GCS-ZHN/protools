@@ -13,7 +13,7 @@ from typing import Iterable, Union, Dict, Tuple, Optional
 from collections import OrderedDict
 from itertools import product, islice
 
-from protools.utils import ensure_fileio, ensure_path
+from protools.utils import ensure_fileio, ensure_path, auto_compression
 from protools.typedef import FilePathType, FilePathOrIOType, SeqLikeType
 
 
@@ -237,7 +237,7 @@ def read_fasta(path: FilePathOrIOType, mode: str = 'r') -> Fasta:
     ----------
     Fasta object.
     """
-    with ensure_fileio(path, mode) as f:
+    with ensure_fileio(path, mode=mode, open_func=auto_compression) as f:
         return Fasta(map(lambda x: (x.id, x), SeqIO.parse(f, 'fasta')))
 
 
@@ -259,7 +259,7 @@ def read_a3m(path: FilePathOrIOType, is_multimer: bool = False) -> Fasta:
     if not is_multimer:
         return read_fasta(path)
     
-    with ensure_fileio(path) as f:
+    with ensure_fileio(path, open_func=auto_compression) as f:
         # seqeunce size record in first line, e.g. #121,221,33
         size = f.readline()[1:].split()[0].split(',')
         size = list(map(int, size))
@@ -452,7 +452,7 @@ def save_fasta(
     """
     if mkdir and isinstance(path, Path):
         path.parent.mkdir(parents=True, exist_ok=True)
-    with ensure_fileio(path, mode) as f:
+    with ensure_fileio(path, mode=mode, open_func=auto_compression) as f:
         SeqIO.write(sequences, f, 'fasta-2line' if two_line_mode else 'fasta')
 
 

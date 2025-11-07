@@ -32,7 +32,7 @@ from Bio.Data import PDBData, IUPACData
 
 from protools.seqio import save_fasta, read_seqres, Fasta
 from protools.typedef import FilePathType, FilePathOrIOType, StructureFragmentAAType, StructureFragmentType, SeqLikeType
-from protools.utils import ensure_path, ensure_fileio, ensure_seq_string, extract_compression
+from protools.utils import ensure_path, ensure_fileio, ensure_seq_string, auto_compression
 from tqdm.auto import tqdm
 
 
@@ -170,7 +170,7 @@ def get_structure(pdb_file: FilePathType, structure_id: str = 'pdb') -> Structur
     if not pdb_file.exists():
         raise FileNotFoundError(f"Could not find PDB file {pdb_file}")
 
-    with extract_compression(pdb_file) as (name, f):
+    with auto_compression(pdb_file, return_name=True) as (name, f):
         suffix = Path(name).suffix
         if suffix.lower() == '.cif':
             parser = MMCIFParser(QUIET=True)
@@ -327,7 +327,7 @@ def save_pdb(
             raise RuntimeError("Only accept one Structure object")
         pdb_io = PDBIO()
         pdb_io.set_structure(entities[0])
-        with open(output_path, "w") as fp:
+        with auto_compression(output_path, "w") as fp:
             _write_remark(fp, 220, "Created by protools")
             if remarks is not None:
                 for k, v in remarks.items():
