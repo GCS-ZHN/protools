@@ -415,9 +415,10 @@ def fetch(pdb_id: str, target_dir: FilePathType, server: str = 'https://files.rc
     """
     target_dir = ensure_path(target_dir)
     target_dir.mkdir(exist_ok=True, parents=True)
+    pdb_id_lower = pdb_id.lower()
     file_name_format = {
-        'pdb': f'{pdb_id[1:3]}/pdb{pdb_id}.ent.gz',
-        'mmCIF': f'{pdb_id[1:3]}/{pdb_id}.cif.gz'
+        'pdb': f'{pdb_id_lower[1:3]}/pdb{pdb_id_lower}.ent.gz',
+        'mmCIF': f'{pdb_id_lower[1:3]}/{pdb_id_lower}.cif.gz'
     }
     type2suffix = {
         'pdb': '.pdb',
