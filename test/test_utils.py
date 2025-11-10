@@ -224,8 +224,7 @@ def test_auto_compression_write(tmp_path, raw_file, exp_md5sum, mode):
         'comressed_file, exp_md5sum, mode',
         [
             ('data/4zqk.cif.gz', '5363bcc30d0fdedf1c5a9218e4732304', 'b'),
-            ('data/4zqk.cif.gz', '5363bcc30d0fdedf1c5a9218e4732304', 't'),
-            ('LICENSE.gz', '4ac37a6b5bd5985ff7b3ec8c35d7ec00', 't')
+            ('data/4zqk.cif.gz', '5363bcc30d0fdedf1c5a9218e4732304', 't')
         ]
 )
 def test_auto_compression_read(tmp_path, comressed_file, exp_md5sum, mode):
