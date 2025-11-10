@@ -6,11 +6,12 @@ import pandas as pd
 from multiprocessing import Pool
 from pathlib import Path
 from typing import Iterable, Tuple
-from scipy.spatial.distance import cdist
 
-from protools.aa import RESIDUE2SIDECHAIN_3LETTER
-from protools.pdbio import Structure, get_structure, save_pdb, pdb2df
-from protools.typedef import FilePathType, StructureFragmentAAType
+from Bio.Data import IUPACData
+
+from protools.pdbanno import distance
+from protools.pdbio import Structure, get_structure, save_pdb, pdb2df, is_aa
+from protools.typedef import FilePathType, StructureFragmentType
 from protools.utils import ensure_path
 
 
@@ -135,82 +136,70 @@ def batch_extract(
     pool.join()
 
 
-def _get_sidechain_radius(data: pd.DataFrame) -> pd.Series:
+def get_interface(model: StructureFragmentType, threshold: float = 8.0, dist_type: str = 'ca') -> pd.DataFrame:
     """
-    Get the sidechain radius of each residue in the dataframe.
-    The sidechain radius is defined as the maximum distance between
-    the CA atom and any sidechain atom.
-    If the residue has no sidechain atoms, the radius is 0.
-    If the residue has no CA atom, the radius is infinity."""
-    def _get_radius(grouped_data: pd.DataFrame) -> float:
-        resn = grouped_data.name[3].capitalize()
-        if resn not in RESIDUE2SIDECHAIN_3LETTER:
-            raise ValueError(f"Unknown residue name: {resn}")
-        sidechain_atoms = RESIDUE2SIDECHAIN_3LETTER[resn]
-        if len(sidechain_atoms) == 0:
-            return 0.0
-        sidechain_data = grouped_data[grouped_data['name'].isin(sidechain_atoms)]
-        ca_data = grouped_data[grouped_data['name'] == 'CA']
-        if len(ca_data) == 0 or len(sidechain_data) == 0:
-            return float('inf')
-        ca_coord = ca_data[['x', 'y', 'z']].to_numpy()
-        sidechain_coord = sidechain_data[['x', 'y', 'z']].to_numpy()
-        dists = cdist(ca_coord, sidechain_coord)
-        return dists.max()
-    return data.groupby(data.index).apply(_get_radius)
+    Get the interface residues of a structure fragment.
+
+    Parameters
+    ----------
+    model : StructureFragmentType
+        A Bio.PDB.Structure.Structure, Bio.PDB.Model.Model,
+        or Bio.PDB.Chain.Chain object.
+    threshold : float, optional
+        Distance threshold to define interface residues,
+        by default 8.0.
+
+    Returns
+    ----------
+    pd.DataFrame
+       A DataFrame of interface residues.
+    """
+    dist = distance(model, model, dist_type=dist_type)
+    chain = dist.index.get_level_values('chain').values
+    dist_mask = dist < threshold
+    cross_chain_mask = chain[:, None] != chain[None, :]
+    interface_mask = (dist_mask.values & cross_chain_mask).any(axis=1)
+    return dist[interface_mask].index.to_frame().reset_index(drop=True)
 
 
-def distance(
-        entity1: StructureFragmentAAType,
-        entity2: StructureFragmentAAType,
-        dist_type: str = 'ca') -> pd.DataFrame:
-    entity1_df = pdb2df(entity1)
-    entity2_df = pdb2df(entity2)
-    entity1_df.set_index(['model', 'chain', 'seqid', 'resn'], inplace=True)
-    entity2_df.set_index(['model', 'chain', 'seqid', 'resn'], inplace=True)
+def find_seq(seq: str, model: StructureFragmentType, findall: bool = False) -> pd.DataFrame:
+    """
+    Find specific sequence in a structure fragment. 
+    It is useful for located the motif.
 
-    if dist_type == 'ca':
-        entity1_ca_df = entity1_df[entity1_df['name'] == 'CA']
-        entity2_ca_df = entity2_df[entity2_df['name'] == 'CA']
-        dist = cdist(
-            entity1_ca_df[['x', 'y', 'z']].to_numpy(),
-            entity2_ca_df[['x', 'y', 'z']].to_numpy())
-        dist_df = pd.DataFrame(
-            dist,
-            index=entity1_ca_df.index,
-            columns=entity2_ca_df.index
-            )
-    elif dist_type == 'full_atom':
-        dist = cdist(
-            entity1_df[['x', 'y', 'z']].to_numpy(),
-            entity2_df[['x', 'y', 'z']].to_numpy())
-        dist_df = pd.DataFrame(
-            dist,
-            index=entity1_df.index,
-            columns=entity2_df.index)
-        dist_df = dist_df.groupby(dist_df.index).min().T.groupby(dist_df.columns).min().T
-        dist_df.index = pd.MultiIndex.from_tuples(
-            dist_df.index, names=entity1_df.index.names)
-        dist_df.columns = pd.MultiIndex.from_tuples(
-            dist_df.columns, names=entity2_df.index.names)
-    elif dist_type == 'sidechain_radius':
-        entity1_ca_df = entity1_df[entity1_df['name'] == 'CA']
-        entity2_ca_df = entity2_df[entity2_df['name'] == 'CA']
-        entity1_sidechain_radius = _get_sidechain_radius(entity1_df)
-        entity2_sidechain_radius = _get_sidechain_radius(entity2_df)
-        dist = cdist(
-            entity1_ca_df[['x', 'y', 'z']].to_numpy(),
-            entity2_ca_df[['x', 'y', 'z']].to_numpy())
-        dist -= entity1_sidechain_radius.values[:, None]
-        dist -= entity2_sidechain_radius.values[None, :]
-        dist[dist < 0] = 0
-        dist_df = pd.DataFrame(
-            dist,
-            index=entity1_ca_df.index,
-            columns=entity2_ca_df.index)
-    else:
-        raise ValueError(f"Unknown distance type: {dist_type}")
-    return dist_df
+    Parameters
+    ----------
+    seq : str
+       The sequence to find.
+    model : StructureFragmentType
+        The structure fragment to search in.
+    findall : bool, optional
+        If True, find all occurrences of the sequence
+    
+    Return
+    ------
+    pd.DataFrame
+        A dataframe about the result.
+    """
+    df = pdb2df(model, 'parent')
+    df = df[df['parent'].apply(is_aa)]
+    ca_df = df[df['name'] == 'CA']
+    founds = set()
+    for _, sub_df in ca_df.groupby(['model', 'chain']):
+        chain_seq = ''.join(IUPACData.protein_letters_3to1[n.capitalize()] for n in sub_df['resn'])
+        try:
+            start_pos = chain_seq.index(seq)
+        except ValueError:
+            continue
+        founded = sub_df.iloc[start_pos:start_pos + len(seq)][['model', 'chain', 'seqid', 'resn']]
+        for _, row in founded.iterrows():
+            founds.add((row['model'], row['chain'], row['seqid'], row['resn']))
+        if not findall:
+            break
+
+    return df[df.apply(
+        lambda row: (row['model'], row['chain'], row['seqid'], row['resn']) in founds, axis=1)].copy()
+
 
 
 if __name__ == "__main__":

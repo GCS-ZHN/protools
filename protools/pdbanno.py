@@ -11,12 +11,14 @@ import pandas as pd
 from Bio.PDB.SASA import ShrakeRupley
 from Bio.PDB.Structure import Structure
 from Bio.PDB.Residue import Residue
-from Bio.SeqUtils import IUPACData
-from scipy.spatial import distance
+from Bio.Data import IUPACData
 
 from protools import pdbio
-from protools.typedef import FilePathType, StructureFragmentType
+from protools.aa import RESIDUE2SIDECHAIN_3LETTER
+from protools.typedef import FilePathType, StructureFragmentAAType, StructureFragmentType
 from protools.utils import ensure_path, CmdWrapperBase
+
+from scipy.spatial.distance import cdist
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -264,34 +266,82 @@ def calc_sasa_from_pdbs(
     _LOGGER.info("all done")
 
 
-def get_interface(model: StructureFragmentType, threshold: float = 5.0) -> pd.DataFrame:
+def _get_sidechain_radius(data: pd.DataFrame) -> pd.Series:
     """
-    Get the interface residues of a structure fragment.
+    Get the sidechain radius of each residue in the dataframe.
+    The sidechain radius is defined as the maximum distance between
+    the CA atom and any sidechain atom.
+    If the residue has no sidechain atoms, the radius is 0.
+    If the residue has no CA atom, the radius is infinity."""
+    def _get_radius(grouped_data: pd.DataFrame) -> float:
+        resn = grouped_data.name[3].capitalize()
+        if resn not in RESIDUE2SIDECHAIN_3LETTER:
+            raise ValueError(f"Unknown residue name: {resn}")
+        sidechain_atoms = RESIDUE2SIDECHAIN_3LETTER[resn]
+        if len(sidechain_atoms) == 0:
+            return 0.0
+        sidechain_data = grouped_data[grouped_data['name'].isin(sidechain_atoms)]
+        ca_data = grouped_data[grouped_data['name'] == 'CA']
+        if len(ca_data) == 0 or len(sidechain_data) == 0:
+            return float('inf')
+        ca_coord = ca_data[['x', 'y', 'z']].to_numpy()
+        sidechain_coord = sidechain_data[['x', 'y', 'z']].to_numpy()
+        dists = cdist(ca_coord, sidechain_coord)
+        return dists.max()
+    return data.groupby(data.index).apply(_get_radius)
 
-    Parameters
-    ----------
-    model : StructureFragmentType
-        A Bio.PDB.Structure.Structure, Bio.PDB.Model.Model,
-        or Bio.PDB.Chain.Chain object.
-    threshold : float, optional
-        Distance threshold to define interface residues,
-        by default 5.0.
 
-    Returns
-    ----------
-    pd.DataFrame
-       A DataFrame of interface residues.
-    """
-    df = pdbio.read_residue(model)
-    dist_mask = distance.cdist(
-        df[['x', 'y', 'z']],
-        df[['x', 'y', 'z']],
-        'euclidean') <= threshold
-    chain = df.index.get_level_values('chain').values
-    cross_chain_mask = chain[:, None] != chain[None, :]
-    interface_mask = (dist_mask & cross_chain_mask).any(axis=1)
-    return df[interface_mask] 
+def distance(
+        entity1: StructureFragmentAAType,
+        entity2: StructureFragmentAAType,
+        dist_type: str = 'ca') -> pd.DataFrame:
+    entity1_df = pdbio.pdb2df(entity1)
+    entity2_df = pdbio.pdb2df(entity2)
+    entity1_df.set_index(['model', 'chain', 'seqid', 'resn'], inplace=True)
+    entity2_df.set_index(['model', 'chain', 'seqid', 'resn'], inplace=True)
 
+    if dist_type == 'ca':
+        entity1_ca_df = entity1_df[entity1_df['name'] == 'CA']
+        entity2_ca_df = entity2_df[entity2_df['name'] == 'CA']
+        dist = cdist(
+            entity1_ca_df[['x', 'y', 'z']].to_numpy(),
+            entity2_ca_df[['x', 'y', 'z']].to_numpy())
+        dist_df = pd.DataFrame(
+            dist,
+            index=entity1_ca_df.index,
+            columns=entity2_ca_df.index
+            )
+    elif dist_type == 'full_atom':
+        dist = cdist(
+            entity1_df[['x', 'y', 'z']].to_numpy(),
+            entity2_df[['x', 'y', 'z']].to_numpy())
+        dist_df = pd.DataFrame(
+            dist,
+            index=entity1_df.index,
+            columns=entity2_df.index)
+        dist_df = dist_df.groupby(dist_df.index).min().T.groupby(dist_df.columns).min().T
+        dist_df.index = pd.MultiIndex.from_tuples(
+            dist_df.index, names=entity1_df.index.names)
+        dist_df.columns = pd.MultiIndex.from_tuples(
+            dist_df.columns, names=entity2_df.index.names)
+    elif dist_type == 'sidechain_radius':
+        entity1_ca_df = entity1_df[entity1_df['name'] == 'CA']
+        entity2_ca_df = entity2_df[entity2_df['name'] == 'CA']
+        entity1_sidechain_radius = _get_sidechain_radius(entity1_df)
+        entity2_sidechain_radius = _get_sidechain_radius(entity2_df)
+        dist = cdist(
+            entity1_ca_df[['x', 'y', 'z']].to_numpy(),
+            entity2_ca_df[['x', 'y', 'z']].to_numpy())
+        dist -= entity1_sidechain_radius.values[:, None]
+        dist -= entity2_sidechain_radius.values[None, :]
+        dist[dist < 0] = 0
+        dist_df = pd.DataFrame(
+            dist,
+            index=entity1_ca_df.index,
+            columns=entity2_ca_df.index)
+    else:
+        raise ValueError(f"Unknown distance type: {dist_type}")
+    return dist_df
 
 class TMalign(CmdWrapperBase):
     """
