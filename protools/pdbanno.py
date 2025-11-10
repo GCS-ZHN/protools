@@ -264,6 +264,35 @@ def calc_sasa_from_pdbs(
     _LOGGER.info("all done")
 
 
+def get_interface(model: StructureFragmentType, threshold: float = 5.0) -> pd.DataFrame:
+    """
+    Get the interface residues of a structure fragment.
+
+    Parameters
+    ----------
+    model : StructureFragmentType
+        A Bio.PDB.Structure.Structure, Bio.PDB.Model.Model,
+        or Bio.PDB.Chain.Chain object.
+    threshold : float, optional
+        Distance threshold to define interface residues,
+        by default 5.0.
+
+    Returns
+    ----------
+    pd.DataFrame
+       A DataFrame of interface residues.
+    """
+    df = pdbio.read_residue(model)
+    dist_mask = distance.cdist(
+        df[['x', 'y', 'z']],
+        df[['x', 'y', 'z']],
+        'euclidean') <= threshold
+    chain = df.index.get_level_values('chain').values
+    cross_chain_mask = chain[:, None] != chain[None, :]
+    interface_mask = (dist_mask & cross_chain_mask).any(axis=1)
+    return df[interface_mask] 
+
+
 class TMalign(CmdWrapperBase):
     """
     TMalign python binding.
