@@ -7,3 +7,5 @@ build
 dist
 .conda
 .DS_Store
+
+*_dev.ipynb
