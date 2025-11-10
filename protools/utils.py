@@ -511,7 +511,8 @@ class Intervals(object):
     def from_slices(cls,
                     slices: List[slice],
                     zero_based: bool = False,
-                    end_inclusive: bool = True):
+                    end_inclusive: bool = True,
+                    indices_len: Optional[int] = None):
         """
         Create Intervals from slice list.
         """
@@ -519,6 +520,12 @@ class Intervals(object):
                        zero_based=zero_based,
                        end_inclusive=end_inclusive)
         slices = [slice(s.start, s.stop) if s.start else slice(0, s.stop) for s in slices]
+        if indices_len is not None:
+            assert indices_len > 0, 'Indices length must be positive'
+            slices = [slice(*s.indices(indices_len)[:2]) for s in slices]
+        for s in slices:
+            assert s.start >= 0, 'Start must be non-negative'
+            assert s.stop is None or s.stop >= s.start, 'Stop must be greater than start'
         interval._interval_slices = cls._merge_intervals(slices)
         interval.dynamic = any([i.stop is None for i in interval._interval_slices])
         return interval
