@@ -3,19 +3,23 @@ from protools import utils
 from . import tools
 
 
-def test_ensure_seq_string_type_err():
+@pytest.mark.parametrize(
+        'seq',
+        [123, None, 1.23, list()]
+)
+def test_ensure_seq_string_type_err(seq):
     with pytest.raises(TypeError):
-        utils.ensure_seq_string(123)  # type: ignore
+        utils.ensure_seq_string(seq)  # type: ignore
 
-    with pytest.raises(TypeError):
-        utils.ensure_seq_string(None)  # type: ignore
-
-
-def test_ensure_seq_string():
+@pytest.mark.parametrize(
+        'seq',
+        ['ACDEFGHIKLMNPQRSTVWY']
+)
+def test_ensure_seq_string(seq):
     """
     Test the ensure_seq_string function.
     """
-    seq1 = 'ACDEFGHIKLMNPQRSTVWY'
+    seq1 = seq
     from Bio.Seq import Seq
     seq2 = Seq(seq1)
     from Bio.SeqRecord import SeqRecord
@@ -26,42 +30,62 @@ def test_ensure_seq_string():
     assert utils.ensure_seq_string(seq3) == seq1, "Failed on SeqRecord input"
 
 
-def test_intervals_parse():
+@pytest.mark.parametrize(
+        'intervals_pattern, exp_slices',
+        [
+            ('1-5,7,9-10,12-', [slice(0, 5), slice(6, 7), slice(8, 10), slice(11, None)]),
+            ('1-9', [slice(0, 9)]),
+            ('1-9, 8', [slice(0, 9)]),
+            ('-10', [slice(0,10)]),
+            ('5-9,7-11', [slice(4, 11)]),
+            ('-', [slice(0, None)])
+        ]
+)
+def test_intervals_parse(intervals_pattern, exp_slices):
     """
     Test the parsing of intervals from a string.
     """
-    intervals = utils.Intervals('1-5,7,9-10,12-')
+    intervals = utils.Intervals(intervals_pattern)
     slices = list(intervals)
-    expected_slices = [
-        slice(0, 5),  # 1-5
-        slice(6, 7),  # 7
-        slice(8, 10), # 9-10
-        slice(11, None)  # 12-
-    ]
-    assert slices == expected_slices, f"Expected {expected_slices}, got {slices}"
+    assert slices == exp_slices
 
 
-def test_intervals_contains():
+@pytest.mark.parametrize(
+        'intervals_pattern, contains, not_contains',
+        [
+            ('1-5,7,9-10', [1,2,3,4,5,7,9,10, slice(8,10)], [0,6,8, slice(9,11)]),
+            ('-', [1, 2, 100000, slice(10)], [0]),
+            ('10-', [10,10000], [1,9, slice(8,19)])
+        ]
+)
+def test_intervals_contains(intervals_pattern, contains, not_contains):
     """
     Test the containment functionality of Intervals.
     """
-    intervals = utils.Intervals('1-5,7,9-10')
-    assert 3 in intervals, "Expected 3 to be in intervals"
-    assert 6 not in intervals, "Expected 6 to not be in intervals"
-    assert 1 in intervals, "Expected 1 to be in intervals"
-    assert 5 in intervals, "Expected 5 to be in intervals"
-    assert 7 in intervals, "Expected 7 to be in intervals"
+    intervals = utils.Intervals(intervals_pattern)
+    for v in contains:
+        assert v in intervals
+    for v in not_contains:
+        assert v not in intervals
 
 
-def test_intervals_from_slices():
+@pytest.mark.parametrize(
+        'slices, intervals_pattern, indices_len',
+        [
+            ([slice(0, 5), slice(6, 7), slice(8, 10)], '1-5,7,9-10', None),
+            ([slice(0, None)], '-10', 10),
+            ([slice(0, 10)],'1-10', None),
+            ([slice(-10, -5)], '1-5', 10)
+        ]
+)
+def test_intervals_from_slices(slices, intervals_pattern, indices_len):
     """
     Test the creation of Intervals from slices.
     """
-    slices = [slice(0, 5), slice(6, 7), slice(8, 10)]
-    intervals = utils.Intervals.from_slices(slices)
-    expected_intervals = utils.Intervals('1-5,7,9-10')
+    intervals = utils.Intervals.from_slices(slices, indices_len=indices_len)
+    expected_intervals = utils.Intervals(intervals_pattern)
     
-    assert intervals == expected_intervals, f"Expected {expected_intervals}, got {intervals}"
+    assert intervals == expected_intervals
 
 
 def test_intervals_add():
@@ -73,99 +97,141 @@ def test_intervals_add():
     assert intervals1 + 1 == intervals2, "Expected intervals1 + 1 to equal intervals2"
 
 
-def test_intervals_invert():
+@pytest.mark.parametrize(
+        'raw, result',
+        [
+            ('1-5,7,9-10', '6,8,11-'),
+            ('2-', '1'),
+            ('-', '')
+        ]
+)
+def test_intervals_invert(raw: str, result: str):
     """
     Test the invert functionality of Intervals.
     """
-    intervals = utils.Intervals('1-5,7,9-10')
+    intervals = utils.Intervals(raw)
     inverted_intervals = ~intervals
-    expected_intervals = utils.Intervals('6,8,11-')
+    expected_intervals = utils.Intervals(result)
     
-    assert inverted_intervals == expected_intervals, f"Expected {expected_intervals}, got {inverted_intervals}"
+    assert inverted_intervals == expected_intervals
 
 
-def test_intervals_invert_with_bounds():
+@pytest.mark.parametrize(
+        'raw, result, low, high',
+        [
+            ('1-5,7,9-10', '6,8,11-12', 1, 12),
+            ('2-5,7,9-10', '1,6,8,11-12', 1, 12),
+            ('-5', '6-10', 1, 10)
+        ]
+)
+def test_intervals_invert_with_bounds(raw: str, result: str, low: int, high: int):
     """
     Test the invert functionality of Intervals with specified bounds.
     """
-    intervals = utils.Intervals('1-5,7,9-10')
-    inverted_intervals = intervals.invert(low=1, high=12)
-    expected_intervals = utils.Intervals('6,8,11-12')
+    intervals = utils.Intervals(raw)
+    inverted_intervals = intervals.invert(low=low, high=high)
+    expected_intervals = utils.Intervals(result)
     
-    assert inverted_intervals == expected_intervals, f"Expected {expected_intervals}, got {inverted_intervals}"
+    assert inverted_intervals == expected_intervals
 
 
-def test_intervals_and():
+@pytest.mark.parametrize(
+        'raw1, raw2, result',
+        [
+            ('1-5,7,9-10', '1-5,7,9-10', '1-5,7,9-10'),
+            ('1-5,7,9-10', '3-8,10-12', '3-5,7,10'),
+            ('3-8,10-12', '1-5,7,9-10', '3-5,7,10'),
+            ('2', '2-', '2')
+        ]
+)
+def test_intervals_and(raw1, raw2, result):
     """
     Test the intersection functionality of Intervals.
     """
-    intervals1 = utils.Intervals('1-5,7,9-10')
-    intervals2 = utils.Intervals('3-8,10-12')
+    intervals1 = utils.Intervals(raw1)
+    intervals2 = utils.Intervals(raw2)
     intersected_intervals = intervals1 & intervals2
-    expected_intervals = utils.Intervals('3-5,7,10')
+    expected_intervals = utils.Intervals(result)
     
-    assert intersected_intervals == expected_intervals, f"Expected {expected_intervals}, got {intersected_intervals}"
+    assert intersected_intervals == expected_intervals
 
 
-def test_intervals_or():
+@pytest.mark.parametrize(
+        'raw1, raw2, result',
+        [
+            ('1-5,7,9-10', '1-5,7,9-10', '1-5,7,9-10'),
+            ('1-5,7,9-10', '3-8,10-12', '1-8,9-12'),
+            ('3-8,10-12', '1-5,7,9-10', '1-8,9-12'),
+            ('1', '2-', '-')
+        ]
+)
+def test_intervals_or(raw1, raw2, result):
     """
     Test the union functionality of Intervals.
     """
-    intervals1 = utils.Intervals('1-5,7,9-10')
-    intervals2 = utils.Intervals('3-8,10-12')
+    intervals1 = utils.Intervals(raw1)
+    intervals2 = utils.Intervals(raw2)
     union_intervals = intervals1 | intervals2
-    expected_intervals = utils.Intervals('1-8,9-12')
+    expected_intervals = utils.Intervals(result)
     
-    assert union_intervals == expected_intervals, f"Expected {expected_intervals}, got {union_intervals}"
+    assert union_intervals == expected_intervals
 
 
-def test_auto_compression_read(tmp_path):
+@pytest.mark.parametrize(
+        'test_content',
+        [
+            b"Test content for compression",
+            b"hello world",
+            b"bodaojdoa",
+            "Test content for compression",
+            "hello world",
+            "bodaojdoa"
+        ]
+)
+def test_auto_compression_read(tmp_path, test_content):
     """
     Test the extract_compression context manager.
     """
     import gzip
-    test_content = b"Test content for compression"
     gz_file = tmp_path / "test.gz"
-    
-    with gzip.open(gz_file, 'wb') as f:
+    mode = 'b' if isinstance(test_content, bytes) else 't'
+    with gzip.open(gz_file, 'w' + mode) as f:
         f.write(test_content)
     
-    with utils.auto_compression(gz_file, 'rb') as f:
+    with utils.auto_compression(gz_file, 'r' + mode) as f:
         content = f.read()
-        assert content == test_content, \
-            "Coauto_compressionpressed file does not match original content"
+        assert content == test_content
 
 
-def test_auto_compression_read_text(tmp_path):
-    """
-    Test the extract_compression context manager for text files.
-    """
-    import gzip
-    test_content = "Test content for compression"
-    gz_file = tmp_path / "test.gz"
-    
-    with gzip.open(gz_file, 'wt') as f:
-        f.write(test_content)
-    
-    with utils.auto_compression(gz_file, 'rt') as f:
-        content = f.read()
-        assert content == test_content, \
-            "Compressed text file does not match original content"
-
-
-def test_auto_compression_write(tmp_path):
-    with open('data/4zqk.cif', 'rb') as f:
+@pytest.mark.parametrize(
+        'raw_file, exp_md5sum, mode',
+        [
+            ('data/4zqk.cif', 'cf2c8c5b6641a6fa9cbc7160eefb28b3', 'b'),
+            ('data/4zqk.cif', 'cf2c8c5b6641a6fa9cbc7160eefb28b3', 't'),
+            ('LICENSE', '7c38f9b17cc554e577f8564b41152f1a', 't')
+            ]
+)
+def test_auto_compression_write(tmp_path, raw_file, exp_md5sum, mode):
+    with open(raw_file, 'r' + mode) as f:
         original_content = f.read()
-    with utils.auto_compression(tmp_path / "output.gz", 'wb') as f:
+    with utils.auto_compression(tmp_path / "output.gz", 'w' + mode) as f:
         f.write(original_content)
 
-    tools.md5_equal_file(tmp_path / "output.gz", 'data/4zqk.cif.gz'), "Compressed file content does not match original content"
+    tools.md5_equal(tmp_path / "output.gz", exp_md5sum)
 
 
-def test_auto_compression_write_text(tmp_path):
-    with open('data/4zqk.cif', 'rt') as f:
-        original_content = f.read()
-    with utils.auto_compression(tmp_path / "output.gz", 'wt') as f:
-        f.write(original_content)
+@pytest.mark.parametrize(
+        'comressed_file, exp_md5sum, mode',
+        [
+            ('data/4zqk.cif.gz', '5363bcc30d0fdedf1c5a9218e4732304', 'b'),
+            ('data/4zqk.cif.gz', '5363bcc30d0fdedf1c5a9218e4732304', 't'),
+            ('LICENSE.gz', '4ac37a6b5bd5985ff7b3ec8c35d7ec00', 't')
+        ]
+)
+def test_auto_compression_read(tmp_path, comressed_file, exp_md5sum, mode):
+    with utils.auto_compression(comressed_file, mode='r' + mode) as f:
+        content = f.read()
+    with open(tmp_path / 'output', 'w' + mode) as f:
+        f.write(content)
     
-    tools.md5_equal_file(tmp_path / "output.gz", 'data/4zqk.cif.gz'), "Compressed text file content does not match original content"
+    tools.md5_equal(tmp_path / 'output', exp_md5sum)
