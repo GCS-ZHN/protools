@@ -24,15 +24,15 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def neighbor_water_count(
-        pdb: Union[Path, str, Structure], 
+        entity: StructureFragmentType, 
         level: str = 'R', 
         threshold: float = 2.8) -> Union[int, pd.Series]:
     """Count the number of water molecules in a PDB file.
 
     Parameters
     ----------
-    pdbfile : Union[Path, str, Structure]
-        Path to the PDB file or a Bio.PDB.Structure.Structure object.
+    entity : Union[Chain, Model, Structure]
+        PDB Entity.
     level : str, optional
         Level of the annotation, by default 'R'.
         'S' for structure, 'M' for model, 'C' for chain, 
@@ -49,30 +49,26 @@ def neighbor_water_count(
 
     Examples
     ----------
-    >>> from protools import pdbanno
-    >>> pdbanno.neighbor_water_count('3inj.pdb')
-    model  chain  seqid  resn
-    0      A      10    ALA     0
-                  100   THR     1
-                  101   TYR     1
-                  102   LEU     0
-                  103   ALA     0
-                              ..
-           H      95    ILE     0
-                  96    GLU     0
-                  97    ARG     0
-                  98    ASP     0
-                  99    ARG     0
+    >>> from protools import pdbanno, pdbio
+    >>> entity = pdbio.get_structure('3inj.pdb')
+    >>> pdbanno.neighbor_water_count(entity)
+    model  chain  seqid  resn  inscode
+    0      A      7      ALA              0
+                8      VAL              0
+                9      PRO              0
+                10     ALA              0
+                11     PRO              1
+                                        ..
+        H      496    PRO              0
+                497    GLN              0
+                498    LYS              2
+                499    ASN              0
+                500    SER              3
     Length: 3953, dtype: int64
     """
-    if isinstance(pdb, Structure):
-        structure = pdb
-    elif isinstance(pdb, FilePathType):
-        structure = pdbio.get_structure(pdb)
-    else:
-        raise TypeError(f"Unknown type: {type(pdb)}")
-
-    df = pdbio.pdb2df(structure)
+    assert isinstance(entity, StructureFragmentType), \
+        f"pdb must be a StructureFragmentType"
+    df = pdbio.pdb2df(entity)
 
     df['is_standard_res'] = df['resn'].apply(
         lambda x: x.capitalize() in IUPACData.protein_letters_3to1)
@@ -89,12 +85,12 @@ def neighbor_water_count(
     elif level == 'C':
         level_columns = ['model', 'chain']
     elif level == 'R':
-        level_columns = ['model', 'chain', 'seqid', 'resn']
+        level_columns = pdbio.RESIDUE_LEVEL_COLS
     else:
         raise ValueError(f"Unknown level: {level}")
 
 
-    dist = distance.cdist(res_hatom_coord, water_oxygen_coord, 'euclidean') <= threshold
+    dist = cdist(res_hatom_coord, water_oxygen_coord, 'euclidean') <= threshold
     dist = pd.DataFrame(index=res_hatom_coord.index, data=dist)
     if level == 'S':
         return dist.any().sum()
@@ -133,36 +129,36 @@ def calc_sasa(
     >>> from protools import pdbanno
     >>> pdb = pdbio.get_structure('3inj.pdb')
     >>> pdbanno.calc_sasa(pdb[0])
-    model  chain  seqid  resn
-    0      A      7     ALA     139.496754
-                  8     VAL      24.683581
-                  9     PRO      49.398717
-                  10    ALA      63.504719
-                  11    PRO       4.285836
-                                ...    
-           H      496   PRO      38.512169
-                  497   GLN       0.000000
-                  498   LYS       0.000000
-                  499   ASN       0.000000
-                  500   SER       0.000000
+    model  chain  seqid  resn  inscode
+    0      A      7     ALA             139.496754
+                  8     VAL              24.683581
+                  9     PRO              49.398717
+                  10    ALA              63.504719
+                  11    PRO               4.285836
+                                        ...    
+           H      496   PRO              38.512169
+                  497   GLN               0.000000
+                  498   LYS               0.000000
+                  499   ASN               0.000000
+                  500   SER               0.000000
     Length: 3953, dtype: float64
     >>> pdbanno.calc_sasa(pdb[0]['H'])
-    model  chain  seqid  resn
-    0      H      6     GLN     142.226811
-                  7     ALA      64.825545
-                  8     VAL      35.011793
-                  9     PRO      30.076666
-                  10    ALA      72.322366
-                                 ...    
-                  496   PRO     101.058627
-                  497   GLN      52.869222
-                  498   LYS      40.743604
-                  499   ASN      93.610187
-                  500   SER     129.328349
+    model  chain  seqid  resn  inscode
+    0      H      6     GLN             142.226811
+                  7     ALA              64.825545
+                  8     VAL              35.011793
+                  9     PRO              30.076666
+                  10    ALA              72.322366
+                                         ...    
+                  496   PRO             101.058627
+                  497   GLN              52.869222
+                  498   LYS              40.743604
+                  499   ASN              93.610187
+                  500   SER             129.328349
     Length: 495, dtype: float64
     >>> pdbanno.calc_sasa(pdb[0]['H'][6])
-    model  chain  seqid  resn
-    0      H      6     GLN     285.154046
+    model  chain  seqid  resn  inscode
+    0      H      6      GLN              285.154046
     dtype: float64
 
     Notes
@@ -194,11 +190,12 @@ def calc_sasa(
         chain_id = chain.get_id() if chain else 'A'
         model = chain.get_parent() if chain else None
         model_id = model.get_id() if model else 0
-        resid = ''.join(map(str, res.get_id())).strip()
-        index = (model_id, chain_id, resid, res.resname)
+        resid = res.get_id()[1]
+        inscode = res.get_id()[2]
+        index = (model_id, chain_id, resid, res.resname, inscode)
         result[index] = res.sasa
     res = pd.Series(result)
-    res.index.set_names(['model', 'chain', 'seqid', 'resn'], inplace=True)
+    res.index.set_names(pdbio.RESIDUE_LEVEL_COLS, inplace=True)
     return res
 
 
@@ -297,8 +294,8 @@ def distance(
         dist_type: str = 'ca') -> pd.DataFrame:
     entity1_df = pdbio.pdb2df(entity1)
     entity2_df = pdbio.pdb2df(entity2)
-    entity1_df.set_index(['model', 'chain', 'seqid', 'resn'], inplace=True)
-    entity2_df.set_index(['model', 'chain', 'seqid', 'resn'], inplace=True)
+    entity1_df.set_index(pdbio.RESIDUE_LEVEL_COLS, inplace=True)
+    entity2_df.set_index(pdbio.RESIDUE_LEVEL_COLS, inplace=True)
 
     if dist_type == 'ca':
         entity1_ca_df = entity1_df[entity1_df['name'] == 'CA']

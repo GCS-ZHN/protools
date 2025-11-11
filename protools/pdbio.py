@@ -50,6 +50,7 @@ __all__ = [
 
 
 BACKBONE_ATOMS = ('N', 'CA', 'C', 'O')
+RESIDUE_LEVEL_COLS = ['model', 'chain', 'seqid', 'resn', 'inscode']
 
 
 def _basic_pdb_column_format(line: str) -> str:
@@ -679,7 +680,7 @@ def read_residue(pdb: Union[FilePathType, str, Entity], mode='centroid') -> pd.D
         df['y'] *= df['mass']
         df['z'] *= df['mass']
         df = df.drop(['id', 'name', 'element'], axis=1)
-        df = df.groupby(['model', 'chain', 'seqid', 'resn']).sum()
+        df = df.groupby(RESIDUE_LEVEL_COLS).sum()
         df['x'] /= df['mass']
         df['y'] /= df['mass']
         df['z'] /= df['mass']
@@ -691,7 +692,7 @@ def read_residue(pdb: Union[FilePathType, str, Entity], mode='centroid') -> pd.D
         if mode == 'CA':
             df = df[df['name'] == 'CA']
         df = df.drop(['id', 'name', 'element'], axis=1)
-        df = df.groupby(['model', 'chain', 'seqid', 'resn']).mean()
+        df = df.groupby(RESIDUE_LEVEL_COLS).mean()
         return df
     
     raise ValueError('mode must be one of "centroid", "fuc", "CA"')

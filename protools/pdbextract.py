@@ -10,7 +10,7 @@ from typing import Iterable, Tuple
 from Bio.Data import IUPACData
 
 from protools.pdbanno import distance
-from protools.pdbio import Structure, get_structure, save_pdb, pdb2df, is_aa
+from protools.pdbio import RESIDUE_LEVEL_COLS, Structure, get_structure, save_pdb, pdb2df, is_aa
 from protools.typedef import FilePathType, StructureFragmentType
 from protools.utils import ensure_path
 
@@ -191,7 +191,7 @@ def find_seq(seq: str, model: StructureFragmentType, findall: bool = False) -> p
         chain_seq = ''.join(IUPACData.protein_letters_3to1[n.capitalize()] for n in sub_df['resn'])
         find_start = 0
         while (start_pos:=chain_seq.find(seq, find_start)) != -1:
-            founded = sub_df.iloc[start_pos:start_pos + len(seq)][['model', 'chain', 'seqid', 'resn']]
+            founded = sub_df.iloc[start_pos:start_pos + len(seq)][RESIDUE_LEVEL_COLS]
             for _, row in founded.iterrows():
                 founds.add((row['model'], row['chain'], row['seqid'], row['resn']))
             find_start = start_pos + len(seq)

@@ -204,20 +204,22 @@ def test_auto_compression_read(tmp_path, test_content):
 
 
 @pytest.mark.parametrize(
-        'raw_file, exp_md5sum, mode',
+        'raw_file, mode',
         [
-            ('data/4zqk.cif', 'cf2c8c5b6641a6fa9cbc7160eefb28b3', 'b'),
-            ('data/4zqk.cif', 'cf2c8c5b6641a6fa9cbc7160eefb28b3', 't'),
-            ('LICENSE', '7c38f9b17cc554e577f8564b41152f1a', 't')
+            ('data/4zqk.cif', 'b'),
+            ('data/4zqk.cif', 't'),
+            ('LICENSE', 't')
             ]
 )
-def test_auto_compression_write(tmp_path, raw_file, exp_md5sum, mode):
+def test_auto_compression_write(tmp_path, raw_file, mode):
     with open(raw_file, 'r' + mode) as f:
         original_content = f.read()
     with utils.auto_compression(tmp_path / "output.gz", 'w' + mode) as f:
         f.write(original_content)
 
-    tools.md5_equal(tmp_path / "output.gz", exp_md5sum)
+    with utils.auto_compression(tmp_path / 'output.gz', 'r' + mode) as f:
+        content = f.read()
+        assert original_content == content
 
 
 @pytest.mark.parametrize(
@@ -233,4 +235,4 @@ def test_auto_compression_read(tmp_path, comressed_file, exp_md5sum, mode):
     with open(tmp_path / 'output', 'w' + mode) as f:
         f.write(content)
     
-    tools.md5_equal(tmp_path / 'output', exp_md5sum)
+    assert tools.md5_equal(tmp_path / 'output', exp_md5sum)

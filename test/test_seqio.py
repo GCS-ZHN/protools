@@ -143,3 +143,39 @@ def test_dataframe2fasta_with_gz(tmp_path):
     assert len(fasta) == 2
     assert str(fasta['seq1'].seq) == 'ACDEFGHIKLMNPQRSTVWY'
     assert str(fasta['seq2'].seq) == 'WYACDEFGHIKLMNPQRSTV'
+
+
+@pytest.mark.xfail(reason="Not implemented")
+def test_read_pdb_seqres():
+    # TODO
+    assert False
+
+
+@pytest.mark.xfail(reason="Not implemented")
+def test_read_mmcif_seqres():
+    # TODO
+    assert False
+
+
+@pytest.mark.xfail(reason="Not implemented")
+def test_read_seqres():
+    # TODO
+    assert False
+
+
+@pytest.mark.xfail(reason="Not implemented")
+def test_temp_fasta():
+    # TODO
+    assert False
+
+
+@pytest.mark.xfail(reason="Not implemented")
+def test_create_complex_seq():
+    # TODO
+    assert False
+
+
+@pytest.mark.xfail(reason="Not implemented")
+def test_cross_create():
+    # TODO
+    assert False
