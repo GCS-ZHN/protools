@@ -15,9 +15,11 @@ from protools.typedef import FilePathType, StructureFragmentType
 from protools.utils import ensure_path
 
 
-def parser_resi(resi: str) -> Iterable[Tuple]:
+def parse_resi(resi: str) -> Iterable[Tuple]:
     """
     Parse a string of residue selection into a list of residue range.
+    It is simmilar to the `protools.utils.Intervals` class but more
+    suitable for residue selection in PDB files.
 
     Parameters
     ----------
@@ -93,7 +95,7 @@ def extract(
     structure = get_structure(pdb_file)
     resi2idx, idx2res = _build_residue_dict(structure, model_id)
     idx_mask = [not remain] * len(idx2res)
-    for chain_id, (start, end) in parser_resi(resi_selection):
+    for chain_id, (start, end) in parse_resi(resi_selection):
         start = resi2idx[(chain_id, start)]
         end = resi2idx[(chain_id, end)]
         for idx in range(start, end + 1):
@@ -187,19 +189,19 @@ def find_seq(seq: str, model: StructureFragmentType, findall: bool = False) -> p
     founds = set()
     for _, sub_df in ca_df.groupby(['model', 'chain']):
         chain_seq = ''.join(IUPACData.protein_letters_3to1[n.capitalize()] for n in sub_df['resn'])
-        try:
-            start_pos = chain_seq.index(seq)
-        except ValueError:
-            continue
-        founded = sub_df.iloc[start_pos:start_pos + len(seq)][['model', 'chain', 'seqid', 'resn']]
-        for _, row in founded.iterrows():
-            founds.add((row['model'], row['chain'], row['seqid'], row['resn']))
-        if not findall:
+        find_start = 0
+        while (start_pos:=chain_seq.find(seq, find_start)) != -1:
+            founded = sub_df.iloc[start_pos:start_pos + len(seq)][['model', 'chain', 'seqid', 'resn']]
+            for _, row in founded.iterrows():
+                founds.add((row['model'], row['chain'], row['seqid'], row['resn']))
+            find_start = start_pos + len(seq)
+            if not findall:
+                break
+        if not findall and len(founds) > 0:
             break
 
     return df[df.apply(
         lambda row: (row['model'], row['chain'], row['seqid'], row['resn']) in founds, axis=1)].copy()
-
 
 
 if __name__ == "__main__":
