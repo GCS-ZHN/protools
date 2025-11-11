@@ -236,3 +236,65 @@ def test_auto_compression_read(tmp_path, comressed_file, exp_md5sum, mode):
         f.write(content)
     
     assert tools.md5_equal(tmp_path / 'output', exp_md5sum)
+
+
+@pytest.mark.xfail(reason="Not implemented")
+def test_ensure_path():
+    # TODO
+    assert False
+
+
+@pytest.mark.xfail(reason="Not implemented")
+def test_ensure_fileio():
+    # TODO
+    assert False
+
+
+@pytest.mark.xfail(reason="Not implemented")
+def test_max_retry():
+    # TODO
+    assert False
+
+
+@pytest.mark.xfail(reason="Not implemented")
+def test_catch_error():
+    # TODO
+    assert False
+
+class TestCmdWrapperBase():
+
+    @pytest.mark.xfail(reason="Not implemented")
+    def test_find_command(self):
+        # TODO
+        assert False
+
+    @pytest.mark.xfail(reason="Not implemented")
+    def test_call():
+        # TODO
+        assert False
+
+    @pytest.mark.xfail(reason="Not implemented")
+    def test_async_call():
+        # TODO
+        assert False
+
+
+@pytest.mark.xfail(reason="Not implemented")
+def test_require_package():
+    # TODO
+    assert False
+
+
+@pytest.mark.xfail(reason="Not implemented")
+def test_local_cwd():
+    # TODO
+    assert False
+
+
+    
+    
+    
+
+
+
+

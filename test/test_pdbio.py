@@ -1,7 +1,8 @@
 import pytest
+import requests
 
 from pathlib import Path
-from protools import pdbio
+from protools import pdbio, utils
 from . import tools
 
 def test_get_structure():
@@ -59,6 +60,7 @@ def test_read_residue(tmp_path: Path, pdb_file: str, exp_md5sum: str):
             ('3inj', 'a5c3950eb76e83dd7050f7b8a0ff2762')
         ]
 )
+@utils.max_retry(err_types=(requests.exceptions.SSLError))
 def test_fetch(tmp_path: Path, pdb_id: str, exp_md5sum: str):
     assert tools.md5_equal(pdbio.fetch(pdb_id, tmp_path), exp_md5sum)
 
