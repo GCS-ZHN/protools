@@ -1,6 +1,6 @@
 import pandas as pd
 
-from protools.utils import require_package, ensure_seq_string
+from protools.utils import require_package, ensure_seq_string, deprecated
 from protools.seqio import read_fasta, df2fasta
 from protools.typedef import SeqLikeType
 from pathlib import Path
@@ -29,6 +29,7 @@ IMGT_BORDERS = [27, 39, 56, 66, 105, 118, 129]
 REGION_NAMES = ['FR1', 'CDR1', 'FR2', 'CDR2', 'FR3', 'CDR3', 'FR4']
 
 
+@deprecated()
 @require_abnumber
 def remove_constant_region(fasta_file: Path, strict: bool = False, ignore_error: bool = False):
     fasta = read_fasta(fasta_file)
@@ -51,6 +52,7 @@ def remove_constant_region(fasta_file: Path, strict: bool = False, ignore_error:
                 raise RuntimeError(f"Error parsing {seq_id}: {e}") from e
 
 
+@deprecated()
 @require_abnumber
 def annotate_chain_type(fasta_file: Path):
     fasta = read_fasta(fasta_file)
@@ -136,6 +138,7 @@ def anno_cdr(seq: SeqLikeType, chain: str, is_tcr: bool = False) -> dict:
     return res
 
 
+@deprecated()
 @require_anarci
 def anno_tcr_cdr(seq: SeqLikeType) -> dict:
     """
