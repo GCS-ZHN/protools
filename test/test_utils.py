@@ -291,10 +291,21 @@ def test_local_cwd():
     assert False
 
 
-    
-    
-    
+def test_deprecated():
+
+    @utils.deprecated()
+    def func1():
+        pass
+
+    with pytest.warns(DeprecationWarning, match=r"func1 is deprecated"):
+        func1()
 
 
+def test_deprecated_with_message():
 
+    @utils.deprecated("{func_name} is old function")
+    def func1():
+        pass
 
+    with pytest.warns(DeprecationWarning, match='func1 is old function'):
+        func1()

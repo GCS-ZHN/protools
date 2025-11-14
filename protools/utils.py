@@ -832,3 +832,31 @@ def auto_compression(
     else:
         with path.open(mode) as f:
             yield (path.name, f) if return_name else f
+
+
+def deprecated(message: str = None) -> Callable:
+    """
+    Mark a function as deprecated.
+
+    Parameters
+    ----------
+        message: str
+            The message to display when the function is called.
+            If None, a default message is used. `func_name` placeholder
+            can be used in the message.
+    """
+    if message is None:
+        message = "{func_name} is deprecated and will be removed in future versions."
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            warnings.warn(
+                message=message.format(
+                    func_name=func.__module__ + '.' + func.__name__),
+                category=DeprecationWarning,
+                stacklevel=2,
+                source=func)
+            return func(*args, **kwargs)
+        return wrapper
+        
+    return decorator
