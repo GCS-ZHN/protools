@@ -1,6 +1,7 @@
 import hashlib
 
 from pathlib import Path
+from typing import Iterable
 
 
 def md5sum(filename: Path) -> str:
@@ -23,3 +24,13 @@ def md5_equal(file: Path, md5: str) -> bool:
 def md5_equal_file(file1: Path, file2: Path) -> bool:
     """Check if the md5sums of two files are equal."""
     return md5sum(file1) == md5sum(file2)
+
+
+def all_equal(data: Iterable) -> bool:
+    prev = None
+    for i, v in enumerate(data):
+        if i == 0:
+            prev = v
+        if prev != v:
+            return False
+    return True
