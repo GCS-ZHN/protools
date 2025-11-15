@@ -1359,7 +1359,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "antpack", specifier = ">=0.3.8,<0.3.9" },
-    { name = "biopython", specifier = ">=1.80" },
+    { name = "biopython", specifier = ">=1.82" },
     { name = "dnachisel" },
     { name = "pandas" },
     { name = "requests" },
