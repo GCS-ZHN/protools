@@ -25,6 +25,14 @@ jobs:
       - name: "Check Python Info"
         run: "which python && which pip"
 
+      - name: "Setup UV"
+        uses:  astral-sh/setup-uv@v7
+
+      - name: "Setup Dependency"
+        run: uv sync --locked --all-extras --dev
+
+      - name: "Run Pytest"
+        run: uv run pytest
 
       - name: "Setup Build"
         run: "pip install build"
