@@ -2,6 +2,13 @@ import numpy as np
 from typing import Iterable, Optional, List
 
 
+def _positive_int_check(data: Iterable[int]):
+    for v in data:
+        if isinstance(v, int) and v > 0:
+            continue
+        raise ValueError(f"All elements in lengths must be positive integers, got {v}")
+
+
 def random_split(
     data: Iterable,
     lengths: Iterable[int],
@@ -26,6 +33,8 @@ def random_split(
     """
     rng = np.random.default_rng(seed)
     data = list(data)
+    lengths = list(lengths)
+    _positive_int_check(lengths)
     total_length = sum(lengths)
     
     if total_length > len(data):
@@ -86,6 +95,8 @@ def grouped_split(
     groups = np.arange(len(group_sizes), dtype=int)
     rng = np.random.default_rng(seed)
     lengths = list(lengths)
+    _positive_int_check(lengths)
+    _positive_int_check(group_sizes)
     assert sum(lengths) == sum(group_sizes), \
         "Sum of lengths must be equal to the total size of the dataset."
     
@@ -117,7 +128,7 @@ def grouped_split(
             if split_size + group_size <= length else float('inf')
             for split_size, length in zip(split_sizes, lengths)
         ])
-        splits[best_split].append(group)
+        splits[best_split].append(group.item())
         split_sizes[best_split] += group_size
     return splits
         
