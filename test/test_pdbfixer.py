@@ -29,7 +29,7 @@ def test_renumber_residue(tmp_path, input_pdb, exp_md5sum, restart_by_chain):
 @pytest.mark.parametrize(
         "input_pdb, exp_md5sum, chain_id_map, chain_order", 
         [
-            ('data/4I77.pdb', 'c981b42afad847650a50ebd3ebc06887',{'Z': 'T'}, ['H', 'L', 'Z']),
+            ('data/4i77.pdb', 'c981b42afad847650a50ebd3ebc06887',{'Z': 'T'}, ['H', 'L', 'Z']),
         ]
 )
 def test_renumber_residue_chain_id_map(tmp_path, input_pdb, exp_md5sum, chain_id_map, chain_order):

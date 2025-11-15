@@ -30,7 +30,7 @@ def test_save_pdb(tmp_path):
 @pytest.mark.parametrize(
         'pdb_file, exp_md5sum',
         [
-            ('data/4I77.pdb', 'd9b2360744db93ef646c7d4f1b6acf88')
+            ('data/4i77.pdb', 'd9b2360744db93ef646c7d4f1b6acf88')
         ]
 )
 def test_pdb2df(tmp_path: Path, pdb_file: str, exp_md5sum: str):
@@ -43,7 +43,7 @@ def test_pdb2df(tmp_path: Path, pdb_file: str, exp_md5sum: str):
 @pytest.mark.parametrize(
         'pdb_file, exp_md5sum',
         [
-            ('data/4I77.pdb', '4304ac6ad0e0d25b019c43304ba30bcd')
+            ('data/4i77.pdb', '4304ac6ad0e0d25b019c43304ba30bcd')
         ]
 )
 def test_read_residue(tmp_path: Path, pdb_file: str, exp_md5sum: str):

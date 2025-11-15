@@ -20,11 +20,11 @@ def test_parse_resi(resi: str, exp_result: list):
 @pytest.mark.parametrize(
         'seq, pdb_file, findall, num_find',
         [
-            ('QVT', 'data/4I77.pdb', False, 1),
-            ('A', 'data/4I77.pdb', True, 33),
-            ('A', 'data/4I77.pdb', False, 1),
-            ('LL', 'data/4I77.pdb', True, 3),
-            ('DIV', 'data/4I77.pdb', True, 1),
+            ('QVT', 'data/4i77.pdb', False, 1),
+            ('A', 'data/4i77.pdb', True, 33),
+            ('A', 'data/4i77.pdb', False, 1),
+            ('LL', 'data/4i77.pdb', True, 3),
+            ('DIV', 'data/4i77.pdb', True, 1),
         ]
 )
 def test_find_seq(seq: str, pdb_file: str, findall: bool, num_find: int):
@@ -42,7 +42,7 @@ def test_find_seq(seq: str, pdb_file: str, findall: bool, num_find: int):
 
 @pytest.mark.parametrize(
         'pdb_file',
-        ['data/3inj.pdb', 'data/4I77.pdb']
+        ['data/3inj.pdb', 'data/4i77.pdb']
 )
 def test_get_interface(pdb_file: str):
     pdbextract.get_interface(pdbio.get_structure(pdb_file))
@@ -51,7 +51,7 @@ def test_get_interface(pdb_file: str):
 @pytest.mark.parametrize(
         'pdb_file, resi, remain, exp_md5sum',
         [
-            ('data/4I77.pdb', 'H1-113,L1-107', True, 'aaf8d8a7b18dbd6d3dcedf256659f4c5')
+            ('data/4i77.pdb', 'H1-113,L1-107', True, 'aaf8d8a7b18dbd6d3dcedf256659f4c5')
         ]
 )
 def test_extract(tmp_path: Path, pdb_file: str, resi: str, remain: True, exp_md5sum: str):

@@ -62,7 +62,7 @@ def test_batch_tmalign_async(tmp_path):
 
 @pytest.mark.parametrize(
         'pdb_file',
-        ['data/3inj.pdb', 'data/4I77.pdb']
+        ['data/3inj.pdb', 'data/4i77.pdb']
 )
 def test_neighbor_water_count(pdb_file: str):
     pdbanno.neighbor_water_count(pdbio.get_structure(pdb_file))
@@ -70,7 +70,7 @@ def test_neighbor_water_count(pdb_file: str):
 
 @pytest.mark.parametrize(
         'pdb_file',
-        ['data/3inj.pdb', 'data/4I77.pdb']
+        ['data/3inj.pdb', 'data/4i77.pdb']
 )
 def test_calc_sasa(pdb_file: str):
     pdbanno.calc_sasa(pdbio.get_structure(pdb_file))
