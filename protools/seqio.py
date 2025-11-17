@@ -8,9 +8,11 @@ from Bio.SeqIO import FastaIO
 from Bio.Seq import Seq 
 from Bio.SeqRecord import SeqRecord
 from Bio.PDB.MMCIF2Dict import MMCIF2Dict
+from pandas.io import clipboard
 from pathlib import Path
 from typing import Iterable, Union, Dict, Tuple, Optional
 from collections import OrderedDict
+from io import StringIO
 from itertools import product, islice
 
 from protools.utils import ensure_fileio, ensure_path, auto_compression
@@ -147,6 +149,13 @@ class Fasta(OrderedDict):
                 continue
             yield fmt_func(v)
 
+    def to_clipboard(self, two_line_mode = False):
+        """
+        Copy fasta string to clipboard.
+        """
+        text = ''.join(self.to_fasta_str(two_line_mode=two_line_mode))
+        clipboard.copy(text)
+
     def to_csv(self, path: FilePathOrIOType,
                mkdir: bool = False, mode: str = 'w'):
         """
@@ -239,6 +248,17 @@ def read_fasta(path: FilePathOrIOType, mode: str = 'r') -> Fasta:
     """
     with ensure_fileio(path, mode=mode, open_func=auto_compression) as f:
         return Fasta(map(lambda x: (x.id, x), SeqIO.parse(f, 'fasta')))
+
+
+def read_clipboard() -> Fasta:
+    """
+    Read Fasta from clipboard.
+
+    Returns
+    -------
+    Fasta object.
+    """
+    return read_fasta(StringIO(clipboard.paste()))
 
 
 def read_a3m(path: FilePathOrIOType, is_multimer: bool = False) -> Fasta:

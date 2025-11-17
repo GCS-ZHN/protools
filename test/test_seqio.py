@@ -1,6 +1,15 @@
 import pytest
 
 from protools import seqio
+from pandas import errors
+try:
+    from pandas.io import clipboard
+    clipboard.paste()
+    clipboard_avail = True
+    clipboard_avail_reason = ''
+except errors.PyperclipException as e:
+    clipboard_avail = False
+    clipboard_avail_reason = f'Clipboard not available, {e}'
 
 class TestFasta:
     
@@ -50,6 +59,14 @@ class TestFasta:
             fasta['seq1'] = SeqRecord(Seq('ACDEFGHIK'))
             assert str(fasta['seq1'].seq) == 'ACDEFGHIK'
 
+    @pytest.mark.skipif(not clipboard_avail, reason=clipboard_avail_reason)
+    def test_to_clipboard(self):
+        fasta = seqio.Fasta()
+        fasta['seq1'] = 'ACDEFGHIK'
+        fasta.to_clipboard()
+        text = clipboard.paste()
+        assert text == '>seq1\nACDEFGHIK\n'
+
 
 def test_read_fasta():
     fasta = seqio.read_fasta('data/test.fasta')
@@ -57,6 +74,13 @@ def test_read_fasta():
     assert str(fasta['seq1'].seq) == 'ACDEFGHIKLMNPQRSTVWY'
     assert str(fasta['seq2'].seq) == 'WYACDEFGHIKLMNPQRSTV'
     assert str(fasta['seq3'].seq) == 'RSTVWYACDEFGHIKLMNPQ'
+
+
+@pytest.mark.skipif(not clipboard_avail, reason=clipboard_avail_reason)
+def test_read_clipboard():
+    clipboard.copy('>seq1\nACDEFGHIK\n')
+    fasta = seqio.read_clipboard()
+    assert str(fasta['seq1'].seq) == 'ACDEFGHIK'
 
 
 def test_read_fasta_with_gz():
