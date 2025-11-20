@@ -1,6 +1,10 @@
 from Bio.Data import IUPACData
+from typing import Dict, List
+from protools.typedef import SeqLikeType
+from protools.utils import ensure_seq_string
 
-RESIDUE2SIDECHAIN = {
+
+RESIDUE2SIDECHAIN: Dict[str, List[str]] = {
     'A': ['CB'],
     'R': ['CB', 'CG', 'CD', 'NE', 'CZ', 'NH1', 'NH2'],
     'N': ['CB', 'CG', 'OD1', 'ND2'],
@@ -23,7 +27,27 @@ RESIDUE2SIDECHAIN = {
     'V': ['CB', 'CG1', 'CG2'],
 }
 
-RESIDUE2SIDECHAIN_3LETTER = {
+RESIDUE2SIDECHAIN_3LETTER: Dict[str, List[str]] = {
     IUPACData.protein_letters_1to3[res]: atoms
     for res, atoms in RESIDUE2SIDECHAIN.items()
 }
+
+
+AA_PROPERTIES: Dict[str, List[str]] = {
+    'hydrophobic': list('AILMFVPGW'),
+    'positive': list('KRH'),
+    'negative': list('DE'),
+    'polar': list('STNQCY')
+}
+
+AA2PROPERTIES: Dict[str, str] = {
+    aa: prop for prop, aas in AA_PROPERTIES.items() for aa in aas}
+
+
+def validate_seq(s1: SeqLikeType, extra_symbols: str =''):
+    """Validate sequence is only contain standard amino acid and allowed extra symbols."""
+    s1 = ensure_seq_string(s1)
+    aas = IUPACData.protein_letters + extra_symbols
+    for pos, aa in enumerate(s1, 1):
+        if aa not in aas:
+            raise ValueError(f"Invalid amino acid: {aa} in sequence {s1} at {pos}")

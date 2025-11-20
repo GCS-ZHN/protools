@@ -1,8 +1,10 @@
+from typing import Callable
 import pandas as pd
 
 from protools.utils import require_package, ensure_seq_string, deprecated
 from protools.seqio import read_fasta, df2fasta
 from protools.typedef import SeqLikeType
+from protools.aa import validate_seq, AA2PROPERTIES
 from pathlib import Path
 try:
     require_anarci = require_package('anarci', 'conda install -c bioconda anarci')
@@ -316,6 +318,56 @@ def calc_seq_identity(s1: SeqLikeType, s2: SeqLikeType, mode: str = 'global', st
     else:
         raise ValueError(f"Invalid strategy: {strategy}, must be 'min_aligned_length', 'max_aligned_length', 'avg_aligned_length', 'min_total_length', 'max_total_length', 'avg_total_length'")
     return alignments.score / length
+
+
+def get_mutations(
+        s1: SeqLikeType,
+        s2: SeqLikeType,
+        comparsion: str | Callable[[str, str], bool] = 'type', chain_id: str = '') -> list[str]:
+    """
+    Generate mutations as a list of strings (e.g. ['A1W', 'C2D']).
+
+    Parameters
+    ----------
+        s1: str, Seq or SeqRecord
+            sequence of wt
+        s2: str, Seq or SeqRecord
+            sequnece of mutations, should be aligned with the same length 
+            as wt.
+        comparsion: string type of Callable[[str, str], bool]
+            comparsion method for two amino acid. support bulitin methods
+            'type' and 'property'. 'type' is the same amino acid, 'property' is the
+            same amino acid property. If a callable is provided, it should take two
+            amino acids and return a boolean indicating whether they are the same.
+        chain_id: str
+            chain id for the mutations, if provided, the mutations will be
+            formatted as 'AH101Y'.
+
+    Returns
+    -------
+       list of mutations in string format.
+    """
+    s1 = ensure_seq_string(s1)
+    s2 = ensure_seq_string(s2)
+    assert len(s1) == len(s2), "Sequences should be aligned with the same length."
+    validate_seq(s1, extra_symbols='-')
+    validate_seq(s2, extra_symbols='-')
+    if isinstance(comparsion, str):
+        comparsion_funcs = {
+            'type': lambda x, y: x==y,
+            'property': lambda x, y: AA2PROPERTIES.get(x) == AA2PROPERTIES.get(y)
+        }
+        if comparsion in comparsion_funcs:
+            comparsion = comparsion_funcs[comparsion]
+        else:
+            raise TypeError(f"Unknown comparsion type: {comparsion}")
+    elif not isinstance(comparsion, Callable):
+        raise TypeError(f"comparsion should be str or Callable type, not {type(comparsion)}")
+    mutations = []
+    for pos, (a1, a2) in enumerate(zip(s1, s2), 1):
+        if not comparsion(a1, a2):
+            mutations.append(f'{a1}{chain_id}{pos}{a2}')
+    return mutations
 
 
 if __name__ == "__main__":
