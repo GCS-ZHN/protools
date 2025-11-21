@@ -1,5 +1,5 @@
 from Bio.Data import IUPACData
-from typing import Dict, List
+from typing import Callable, Dict, List
 from protools.typedef import SeqLikeType
 from protools.utils import ensure_seq_string
 
@@ -51,3 +51,49 @@ def validate_seq(s1: SeqLikeType, extra_symbols: str =''):
     for pos, aa in enumerate(s1, 1):
         if aa not in aas:
             raise ValueError(f"Invalid amino acid: {aa} in sequence {s1} at {pos}")
+
+
+def aa_equal(a1: str, a2: str, comparsion: str | Callable[[str, str], bool] = 'type') -> bool:
+    """
+    Compare two amino acids.
+
+    Parameters
+    ----------
+        a1: str
+            one-letter code of amino acid.
+        a2: str
+            one-letter code of amino acid.
+        comparsion: string type of Callable[[str, str], bool]
+            comparsion method for two amino acid. support bulitin methods
+            'type' and 'property'. 'type' is the same amino acid, 'property' is the
+            same amino acid property. If a callable is provided, it should take two
+            amino acids and return a boolean indicating whether they are the same.
+    
+    Return
+    ------
+        bool
+        Whether `a1` is equal to `a2` under provided comparsion criteria.
+
+    Notes
+    -----
+        For non-standard or unknown aa token, this function assumes they 
+        have different properties unless they are the same type tokens.
+    
+    """
+    assert len(a1) == len(a2) == 1, "Only amino acid one letter code is allowed."
+    a1 = a1.upper()
+    a2 = a2.upper()
+    if isinstance(comparsion, str):
+        comparsion_funcs = {
+            'type': lambda x, y: x==y,
+            # assume unknown aa token have different property unless they are the same type
+            'property': lambda x, y: (x==y) or (AA2PROPERTIES.get(x, 1) == AA2PROPERTIES.get(y, 2))
+        }
+        if comparsion in comparsion_funcs:
+            comparsion = comparsion_funcs[comparsion]
+        else:
+            raise TypeError(f"Unknown comparsion type: {comparsion}")
+    elif not isinstance(comparsion, Callable):
+        raise TypeError(f"comparsion should be str or Callable type, not {type(comparsion)}")
+    
+    return comparsion(a1, a2)

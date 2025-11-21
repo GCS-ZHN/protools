@@ -4,7 +4,7 @@ import pandas as pd
 from protools.utils import require_package, ensure_seq_string, deprecated
 from protools.seqio import read_fasta, df2fasta
 from protools.typedef import SeqLikeType
-from protools.aa import validate_seq, AA2PROPERTIES
+from protools.aa import validate_seq, aa_equal
 from pathlib import Path
 try:
     require_anarci = require_package('anarci', 'conda install -c bioconda anarci')
@@ -328,7 +328,7 @@ def get_mutations(
     Generate mutations as a list of strings (e.g. ['A1W', 'C2D']).
     Position number (1-indexed) is the ungapped sequence position of `s1`.
     ['-2G', 'A2E', 'C4-'] means a 'G' insertion before 2rd aa in s1, a
-    A-to-E mutation at 2rd aa and a deletion at 4th aa.
+    A-to-E replace at 2rd aa and a deletion at 4th aa.
 
     Parameters
     ----------
@@ -355,24 +355,14 @@ def get_mutations(
     assert len(s1) == len(s2), "Sequences should be aligned with the same length."
     validate_seq(s1, extra_symbols='-')
     validate_seq(s2, extra_symbols='-')
-    if isinstance(comparsion, str):
-        comparsion_funcs = {
-            'type': lambda x, y: x==y,
-            'property': lambda x, y: AA2PROPERTIES.get(x) == AA2PROPERTIES.get(y)
-        }
-        if comparsion in comparsion_funcs:
-            comparsion = comparsion_funcs[comparsion]
-        else:
-            raise TypeError(f"Unknown comparsion type: {comparsion}")
-    elif not isinstance(comparsion, Callable):
-        raise TypeError(f"comparsion should be str or Callable type, not {type(comparsion)}")
+
     mutations = []
 
     alignment_pos_shift = 0
     for pos, (a1, a2) in enumerate(zip(s1, s2), 1):
 
         pos -= alignment_pos_shift
-        if not comparsion(a1, a2):
+        if not aa_equal(a1, a2, comparsion):
             mutations.append(f'{a1}{chain_id}{pos}{a2}')
 
         if a1 == '-':
