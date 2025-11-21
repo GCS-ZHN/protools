@@ -326,6 +326,9 @@ def get_mutations(
         comparsion: str | Callable[[str, str], bool] = 'type', chain_id: str = '') -> list[str]:
     """
     Generate mutations as a list of strings (e.g. ['A1W', 'C2D']).
+    Position number (1-indexed) is the ungapped sequence position of `s1`.
+    ['-2G', 'A2E', 'C4-'] means a 'G' insertion before 2rd aa in s1, a
+    A-to-E mutation at 2rd aa and a deletion at 4th aa.
 
     Parameters
     ----------
@@ -364,9 +367,16 @@ def get_mutations(
     elif not isinstance(comparsion, Callable):
         raise TypeError(f"comparsion should be str or Callable type, not {type(comparsion)}")
     mutations = []
+
+    alignment_pos_shift = 0
     for pos, (a1, a2) in enumerate(zip(s1, s2), 1):
+
+        pos -= alignment_pos_shift
         if not comparsion(a1, a2):
             mutations.append(f'{a1}{chain_id}{pos}{a2}')
+
+        if a1 == '-':
+            alignment_pos_shift += 1
     return mutations
 
 

@@ -38,7 +38,9 @@ def test_anno_vj_gene():
             ('QVQ', 'QVQ', 'type', 'H', []),
             ('EVQ', 'DVQ', 'property', 'H', []),
             ('QVQE', 'EVDE', 'type', '', ['Q1E', 'Q3D']),
-            ('-VQ', 'EVQ', 'type', 'H', ['-H1E']),
+            ('-DG', 'EVQ', 'type', 'H', ['-H1E', 'DH1V', 'GH2Q']),
+            ('W-E-VQ', 'WGGEVE', 'type', '', ['-2G', 'E2G', '-3E', 'Q4E']),
+            ('E-GA', 'EGQ-', 'type', '', ['-2G', 'G2Q', 'A3-']),
             ('QVD', 'EYG', lambda x, y: True, '', []),
             ('QVQ', 'QVQ', lambda x, y: True, '', [])
         ]
