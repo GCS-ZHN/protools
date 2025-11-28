@@ -2,16 +2,18 @@ import logging
 import re
 import asyncio
 import subprocess
+import prody
+
 from itertools import product, starmap
 from multiprocessing import Pool
 from pathlib import Path
-from typing import Union, Tuple, Iterable
+from typing import Dict, Union, Tuple, Iterable
 
 import pandas as pd
 from Bio.PDB.SASA import ShrakeRupley
-from Bio.PDB.Structure import Structure
 from Bio.PDB.Residue import Residue
 from Bio.Data import IUPACData
+from io import StringIO
 
 from protools import pdbio
 from protools.aa import RESIDUE2SIDECHAIN_3LETTER
@@ -539,6 +541,110 @@ please use `async_batch_align` if you want to use asyncio.")
         return loop.run_until_complete(
             self.async_batch_align(pair_iterable, output_dir))
 
+
+def get_interactions(entity: StructureFragmentType) -> Dict[str, pd.DataFrame]:
+    """
+    Calculate interactions between residues in a structure.
+    Supported interactions:
+    - Hydrogen bonds
+    - Salt bridges
+    - Repulsive ionic interactions
+    - Pi Stack
+    - Pi-Cation
+    - hydrophobic
+    - Disulfide bonds
+
+    Parameters
+    ----------
+    entity : StructureFragmentType
+       The structure to calculate interactions for.
+
+    Returns
+    -------
+    Dict[str, pd.DataFrame]
+    """
+    _pdbio = pdbio.PDBIO()
+    _pdbio.set_structure(entity)
+    pdb_string_io = StringIO()
+    _pdbio.save(pdb_string_io)
+    pdb_string_io.seek(0)
+    atoms = prody.parsePDBStream(pdb_string_io)
+    ia = prody.Interactions()
+    result = ia.calcProteinInteractions(atoms.select('protein'))
+
+    def split_resn(resn: str, prefix: str = '') -> dict:
+        return {
+            f'{prefix}resn': resn[:3],
+            f'{prefix}resi': int(resn[3:])
+        }
+    
+    def format_atoms(atom_str: str) -> str:
+        nonlocal atoms
+        atom_list = atom_str.split('_')
+        head_atom_name = None
+        if not atom_list[0].isdecimal():
+            head_atom_name = atom_list[0]
+            atom_list = atom_list[1:]
+        atom_list = [int(x) for x in atom_list]
+        if head_atom_name is not None:
+            atoms[atom_list[0]].getName == head_atom_name
+        
+        atom_temp = '{name:s}_{serial:d}'
+        return ','.join(
+            atom_temp.format(
+                name=atom.getName(),
+                serial=atom.getSerial()) for atom in atoms[atom_list])
+    
+    def as_df(data, columns):
+        for row in data:
+            assert len(row) == len(columns)
+            item = {}
+            for col, val in zip(columns, row):
+                if col.endswith('_resn'):
+                    prefix = col.removesuffix('resn')
+                    item.update(split_resn(val, prefix=prefix))
+                elif col.endswith('_atoms'):
+                    item[col] = format_atoms(val)
+                else:
+                    item[col] = val
+            yield item
+
+    columns=[
+            'donor_resn',
+            'donor_atoms',
+            'donor_chain_id',
+            'acceptor_resn',
+            'acceptor_atoms',
+            'acceptor_chain_id',
+            'distance',
+            'angle']
+    hbond_ia = pd.DataFrame(as_df(result[0], columns=columns))
+    columns=[
+            'res1_resn',
+            'res1_atoms',
+            'res1_chain_id',
+            'res2_resn',
+            'res2_atoms',
+            'res2_chain_id',
+            'distance']
+    salt_bridge_ia = pd.DataFrame(as_df(result[1], columns=columns))
+    # positive vs positive, negative vs negative
+    repulsive_ionic_ia = pd.DataFrame(as_df(result[2], columns=columns))
+    pi_cation_ia = pd.DataFrame(as_df(result[4], columns=columns))
+    hydrophobic_ia = pd.DataFrame(as_df(result[5], columns=columns))
+    columns.append('angle')
+
+    pi_stack_ia = pd.DataFrame(as_df(result[3], columns=columns))
+    disulfide_bonds_ia = pd.DataFrame(as_df(result[6], columns=columns))
+    return {
+        'hydrogen_bond': hbond_ia,
+        'salt_bridge': salt_bridge_ia,
+        'repulsive_ionic_bond': repulsive_ionic_ia,
+        'pi_stack': pi_stack_ia,
+        'pi_cation': pi_cation_ia,
+        'hydrophobic': hydrophobic_ia,
+        'disulfide_bond': disulfide_bonds_ia
+    }
 
 if __name__ == '__main__':
     from argparse import ArgumentParser

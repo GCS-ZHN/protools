@@ -74,3 +74,9 @@ def test_neighbor_water_count(pdb_file: str):
 )
 def test_calc_sasa(pdb_file: str):
     pdbanno.calc_sasa(pdbio.get_structure(pdb_file))
+
+
+@pytest.mark.xfail(reason="Not implemented")
+def test_get_interactions():
+    # TODO
+    assert False

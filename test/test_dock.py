@@ -24,4 +24,9 @@ class TestHDock():
     def test_create_complex():
         # TODO
         assert False
-    
+
+
+@pytest.mark.xfail(reason="Not implemented")
+def test_dockq_score():
+    # TODO
+    assert False

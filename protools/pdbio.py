@@ -88,6 +88,24 @@ but you should check the PDB file.")
     return False
 
 
+def is_het(entity: StructureFragmentAAType) -> bool:
+    """
+    Check entity contains any HETATM or not.
+
+    Parameters
+    ----------
+    entity: StructureFragmentAAType
+
+    Return
+    ------
+    bool
+    """
+    if isinstance(entity, Residue):
+        return entity.id[0] != " "
+    else:
+        return any(r.id[0] != " " for r in entity.get_residues())
+
+
 def get_aa_residues(chain: Chain) -> OrderedDict:
     """
     Get the amino acid residues of a chain.

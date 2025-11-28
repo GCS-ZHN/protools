@@ -4,9 +4,12 @@ import re
 import shutil
 import tempfile
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, Optional
 
-from protools.utils import CmdWrapperBase, ensure_path, local_cwd
+from protools.utils import CmdWrapperBase, ensure_path, local_cwd, flatten_collection
+from protools import pdbio
+from DockQ import DockQ
+from Bio.PDB.Model import Model
 
 
 class DockBase(object, metaclass=abc.ABCMeta):
@@ -171,6 +174,62 @@ class HDock(DockBase):
                     f"HDock create complex failed with exit code {status}.")
 
             os.rename(complex_tmp.name, pdb_name)
+
+
+def dockq_score(model: Model, native: Model, chain_map: Dict[str, str]) -> Dict[str, Any]:
+    """
+    Calculate DockQ score for a model against a native
+
+    Parameters
+    ----------
+    model : Model
+        The model to be evaluated.
+
+    native: Model
+        The model as reference.
+
+    chain_map: Dict[str, str]
+        Mapping of chain ids between native and model. The keys
+        is native chain id and the values is model chain id.
+    
+    Return
+    ------
+    Dict[str, Any]
+    """
+    for native_id, model_id in chain_map.items():
+        if native_id not in native:
+            raise ValueError(f'native chain id {native_id} does not exist!')
+        if model_id not in model:
+            raise ValueError(f'model chain id {model_id} does not exist!')
+    
+    # DockQ.load_PDB will add 'is_het' and 'sequence' property to Chain.
+    for m in [model, native]:
+        for c in m:
+            if not hasattr(c, 'is_het'):
+                setattr(c, 'is_het', pdbio.is_het(c))
+            if not hasattr(c, 'sequence'):
+                setattr(c, 'sequence', str(pdbio.get_aa_sequence(c)))
+
+    detail, dockq_sum = DockQ.run_on_all_native_interfaces(
+        model_structure=model,
+        native_structure=native,
+        chain_map=chain_map
+    )
+    assert sum(v['DockQ'] for v in detail.values()) == dockq_sum
+    dockq_mean = dockq_sum / len(detail)
+    detail = dict(flatten_collection(detail))
+    detail['DockQ'] = dockq_mean
+    
+    if dockq_mean < 0.23:
+        detail['DockQ_label'] = 'Incorrect'
+    elif dockq_mean < 0.49:
+        detail['DockQ_label'] = 'Acceptable'
+    elif dockq_mean < 0.8:
+        detail['DockQ_label'] = 'Medium'
+    else:
+        detail['DockQ_label'] = 'High'
+
+    return detail
 
 
 if __name__ == '__main__':

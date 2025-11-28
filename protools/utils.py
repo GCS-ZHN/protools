@@ -9,7 +9,7 @@ import warnings
 import gzip
 
 from pathlib import Path
-from typing import Any, Dict, Generator, Iterable, Optional, List, Callable
+from typing import Any, Dict, Generator, Iterable, Optional, List, Callable, Tuple
 from io import IOBase
 from protools.typedef import FilePathType, FilePathOrIOType, SeqLikeType
 from collections import namedtuple
@@ -860,3 +860,25 @@ def deprecated(message: str = None) -> Callable:
         return wrapper
         
     return decorator
+
+
+def flatten_collection(
+        data: Dict|List|Tuple,
+        parent_key: str = '',
+        key_seq: str = '.') -> Iterable[Tuple[str, Any]]:
+    """
+    Make multilevel data to be flatten.
+    """
+    if isinstance(data, dict):
+        kv_iterable = data.items()
+    elif isinstance(data, (list, tuple)):
+        kv_iterable = enumerate(data)
+    else:
+        raise TypeError('Only dict, list or tuple are allowed type.')
+    
+    for k, v in kv_iterable:
+        new_k = f'{parent_key}{key_seq}{k}' if parent_key else str(k)
+        if isinstance(v, (dict, list, tuple)):
+            yield from flatten_collection(v, parent_key=new_k, key_seq=key_seq)
+        else:
+            yield new_k, v
