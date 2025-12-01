@@ -562,6 +562,10 @@ def get_interactions(entity: StructureFragmentType) -> Dict[str, pd.DataFrame]:
     Returns
     -------
     Dict[str, pd.DataFrame]
+
+    Notes
+    -----
+    See detail at http://www.bahargroup.org/prody/tutorials/insty_tutorial/insty_tutorial.pdf
     """
     _pdbio = pdbio.PDBIO()
     _pdbio.set_structure(entity)
