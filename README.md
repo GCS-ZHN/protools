@@ -9,7 +9,8 @@ Optional requirement is listed below:
 conda install -c schrodinger pymol
 conda install -c bioconda abnumber
 ```
-Also, pypi release will be updated every github release, just install it by `pip`:
+Also, pypi release will be updated every github release, just install it by `uv pip`:
 ```bash
-pip install protools4py
+uv pip install protools4py
 ```
+
