@@ -201,12 +201,12 @@ def dockq_score(model: Model, native: Model, chain_map: Dict[str, str]) -> Dict[
             raise ValueError(f'native chain id {native_id} does not exist!')
         if model_id not in model:
             raise ValueError(f'model chain id {model_id} does not exist!')
-    
+
     # DockQ.load_PDB will add 'is_het' and 'sequence' property to Chain.
     for m in [model, native]:
         for c in m:
             if not hasattr(c, 'is_het'):
-                setattr(c, 'is_het', pdbio.is_het(c))
+                setattr(c, 'is_het', None)
             if not hasattr(c, 'sequence'):
                 setattr(c, 'sequence', str(pdbio.get_aa_sequence(c)))
 
