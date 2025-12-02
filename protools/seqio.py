@@ -19,19 +19,15 @@ from protools.utils import ensure_fileio, ensure_path, auto_compression
 from protools.typedef import FilePathType, FilePathOrIOType, SeqLikeType
 
 
-class Fasta(OrderedDict):
+class Fasta(OrderedDict[str, SeqLikeType]):
     """
-    Sequence record dictionary
-    and FASTA format processor.
-    
-    Parameters
-    ----------
-    data : Iterable[Tuple[str, SeqLike]], optional
-        The initial data of the Fasta object.
-        The default is None.
-    **kwargs : Dict[str, SeqLike]
-        The initial data of the Fasta object.
-        The default is None.
+    Sequence record dictionary and FASTA format processor.
+    It is implemented by inheriting from OrderedDict,
+    thus allowing initialization and data access using the same
+    methods as a Python dictionary. The difference lies in
+    its restriction of element types to `Seq`, `SeqRecord`, or `str`,
+    and key types to `str`. Additionally, it provides unique
+    operation methods specific to the Fasta type.
 
     Examples
     ----------
@@ -39,14 +35,15 @@ class Fasta(OrderedDict):
     >>> fasta = Fasta([('seq1', 'ATCG'), ('seq2', 'ATCG')])
     >>> fasta['seq1']
     SeqRecord(seq=Seq('ATCG'), id='seq1', name='seq1', description='', dbxrefs=[])
+    >>> Fasta(d='SVS')
+    Fasta(len=1)
+    >d
+    SVS
+    >>> Fasta(dict(a='QVQ'))
+    Fasta(len=1)
+    >a
+    QVQ
     """
-    def __init__(self, 
-                 data: Optional[Iterable[Tuple[str, SeqLikeType]]] = None, 
-                 **kwargs: Dict[str, SeqLikeType]) -> None:
-        if data is None:
-            data = []
-        super().__init__(data, **kwargs)
-
     def __getitem__(self, __key: Union[str, Iterable[str], slice, int]) -> Union[SeqRecord, 'Fasta']:
             """
             Get item by key, slice or index. For string key, return the corresponding.
@@ -89,7 +86,9 @@ class Fasta(OrderedDict):
 
     def __setitem__(self, __key: str, __value: SeqLikeType) -> None:
         if not isinstance(__key, str):
-            warnings.warn(f"Key {__key} is not a string, force converting to string")
+            warnings.warn(
+                f"Key {__key} is not a string, force converting to string",
+                stacklevel=2)
             __key = str(__key)
         if isinstance(__value, str):
             __value = Seq(__value)
