@@ -108,7 +108,7 @@ class Fasta(OrderedDict[str, SeqLikeType]):
                     mode=self._binded_fileio.mode,
                     **self._binded_kwargs)
             return super().__setitem__(__key, __value)
-        raise ValueError('Element should be str, Seq or SeqRecord')
+        raise ValueError(f'Element should be str, Seq or SeqRecord, got {type(__value)}: {__value}')
 
     def to_dict(self) -> Iterable[Dict]:
         """
