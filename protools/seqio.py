@@ -110,21 +110,34 @@ class Fasta(OrderedDict[str, SeqLikeType]):
             return super().__setitem__(__key, __value)
         raise ValueError(f'Element should be str, Seq or SeqRecord, got {type(__value)}: {__value}')
 
-    def to_dict(self) -> Iterable[Dict]:
+    def to_dict(self, *extra_attrs: str) -> Iterable[Dict]:
         """
         Iterate fasta sequence record.
+
+        Parameters
+        ----------
+        *extra_attrs: str
+            extra atrributes of `SeqRecord`.
         """
+        extra_attrs = filter(lambda v: v not in ['seq'], extra_attrs)
         for rid, record in self.items():
             yield {
                 'id': rid,
                 'sequence': str(record.seq),
-                'description': record.description}
+                **{attr: getattr(record, attr, None) for attr in extra_attrs}}
     
-    def to_dataframe(self, id_as_index: bool = False) -> pd.DataFrame:
+    def to_dataframe(self, id_as_index: bool = False, *extra_attrs: str) -> pd.DataFrame:
         """
         Read fasta sequence as `pd.DataFrame`.
+
+        Parameters
+        ----------
+        id_as_index: bool, default False.
+            Set id as index.
+        *extra_attrs: str
+            extra atrributes of `SeqRecord`.
         """
-        df = pd.DataFrame(self.to_dict())
+        df = pd.DataFrame(self.to_dict(*extra_attrs))
         if id_as_index:
             df.set_index('id', inplace=True)
         return df
