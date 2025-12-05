@@ -1,87 +1,118 @@
-from typing import Callable
-import pandas as pd
+import warnings
 
-from protools.utils import require_package, ensure_seq_string, deprecated
-from protools.seqio import read_fasta, df2fasta
+from typing import Callable, Literal
+
+from protools.utils import ensure_seq_string
 from protools.typedef import SeqLikeType
-from protools.aa import validate_seq, aa_equal
-from pathlib import Path
-try:
-    require_anarci = require_package('anarci', 'conda install -c bioconda anarci')
-    require_abnumber = require_package("abnumber",  "conda install -c bioconda abnumber")
-    from anarci import run_anarci
-    from abnumber import Chain, ChainParseError
-except ImportError:
-    pass
+from protools.aa import validate_seq, aa_equal, AAComparsionType
+from functools import lru_cache
+
 
 from antpack import SingleChainAnnotator, VJGeneTool
 from Bio import Align
 
-_ANTIBODY_HC_IDS = ['H']
-_ANTIBODY_LC_IDS = ['K', 'L']
-_TCR_HC_IDS = ['B', 'D']
-_TCR_LC_IDS = ['A', 'G']
-_ANTIBODY_HC_ANNOTATOR = SingleChainAnnotator(chains=_ANTIBODY_HC_IDS, scheme='imgt')
-_ANTIBODY_LC_ANNOTATOR = SingleChainAnnotator(chains=_ANTIBODY_LC_IDS, scheme='imgt')
-_TCR_HC_ANNOTATOR = SingleChainAnnotator(chains=_TCR_HC_IDS, scheme='imgt')
-_TCR_LC_ANNOTATOR = SingleChainAnnotator(chains=_TCR_LC_IDS, scheme='imgt')
+
+ChainType = Literal['H', 'L']
+SchemeType = Literal['imgt', 'martin', 'kabat', 'aho']
+SpecieType = Literal['human', 'mouse', 'alpaca', 'rabbit', 'unknown']
+IdentityStrategyType = Literal[
+    'min_aligned_length',
+    'max_aligned_length',
+    'avg_aligned_length',
+    'min_sequence_length',
+    'max_sequence_length',
+    'first_alignment_length'
+]
+
+class SeqNumberingWarning(UserWarning):
+    """
+    Warning Defined for Seq Numbering.
+    """
+    pass
 
 
-IMGT_BORDERS = [27, 39, 56, 66, 105, 118, 129]
-REGION_NAMES = ['FR1', 'CDR1', 'FR2', 'CDR2', 'FR3', 'CDR3', 'FR4']
+@lru_cache()
+def get_annotator(chain: ChainType, scheme: SchemeType = 'imgt', is_tcr: bool = False) -> SingleChainAnnotator:
+    """
+    Get a SingleChainAnnotator for a given chain type.
+    """
+    _ANTIBODY_HC_IDS = ['H']
+    _ANTIBODY_LC_IDS = ['K', 'L']
+    _TCR_HC_IDS = ['B', 'D']
+    _TCR_LC_IDS = ['A', 'G']
+    _VALID_SCHEME = {
+        'antibody': ['imgt', 'martin', 'kabat', 'aho'],
+        'tcr': ['imgt']
+    }
+    if scheme == 'chothia':
+        scheme = 'martin'
+        warnings.warn(
+            f"Chothia scheme is not supported, use Martin scheme (a modern version of Chothia) instead.",
+            SeqNumberingWarning,
+            stacklevel=2
+            )
 
+    seq_type = 'tcr' if is_tcr else 'antibody'
+    if scheme not in _VALID_SCHEME[seq_type]:
+        raise ValueError(
+            f"Valid scheme for {seq_type} are {_VALID_SCHEME[seq_type]}, got {scheme}")
 
-@deprecated()
-@require_abnumber
-def remove_constant_region(fasta_file: Path, strict: bool = False, ignore_error: bool = False):
-    fasta = read_fasta(fasta_file)
-
-    for seq_id, seq in fasta.items():
-        seq = str(seq.seq)
-
-        # below 135 is a heuristic value
-        if not strict and len(seq) <= 135:
-            yield {"id": seq_id, "seq": seq}
-            continue
-
-        try:
-            chain = Chain(seq, scheme='imgt')
-            yield {"id": seq_id, "seq": str(chain)}
-        except ChainParseError as e:
-            if ignore_error:
-                yield {"id": seq_id, "seq": seq}
-            else:
-                raise RuntimeError(f"Error parsing {seq_id}: {e}") from e
-
-
-@deprecated()
-@require_abnumber
-def annotate_chain_type(fasta_file: Path):
-    fasta = read_fasta(fasta_file)
-    for seq_id, seq in fasta.items():
-        seq = str(seq.seq)
-        try:
-            chain = Chain(seq.seq, scheme='imgt')
-            yield {"id": seq_id, "chain_type": chain.chain_type}
-        except ChainParseError:
-            yield {"id": seq_id, "chain_type": "unknown"}
-
-
-def numbering_seq(seq: SeqLikeType, chain: str, is_tcr: bool = False) -> tuple:
-    seq = ensure_seq_string(seq)
     if chain == 'H':
-        annnotator = _TCR_HC_ANNOTATOR if is_tcr else _ANTIBODY_HC_ANNOTATOR
-        valid_chains = _TCR_HC_IDS if is_tcr else _ANTIBODY_HC_IDS
+        annotator = SingleChainAnnotator(
+            chains=_TCR_HC_IDS if is_tcr else _ANTIBODY_HC_IDS,
+            scheme=scheme)
     else:
-        annnotator = _TCR_LC_ANNOTATOR if is_tcr else _ANTIBODY_LC_ANNOTATOR
-        valid_chains = _TCR_LC_IDS if is_tcr else _ANTIBODY_LC_IDS
+        annotator = SingleChainAnnotator(
+            chains=_TCR_LC_IDS if is_tcr else _ANTIBODY_LC_IDS,
+            scheme=scheme)
     
-    numbering, percent_identity, chain_type, err_message = annnotator.analyze_seq(seq)
-    assert chain_type in valid_chains, f"Chain type {chain_type} not in {valid_chains}, detail: {err_message}"
+    return annotator
+
+
+def numbering_seq(seq: SeqLikeType, chain: ChainType, is_tcr: bool = False, 
+                  scheme: SchemeType = 'imgt') -> tuple[list[str], float, str, str]:
+    """
+    Numbering antibody or TCR sequences.
+
+    Parameters
+    ----------
+    seq: str, Seq, or SeqRecord.
+       The sequence to be numbered.
+
+    chain: str
+        'H' for heavy chain, 'L' for light chain
+    
+    is_tcr: bool
+       True for TCR, False for antibody.
+
+    scheme: str
+        'imgt', 'kabat', 'aho' or 'martin' (modern version of chothia).
+
+    Returns
+    -------
+    numbering position list
+        A list of numbering positions
+    sequence identity
+        The sequence identity to the reference sequence.
+    chain type
+        The chain type, 'H', 'B', 'D' for heavy chain, 'K', 'L', 'A', 'G' for light chain.
+    error message
+        The error message if any.
+    """
+    seq = ensure_seq_string(seq)
+    annotator = get_annotator(chain=chain, scheme=scheme, is_tcr=is_tcr)
+    numbering, percent_identity, chain_type, err_message = annotator.analyze_seq(seq)
+    if err_message:
+        warnings.warn(err_message, stacklevel=2, category=SeqNumberingWarning)
     return numbering, percent_identity, chain_type, err_message
 
 
-def anno_cdr(seq: SeqLikeType, chain: str, is_tcr: bool = False) -> dict:
+def anno_cdr(
+        seq: SeqLikeType,
+        chain: ChainType,
+        is_tcr: bool = False,
+        scheme: SchemeType = 'imgt',
+        cdr_scheme: SchemeType| Literal['north'] = '') -> dict:
     """
     Annotate Antibody CDR regions based antpack package
 
@@ -102,110 +133,37 @@ def anno_cdr(seq: SeqLikeType, chain: str, is_tcr: bool = False) -> dict:
         A dictionary containing CDR regions and their sequences
     """
     seq = ensure_seq_string(seq)
-    numbering, percent_identity, _, _ = numbering_seq(seq, chain, is_tcr=is_tcr)
+    numbering, percent_identity, anno_chain, _ = numbering_seq(
+        seq, chain=chain, is_tcr=is_tcr, scheme=scheme)
     if len(numbering) != len(seq):
         raise ValueError(f"Numbering length {len(numbering)} != sequence length {len(seq)}")
-    res = [''] * len(IMGT_BORDERS)
-    real_borders = [[-1, 0] for _ in range(len(IMGT_BORDERS))]
-    region_idx = 0
-    for seq_idx, num in enumerate(numbering):
-        if num == '-':
+
+    annotator = get_annotator(chain=chain, scheme=scheme, is_tcr=is_tcr)
+    seq_range = {}
+    label_map = lambda x: 'FR'+x[-1] if x.startswith('fmwk') else x.upper()
+    cdr_labels = annotator.assign_cdr_labels(
+        numbering=numbering, chain=anno_chain, scheme=cdr_scheme)
+    for i , label in enumerate(cdr_labels):
+        label = label_map(label)
+        if label == '-':
             continue
-        try:
-            if int(num) >= IMGT_BORDERS[region_idx]:
-                region_idx += 1
-        except ValueError:
-            pass
-        if real_borders[region_idx][0] == -1:
-            real_borders[region_idx][0] = seq_idx
-        res[region_idx] += seq[seq_idx]
-        real_borders[region_idx][1] = seq_idx + 1
-    res = {
-        f'{chain}FR1': res[0],
-        f'{chain}FR1_slice': slice(*real_borders[0]),
-        f'{chain}CDR1': res[1],
-        f'{chain}CDR1_slice': slice(*real_borders[1]),
-        f'{chain}FR2': res[2],
-        f'{chain}FR2_slice': slice(*real_borders[2]),
-        f'{chain}CDR2': res[3],
-        f'{chain}CDR2_slice': slice(*real_borders[3]),
-        f'{chain}FR3': res[4],
-        f'{chain}FR3_slice': slice(*real_borders[4]),
-        f'{chain}CDR3': res[5],
-        f'{chain}CDR3_slice': slice(*real_borders[5]),
-        f'{chain}FR4': res[6],
-        f'{chain}FR4_slice': slice(*real_borders[6]),
-        f'{chain}_percent_identity': percent_identity
-    }
+        if label not in seq_range:
+            seq_range[label] = [i, i+1]
+        else:
+            seq_range[label][1] = i + 1
+
+    res = {}
+    for label, seq_slice in seq_range.items():
+        seq_slice = slice(*seq_slice)
+        res[chain+label] = seq[seq_slice]
+        res[chain+label+'_slice'] = seq_slice
+    res[f'{chain}_percent_identity'] = percent_identity
     return res
 
 
-@deprecated()
-@require_anarci
-def anno_tcr_cdr(seq: SeqLikeType) -> dict:
-    """
-    Annoate TCR CDR info.
-
-    Parameters
-    ----------
-    seq : SeqLikeType
-        Amino acid sequence of TCR. 
-
-    Returns
-    -------
-    dict
-        A dictionary containing TCR CDR regions and their sequences.
-    """
-    seq = ensure_seq_string(seq)
-    _, numbered, alignment_details, _ = run_anarci([('A', seq)], scheme='imgt')
-    assert len(numbered) == len(alignment_details) == 1
-    assert numbered[0] is not None, 'No domain found!'
-    assert len(numbered[0]) == len(alignment_details[0]) == 1, 'Multiple domain found!'
-    numbered_seq, fv_start, fv_end = numbered[0][0]
-    alignment_details = alignment_details[0][0]
-    chain_type = alignment_details['chain_type']
-    if chain_type not in ['B', 'A', 'D', 'G']:
-        raise RuntimeError(f'{seq} is not a valid TCR chain')
-    
-    numbered_seq = filter(lambda x: x[1] != '-', numbered_seq)
-    real_borders = [None for _ in range(len(IMGT_BORDERS))]
-    region_idx = -1
-    for seq_idx, ((aligned_idx, inscode), aa) in enumerate(numbered_seq, fv_start):
-        assert seq[seq_idx] == aa, 'AA not matched!'
-        if region_idx == -1:
-            # find first region
-            tmp_idx = 0
-            while aligned_idx >= IMGT_BORDERS[tmp_idx]:
-                tmp_idx += 1
-            region_idx = tmp_idx
-        elif aligned_idx >= IMGT_BORDERS[region_idx]:
-            region_idx += 1
-
-        if real_borders[region_idx] is None:
-            real_borders[region_idx] = [seq_idx, seq_idx + 1]
-        else:
-            real_borders[region_idx][1] = seq_idx + 1
-    
-    assert seq_idx == fv_end
-    result = {
-        'chain_type': chain_type,
-        'raw_seq': seq,
-        'fv_seq': seq[fv_start: fv_end + 1]
-        }
-    for region_idx, border in enumerate(real_borders):
-        name = REGION_NAMES[region_idx]
-        if border is None:
-            result[name] = None
-        else:
-            border = slice(*border)
-            result[name] = seq[border]
-        result[name + '_slice'] = border
-    return result
-
-
 def anno_vj_gene(seq: SeqLikeType,
-                 chain_type: str,
-                 species: str,
+                 chain_type: ChainType,
+                 species: SpecieType,
                  is_tcr: bool = False) -> dict:
     """
     Annotate VJ gene for antibody or TCR sequence.
@@ -257,7 +215,9 @@ def anno_vj_gene(seq: SeqLikeType,
     }
 
 
-def calc_seq_identity(s1: SeqLikeType, s2: SeqLikeType, mode: str = 'global', strategy: str = 'min_aligned_length', max_alignments_size: int = 0) -> float:
+def calc_seq_identity(
+        s1: SeqLikeType, s2: SeqLikeType, mode: Literal['global', 'local'] = 'global',
+        strategy: IdentityStrategyType = 'min_aligned_length', max_alignments_size: int = 0) -> float:
     """
     Calculate sequence identity between two sequences.
 
@@ -323,7 +283,7 @@ def calc_seq_identity(s1: SeqLikeType, s2: SeqLikeType, mode: str = 'global', st
 def get_mutations(
         s1: SeqLikeType,
         s2: SeqLikeType,
-        comparsion: str | Callable[[str, str], bool] = 'type', chain_id: str = '') -> list[str]:
+        comparsion: AAComparsionType = 'type', chain_id: str = '') -> list[str]:
     """
     Generate mutations as a list of strings (e.g. ['A1W', 'C2D']).
     Position number (1-indexed) is the ungapped sequence position of `s1`.
@@ -368,30 +328,3 @@ def get_mutations(
         if a1 == '-':
             alignment_pos_shift += 1
     return mutations
-
-
-if __name__ == "__main__":
-    from argparse import ArgumentParser
-    parser = ArgumentParser()
-    subparsers = parser.add_subparsers(dest="cmd")
-
-    remove_constant_region_parser = subparsers.add_parser("rm_const")
-    remove_constant_region_parser.add_argument("--fasta", "-i", type=Path, required=True)
-    remove_constant_region_parser.add_argument("--strict", "-s", action="store_true")
-    remove_constant_region_parser.add_argument("--ignore_error", "-e", action="store_true")
-    remove_constant_region_parser.add_argument("--output", "-o", type=Path, required=True)
-
-    annotate_chain_type_parser = subparsers.add_parser("anno_chain")
-    annotate_chain_type_parser.add_argument("--fasta", "-i", type=Path, required=True)
-    annotate_chain_type_parser.add_argument("--output", "-o", type=Path, required=True)
-
-    args = parser.parse_args()
-
-    if args.cmd == "rm_const":
-        df = pd.DataFrame(remove_constant_region(args.fasta, args.strict, args.ignore_error))
-        df2fasta(df, args.output, 'seq', id_col='id')
-    elif args.cmd == "anno_chain":
-        df = pd.DataFrame(annotate_chain_type(args.fasta))
-        df.to_csv(args.output, index=False)
-    else:
-        raise ValueError(f"Unknown subcommand: {args.cmd}")

@@ -1,5 +1,5 @@
 from Bio.Data import IUPACData
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Literal
 from protools.typedef import SeqLikeType
 from protools.utils import ensure_seq_string
 
@@ -44,6 +44,9 @@ AA2PROPERTIES: Dict[str, str] = {
     aa: prop for prop, aas in AA_PROPERTIES.items() for aa in aas}
 
 
+AAComparsionType = Literal['type', 'property'] | Callable[[str, str], bool]
+
+
 def validate_seq(s1: SeqLikeType, extra_symbols: str =''):
     """Validate sequence is only contain standard amino acid and allowed extra symbols."""
     s1 = ensure_seq_string(s1)
@@ -53,7 +56,7 @@ def validate_seq(s1: SeqLikeType, extra_symbols: str =''):
             raise ValueError(f"Invalid amino acid: {aa} in sequence {s1} at {pos}")
 
 
-def aa_equal(a1: str, a2: str, comparsion: str | Callable[[str, str], bool] = 'type') -> bool:
+def aa_equal(a1: str, a2: str, comparsion: AAComparsionType = 'type') -> bool:
     """
     Compare two amino acids.
 
