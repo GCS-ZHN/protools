@@ -1,6 +1,7 @@
 import pytest
 
 from protools import pdbanno, utils, pdbio
+from pathlib import Path
 
 try:
     pdbanno.TMalign()
@@ -76,7 +77,15 @@ def test_calc_sasa(pdb_file: str):
     pdbanno.calc_sasa(pdbio.get_structure(pdb_file))
 
 
-@pytest.mark.xfail(reason="Not implemented")
-def test_get_interactions():
-    # TODO
-    assert False
+@pytest.mark.parametrize(
+        'pdb_file',
+        ['data/4i77.pdb']
+)
+def test_get_interactions(pdb_file, tmp_path):
+    pdb_file = Path(pdb_file)
+    fixed_file = tmp_path / pdb_file.name
+    from packaging.version import Version
+    import prody
+    prody.addMissingAtoms(str(pdb_file), method='pdbfixer', outfile=fixed_file)
+    result = pdbanno.get_interactions(pdbio.get_structure(fixed_file))
+    assert len(result) == 7
