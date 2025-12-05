@@ -1280,17 +1280,13 @@ wheels = [
 [[package]]
 name = "prody"
 version = "2.6.1"
-source = { registry = "https://pypi.org/simple" }
+source = { git = "https://github.com/GCS-ZHN/ProDy.git?rev=main#79c6641d685b47fedf78c2272e5977524281f34c" }
 dependencies = [
     { name = "biopython" },
     { name = "numpy" },
     { name = "pyparsing" },
     { name = "scipy", version = "1.15.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "scipy", version = "1.16.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/09/bd/2fbeee84c1f314d9fc502c4bf434eafc83d375aa53a4a46e9574b41e665b/prody-2.6.1.tar.gz", hash = "sha256:911a8ca3ea7c5f8cd1a9c632e7d7f6e09ea1937db84d147030d08ff8c44b200b", size = 35099850, upload-time = "2025-08-19T18:18:12.444Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/0b/0a/740b528d15a5eddd5d8e0106c8311cce50b20ab16859a1bb068f3068eff3/prody-2.6.1-cp312-cp312-manylinux_2_35_x86_64.whl", hash = "sha256:763825bd2adb3544fdfad36b3b1f72735e6f9f826158c185e2434f08dea3dee6", size = 37523769, upload-time = "2025-08-19T18:18:08.897Z" },
 ]
 
 [[package]]
@@ -1350,7 +1346,7 @@ requires-dist = [
     { name = "dockq", specifier = ">=2.1.3" },
     { name = "pandas" },
     { name = "pdbfixer", git = "https://github.com/openmm/pdbfixer.git?rev=v1.11" },
-    { name = "prody", specifier = ">=2.6.1" },
+    { name = "prody", git = "https://github.com/GCS-ZHN/ProDy.git?rev=main" },
     { name = "requests" },
     { name = "scipy" },
     { name = "seaborn" },
