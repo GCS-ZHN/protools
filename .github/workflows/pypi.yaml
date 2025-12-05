@@ -34,11 +34,8 @@ jobs:
       - name: "Run Pytest"
         run: uv run pytest
 
-      - name: "Setup Build"
-        run: "pip install build"
-
       - name: "Build Package"
-        run: "python -m build"
+        run: "uv build"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
