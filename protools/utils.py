@@ -9,11 +9,20 @@ import warnings
 import gzip
 
 from pathlib import Path
-from typing import Any, Dict, Generator, Iterable, Optional, List, Callable, Tuple
+from typing import Any, Dict, Generator, Iterable, Optional, Callable, Literal
 from io import IOBase
 from protools.typedef import FilePathType, FilePathOrIOType, SeqLikeType
 from collections import namedtuple
 from contextlib import contextmanager
+from rich.progress import (
+    Progress,
+    SpinnerColumn,
+    TextColumn,
+    DownloadColumn,
+    BarColumn,
+    TransferSpeedColumn,
+    TimeRemainingColumn
+)
 
 
 AsyncCompletedProcess = namedtuple('AsyncCompletedProcess', ['stdout', 'stderr'])
@@ -509,7 +518,7 @@ class Intervals(object):
 
     @classmethod
     def from_slices(cls,
-                    slices: List[slice],
+                    slices: list[slice],
                     zero_based: bool = False,
                     end_inclusive: bool = True,
                     indices_len: Optional[int] = None):
@@ -531,7 +540,7 @@ class Intervals(object):
         return interval
 
     @staticmethod
-    def _merge_intervals(interval_slices: List[slice]) -> List[slice]:
+    def _merge_intervals(interval_slices: list[slice]) -> list[slice]:
         interval_slices.sort(key=lambda x: x.start)
         merged_interval_slices = []
         for interval in interval_slices:
@@ -564,7 +573,7 @@ class Intervals(object):
 
     def _parse_intervals(self, 
                        intervals_patttern: str,
-                       interval_hook: Optional[Callable[[str], str]] = None) -> List[slice]:
+                       interval_hook: Optional[Callable[[str], str]] = None) -> list[slice]:
         interval_slices = []
         for i in intervals_patttern.split(','):
             if interval_hook:
@@ -863,9 +872,9 @@ def deprecated(message: str = None) -> Callable:
 
 
 def flatten_collection(
-        data: Dict|List|Tuple,
+        data: Dict|list|tuple,
         parent_key: str = '',
-        key_seq: str = '.') -> Iterable[Tuple[str, Any]]:
+        key_seq: str = '.') -> Iterable[tuple[str, Any]]:
     """
     Make multilevel data to be flatten.
     """
@@ -882,3 +891,135 @@ def flatten_collection(
             yield from flatten_collection(v, parent_key=new_k, key_seq=key_seq)
         else:
             yield new_k, v
+
+
+# a copy from tqdm.utils, MIT license.
+class ObjectWrapper(object):
+    
+    def __getattr__(self, name):
+        return getattr(self._wrapped, name)
+
+    def __setattr__(self, name, value):
+        return setattr(self._wrapped, name, value)
+
+    def wrapper_getattr(self, name):
+        """Actual `self.getattr` rather than self._wrapped.getattr"""
+        try:
+            return object.__getattr__(self, name)
+        except AttributeError:  # py2
+            return getattr(self, name)
+
+    def wrapper_setattr(self, name, value):
+        """Actual `self.setattr` rather than self._wrapped.setattr"""
+        return object.__setattr__(self, name, value)
+
+    def __init__(self, wrapped):
+        """
+        Thin wrapper around a given object
+        """
+        self.wrapper_setattr('_wrapped', wrapped)
+
+
+# a copy from tqdm.utils, MIT license.
+class CallbackIOWrapper(ObjectWrapper, IOBase):
+    def __init__(self, callback, stream: IOBase, method: Literal['read', 'write'] = "read", seek_callback: Callable[[int], Any] = None):
+        """
+        Wrap a given `file`-like object's `read()` or `write()` to report
+        lengths to the given `callback`
+        """
+        super().__init__(stream)
+        func = getattr(stream, method)
+        if method == "write":
+            @functools.wraps(func)
+            def write(data, *args, **kwargs):
+                res = func(data, *args, **kwargs)
+                callback(len(data))
+                return res
+            self.wrapper_setattr('write', write)
+        elif method == "read":
+            @functools.wraps(func)
+            def read(*args, **kwargs):
+                data = func(*args, **kwargs)
+                callback(len(data))
+                return data
+            self.wrapper_setattr('read', read)
+        else:
+            raise KeyError("Can only wrap read/write methods")
+        
+        if stream.seekable():
+            @functools.wraps(stream.seek)
+            def seek(*args, **kwargs):
+                pos = stream.seek(*args, **kwargs)
+                if seek_callback:
+                    seek_callback(pos)
+                return pos
+            self.wrapper_setattr('seek', seek)
+
+    def readable(self):
+        return self.wrapper_getattr('_wrapped').readable()
+    
+    def writable(self):
+        return self.wrapper_getattr('_wrapped').writable()
+    
+    def seekable(self):
+        return self.wrapper_getattr('_wrapped').seekable()
+
+
+class ProgressIOError(RuntimeError):
+    pass
+
+
+@contextmanager
+def progress_io(
+    stream: IOBase, description: str = '', total: Optional[int] = None,
+    method: Literal['read', 'write'] = 'read', binary_units: bool = True) -> Generator[CallbackIOWrapper, None, None]:
+    """
+    A rich progress IO Wrapper method, similar to
+    the `tqdm.wrapatrr` method.`
+
+    Parameters
+    ----------
+    stream: IO object.
+       The IO object to wrap.
+    description: str, Optional
+        The decription of this IO
+    total: int
+        The total size of this IO, if not provided,
+        No remain time will be calculated.
+    method: Literal['read', 'write']
+        which method will be wrapped. should be
+        readable if method is 'read', writable if method is
+        'write'.
+    binary_units: bool
+        Set True if it is a byte stream.
+        Default True.
+
+    Return
+    ------
+    A Wrapped IO object.
+    """
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("{task.description}"),
+        BarColumn(),
+        DownloadColumn(binary_units=binary_units),
+        TransferSpeedColumn(),
+        TimeRemainingColumn()) as progress:
+        if not stream.readable() and method == 'read':
+            raise ProgressIOError('Stream is not readable.')
+        if not stream.writable() and method == 'write':
+            raise ProgressIOError('Stream is not writable.')
+
+        task = progress.add_task(
+            description=description,
+            start=True,
+            total=total,
+            completed=stream.tell()
+        )
+        wrapper = CallbackIOWrapper(
+            callback=lambda x: progress.update(task, advance=x),
+            seek_callback=lambda x: progress.update(task, completed=x),
+            stream=stream,
+            method=method)
+
+        yield wrapper

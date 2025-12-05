@@ -309,3 +309,9 @@ def test_deprecated_with_message():
 
     with pytest.warns(DeprecationWarning, match='func1 is old function'):
         func1()
+
+
+@pytest.mark.xfail(reason="Not implemented")
+def test_progress_io():
+    # TODO
+    assert False

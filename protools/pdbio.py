@@ -7,7 +7,6 @@ PDB standard: https://files.wwpdb.org/pub/pdb/doc/format_descriptions/Format_v33
 """
 
 from io import StringIO
-import warnings
 import numpy as np
 import requests
 import gzip
@@ -17,6 +16,7 @@ from collections import OrderedDict
 from itertools import product
 
 import pandas as pd
+import warnings
 from Bio.PDB import PDBParser, MMCIFParser
 from Bio.PDB.Atom import Atom
 from Bio.PDB.Chain import Chain
@@ -32,8 +32,7 @@ from Bio.Data import PDBData, IUPACData
 
 from protools.seqio import save_fasta, read_seqres, Fasta
 from protools.typedef import FilePathType, FilePathOrIOType, StructureFragmentAAType, StructureFragmentType, SeqLikeType
-from protools.utils import ensure_path, ensure_fileio, ensure_seq_string, auto_compression
-from tqdm.auto import tqdm
+from protools.utils import ensure_path, ensure_fileio, ensure_seq_string, auto_compression, progress_io
 
 
 __all__ = [
@@ -451,8 +450,8 @@ def fetch(pdb_id: str, target_dir: FilePathType, server: str = 'https://files.rc
             response = requests.get(url, stream=True)
             response.raise_for_status()
             total = int(response.headers.get('content-length', 0))
-            with tqdm.wrapattr(response.raw, 'read', total=total,
-                               desc=f'Downloading {pdb_id}') as stream:
+            with progress_io(response.raw, method='read', total=total,
+                               description=f'Downloading {pdb_id}') as stream:
                 with gzip.open(stream, mode='r') as f:
                     with tmp_file.open('wb') as out:
                         for chunk in iter(lambda: f.read(1024), b''):
@@ -925,10 +924,8 @@ def coord2chain(
 
 
 if __name__ == "__main__":
-    import asyncio
     from argparse import ArgumentParser
 
-    from tqdm.auto import tqdm
     parser = ArgumentParser()
     subparsers = parser.add_subparsers(dest="cmd")
 
