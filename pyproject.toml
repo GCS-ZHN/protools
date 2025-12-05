@@ -50,7 +50,7 @@ parentdir_prefix = "protools-"
 
 [tool.uv.sources]
 pdbfixer = { git = "https://github.com/openmm/pdbfixer.git", rev = "v1.11" }
-prody = { git = "https://github.com/GCS-ZHN/ProDy.git", rev = "main" }
+prody = { git = "https://github.com/GCS-ZHN/ProDy.git", rev = "e5bc3bb917cf712660f715f27171f25fb6694721" }
 
 [dependency-groups]
 dev = [

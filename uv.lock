@@ -1280,7 +1280,7 @@ wheels = [
 [[package]]
 name = "prody"
 version = "2.6.1"
-source = { git = "https://github.com/GCS-ZHN/ProDy.git?rev=main#79c6641d685b47fedf78c2272e5977524281f34c" }
+source = { git = "https://github.com/GCS-ZHN/ProDy.git?rev=e5bc3bb917cf712660f715f27171f25fb6694721#e5bc3bb917cf712660f715f27171f25fb6694721" }
 dependencies = [
     { name = "biopython" },
     { name = "numpy" },
@@ -1346,7 +1346,7 @@ requires-dist = [
     { name = "dockq", specifier = ">=2.1.3" },
     { name = "pandas" },
     { name = "pdbfixer", git = "https://github.com/openmm/pdbfixer.git?rev=v1.11" },
-    { name = "prody", git = "https://github.com/GCS-ZHN/ProDy.git?rev=main" },
+    { name = "prody", git = "https://github.com/GCS-ZHN/ProDy.git?rev=e5bc3bb917cf712660f715f27171f25fb6694721" },
     { name = "requests" },
     { name = "scipy" },
     { name = "seaborn" },
