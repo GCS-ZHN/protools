@@ -3,12 +3,7 @@ Personal protein processing tool collections.
 
 ## Installment
 
-Necessary requirement is listed in [requirements.txt](./requirements.txt).
-Optional requirement is listed below:
-```bash
-conda install -c schrodinger pymol
-```
-Also, pypi release will be updated every github release, just install it by `uv pip`:
+PyPi release will be updated every github release, just install it by `uv pip`:
 ```bash
 uv pip install protools4py
 ```
@@ -42,7 +37,7 @@ uv pip install protools4py
 - protools.database.uniprot
 - protools.database.patent
 
-### TODO
+## TODO
 
 - [ ] Add documents for each module.
 
