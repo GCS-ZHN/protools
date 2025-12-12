@@ -15,7 +15,7 @@ from collections import OrderedDict
 from io import StringIO
 from itertools import product, islice
 
-from protools.utils import ensure_fileio, ensure_path, auto_compression
+from protools.utils import ensure_fileio, ensure_path, auto_compression, deprecated
 from protools.typedef import FilePathType, FilePathOrIOType, SeqLikeType
 
 
@@ -347,6 +347,8 @@ def read_a3m(path: FilePathOrIOType, is_multimer: bool = False) -> Fasta:
         assert current_query == query_names[-1]
     return res
 
+
+@deprecated()
 def read_pdb_seqres(path: Path) -> Dict[str, Iterable[str]]:
     """
     Read sequence from PDB SEQRES record.
@@ -376,6 +378,7 @@ def read_pdb_seqres(path: Path) -> Dict[str, Iterable[str]]:
     return data
 
 
+@deprecated()
 def read_mmcif_seqres(path: Path, auth: bool = True) -> Dict[str, Iterable[str]]:
     """
     Read sequence from mmCIF file.
@@ -438,30 +441,39 @@ def read_seqres(path: FilePathType, auth: bool = True) -> Fasta:
     return one-letter amino acid sequence as Fasta object,
     which may result in loss of information.
     """
-    path = ensure_path(path)
-    if path.suffix.lower() == '.pdb':
-        seqres = SeqIO.parse(path, 'pdb-seqres')
-        seqres_iter = (
-            (record.id.split(':')[-1], str(record.seq)) for record in seqres)
-
-    elif path.suffix.lower() == '.cif':
-        seqres = SeqIO.parse(path, 'cif-seqres')
-        seqres_iter = (
-            (record.id.split(':')[-1], str(record.seq)) for record in seqres)
-        # as bioython use '_pdbx_poly_seq_scheme.asym_id' in 
-        # `Bio.SeqIO.PdbIO.CifSeqresIterator`, we need to convert
-        # chain id to auth chain id by '_pdbx_poly_seq_scheme.pdb_strand_id'
-        if auth:
-            mmcif_dict = MMCIF2Dict(path)
-            label2auth = dict(zip(
-                mmcif_dict['_pdbx_poly_seq_scheme.asym_id'],
-                mmcif_dict['_pdbx_poly_seq_scheme.pdb_strand_id']))
+    with auto_compression(path, return_name=True) as (name, f):
+        suffix = Path(name).suffix
+        if suffix.lower() == '.pdb':
+            seqres = SeqIO.parse(f, 'pdb-seqres')
             seqres_iter = (
-                (label2auth[label], seq) for label, seq in seqres_iter)
+                (record.id.split(':')[-1], str(record.seq)) for record in seqres)
 
-    else:
-        raise ValueError(f"Unsupported file format: {path.suffix}")
-    return Fasta(seqres_iter)
+        elif suffix.lower() == '.cif':
+            # `cif-seqres` is not a really generator, it will construct a
+            # `MMCIF2Dict` first and store seqres in a `records` list and 
+            # return `iter(records)` 
+            seqres = SeqIO.parse(f, 'cif-seqres')
+            seqres_iter = (
+                (record.id.split(':')[-1], str(record.seq)) for record in seqres)
+            # as bioython use '_pdbx_poly_seq_scheme.asym_id' in 
+            # `Bio.SeqIO.PdbIO.CifSeqresIterator`, we need to convert
+            # chain id to auth chain id by '_pdbx_poly_seq_scheme.pdb_strand_id'
+            if auth:
+                # reset position to get MMCIF dict again
+                # but actually `cif-seqres` also read it as a MMCIF2Dict first
+                # This operation do not influence previous `cif-seqres` beacause
+                # it is not a flow IO.
+                f.seek(0)
+                mmcif_dict = MMCIF2Dict(f)
+                label2auth = dict(zip(
+                    mmcif_dict['_pdbx_poly_seq_scheme.asym_id'],
+                    mmcif_dict['_pdbx_poly_seq_scheme.pdb_strand_id']))
+                seqres_iter = (
+                    (label2auth[label], seq) for label, seq in seqres_iter)
+
+        else:
+            raise ValueError(f"Unsupported file format: {path.suffix}")
+        return Fasta(seqres_iter)
 
 
 def save_fasta(

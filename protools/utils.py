@@ -9,7 +9,7 @@ import warnings
 import gzip
 
 from pathlib import Path
-from typing import Any, Dict, Generator, Iterable, Optional, Callable, Literal
+from typing import Any, Dict, Generator, Iterable, Optional, Callable, Literal, ContextManager
 from io import IOBase
 from protools.typedef import FilePathType, FilePathOrIOType, SeqLikeType
 from collections import namedtuple
@@ -54,7 +54,7 @@ def ensure_path(path: FilePathType, mk_parents: bool = False) -> Path:
 @contextmanager
 def ensure_fileio(path_or_io: FilePathOrIOType,
                   mode: str = 'r',
-                  open_func: Callable[[Any, str], IOBase] = open) -> Generator[IOBase, None, None]:
+                  open_func: Callable[[Any, str], ContextManager[IOBase]] = open) -> Generator[IOBase, None, None]:
     """
     Ensure the input is a IO object. If the input is a path,
     open the path as a IO object. If the input is already
@@ -813,7 +813,7 @@ class Intervals(object):
 def auto_compression(
     path: FilePathType,
     mode: str = 'rt',
-    return_name: bool = False) -> Generator[tuple[str, IOBase], None, None]:
+    return_name: bool = False) -> Generator[tuple[str, IOBase]|IOBase, None, None]:
     """
     A context manager to automatical open compressed file temporarily.
     If the file is not compressed (with correct suffix),
@@ -1023,3 +1023,28 @@ def progress_io(
             method=method)
 
         yield wrapper
+
+
+def glob(path: FilePathType, *patterns: str) -> Iterable[Path]:
+    """
+    Glob multiple patterns in a path.
+
+    Parameters
+    ----------
+    path: Path or str
+        The path to glob.
+    *patterns: str
+        patterns to glob.
+
+    Returns
+    -------
+    Iterable[Path].
+        unique matched paths.
+    """
+    path = ensure_path(path)
+    seen = set()
+    for pattern in patterns:
+        for p in path.glob(pattern):
+            if p not in seen:
+                seen.add(p)
+                yield p

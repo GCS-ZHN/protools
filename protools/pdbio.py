@@ -258,7 +258,7 @@ def read_modified_residues(pdbfile: Path) -> pd.DataFrame:
         'standard_res_name': [],  # column 25-27
         'comment': []             # column 30-
     }
-    with open(pdbfile) as f:
+    with auto_compression(pdbfile) as f:
         for line in f:
             if line.startswith('MODRES'):
                 id_code = line[7:11].strip()
@@ -285,7 +285,7 @@ def write_modified_residues(data: pd.DataFrame, target_path: FilePathOrIOType):
     if len(data) == 0:
         return
     format_line = 'MODRES {:<4s} {:<3s} {:<1s} {:>4d}{:<1s} {:<3s}  {:<s}'
-    with ensure_fileio(target_path, 'w') as f:
+    with ensure_fileio(target_path, 'w', open_func=auto_compression) as f:
         for _, row in data.iterrows():
             f.write(_basic_pdb_column_format(format_line.format(*row.values)))
 
@@ -732,7 +732,7 @@ def read_remarks(pdbfile: Path, ignore_non_standard: bool = False) -> Dict[int, 
         A dictionary where the keys are the remark type codes
     """
     remarks = {}
-    with open(pdbfile) as f:
+    with auto_compression(pdbfile) as f:
         for line in f:
             if line.startswith('REMARK'):
                 if ignore_non_standard and not line[7:10].isdigit():
