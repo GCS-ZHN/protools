@@ -127,6 +127,13 @@ def anno_cdr(
     is_tcr: str
         Whether the sequence is TCR or not. Default is False. supported since antpack v0.3.8
 
+    scheme : str
+       Numbering scheme, default is 'imgt'. Supported schemes: 'imgt', 'martin', 'kabat', 'aho'.
+
+    cdr_scheme : str
+       CDR definition scheme, default is '' (same as numbering scheme). Supported schemes: 'imgt',
+       'martin', 'kabat', 'aho', 'north'.
+
     Returns
     ----------
     dict
