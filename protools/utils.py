@@ -16,13 +16,17 @@ from collections import namedtuple
 from contextlib import contextmanager
 from rich.progress import (
     Progress,
+    Task,
     SpinnerColumn,
     TextColumn,
     DownloadColumn,
     BarColumn,
-    TransferSpeedColumn,
+    ProgressColumn,
     TimeRemainingColumn
 )
+from rich import filesize
+from rich.text import Text
+from rich.table import Column
 
 
 AsyncCompletedProcess = namedtuple('AsyncCompletedProcess', ['stdout', 'stderr'])
@@ -969,6 +973,42 @@ class ProgressIOError(RuntimeError):
     pass
 
 
+class TransferSpeedColumn(ProgressColumn):
+    """Renders human readable transfer speed.
+    enhanced version of `rich.progress.TransferSpeedColumn`
+    which does not support `binary_units`. see issue
+    at https://github.com/Textualize/rich/issues/3466
+
+    Args:
+        binary_units (bool, optional): Use binary units, KiB, MiB etc. Defaults to False.
+    """
+
+    def __init__(
+        self, binary_units: bool = False, table_column: Optional[Column] = None
+    ) -> None:
+        self.binary_units = binary_units
+        super().__init__(table_column=table_column)
+
+    def render(self, task: "Task") -> Text:
+        """Show data transfer speed."""
+        speed = task.finished_speed or task.speed
+        if speed is None:
+            return Text("?", style="progress.data.speed")
+        if self.binary_units:
+            unit, suffix = filesize.pick_unit_and_suffix(
+                speed,
+                ["bytes", "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB"],
+                1024,
+            )
+        else:
+            unit, suffix = filesize.pick_unit_and_suffix(
+                speed,
+                ["bytes", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"],
+                1000,
+            )
+        return Text(f"{speed/unit:.1f}{suffix}/s", style="progress.data.speed")
+
+
 @contextmanager
 def progress_io(
     stream: IOBase, description: str = '', total: Optional[int] = None,
@@ -1003,7 +1043,7 @@ def progress_io(
         TextColumn("{task.description}"),
         BarColumn(),
         DownloadColumn(binary_units=binary_units),
-        TransferSpeedColumn(),
+        TransferSpeedColumn(binary_units=binary_units),
         TimeRemainingColumn()) as progress:
         if not stream.readable() and method == 'read':
             raise ProgressIOError('Stream is not readable.')
