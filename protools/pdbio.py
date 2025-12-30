@@ -30,9 +30,23 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio.Data import PDBData, IUPACData
 
-from protools.seqio import save_fasta, read_seqres, Fasta
-from protools.typedef import FilePathType, FilePathOrIOType, StructureFragmentAAType, StructureFragmentType, SeqLikeType
-from protools.utils import ensure_path, ensure_fileio, ensure_seq_string, auto_compression, progress_io
+from protools.seqio import (
+    save_fasta,
+    read_seqres,
+    Fasta)
+from protools.typedef import (
+    FilePathType,
+    FilePathOrIOType,
+    StructureFragmentAAType,
+    StructureFragmentType,
+    SeqLikeType)
+from protools.utils import (
+    ensure_path,
+    ensure_fileio,
+    ensure_seq_string,
+    auto_compression,
+    progress_io,
+    md5sum)
 
 
 __all__ = [
@@ -168,7 +182,7 @@ def get_aa_sequence(chain: Chain, standard: bool = True, unknown_aa: str = 'X') 
     return Seq(''.join(aa_3to1.get(residue.get_resname(), unknown_aa) for residue in seq.values()))
 
 
-def get_structure(pdb_file: FilePathType, structure_id: str = 'pdb') -> Structure:
+def get_structure(pdb_file: FilePathType, structure_id: str|None = None) -> Structure:
     """
     Get the structure of a PDB file.
 
@@ -177,7 +191,8 @@ def get_structure(pdb_file: FilePathType, structure_id: str = 'pdb') -> Structur
     pdb_file : str
         Path to the PDB file.
     structure_id : str, optional
-        ID of the structure, by default 'pdb'.
+        ID of the structure, by default,
+        use md5sum of the file as the ID.
 
     Returns
     ----------
@@ -185,6 +200,8 @@ def get_structure(pdb_file: FilePathType, structure_id: str = 'pdb') -> Structur
         Structure of the PDB file.
     """
     pdb_file = ensure_path(pdb_file)
+    if structure_id is None:
+        structure_id = md5sum(pdb_file)
     if not pdb_file.exists():
         raise FileNotFoundError(f"Could not find PDB file {pdb_file}")
 

@@ -7,6 +7,7 @@ import functools
 import logging
 import warnings
 import gzip
+import hashlib
 
 from pathlib import Path
 from typing import Any, Dict, Generator, Iterable, Optional, Callable, Literal, ContextManager
@@ -1088,3 +1089,15 @@ def glob(path: FilePathType, *patterns: str) -> Iterable[Path]:
             if p not in seen:
                 seen.add(p)
                 yield p
+
+
+def md5sum(path: FilePathType) -> str:
+    """Compute the md5sum of a file."""
+    with open(path, 'rb') as f:
+        md5 = hashlib.md5()
+        while True:
+            data = f.read(65536)
+            if not data:
+                break
+            md5.update(data)
+        return md5.hexdigest()
