@@ -635,7 +635,10 @@ def get_interactions(entity: StructureFragmentType) -> Dict[str, pd.DataFrame]:
     # positive vs positive, negative vs negative
     repulsive_ionic_ia = pd.DataFrame(as_df(result[2], columns=columns))
     pi_cation_ia = pd.DataFrame(as_df(result[4], columns=columns))
-    hydrophobic_ia = pd.DataFrame(as_df(result[5], columns=columns))
+    if len(result[5][0]) == 7:
+        hydrophobic_ia = pd.DataFrame(as_df(result[5], columns=columns))
+    elif len(result[5][0]) == 8:
+        hydrophobic_ia = pd.DataFrame(as_df(result[5], columns=columns + ['hydrophobic_overlapping_area']))
     columns.append('angle')
 
     pi_stack_ia = pd.DataFrame(as_df(result[3], columns=columns))
