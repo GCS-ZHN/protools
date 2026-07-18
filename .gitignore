@@ -1,11 +1,43 @@
 # python cached file
 *.py[cod]
 __pycache__/
-.ipynb_checkpoints/
 *.egg-info
 build
 dist
-.conda
-.DS_Store
 
+# virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# environment / secrets
+.env
+.env.*
+!.env.example
+
+# test / coverage artifacts
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+
+# type checker / linter caches (ad-hoc usage)
+.mypy_cache/
+.ruff_cache/
+.pyre/
+.pytype/
+
+# notebooks
+.ipynb_checkpoints/
 *_dev.ipynb
+
+# OS / editor
+.DS_Store
+.conda
+
+# project-local tool indexes
+.codegraph/
