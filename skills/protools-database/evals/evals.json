@@ -1,0 +1,24 @@
+{
+  "skill_name": "protools-database",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Parse the attached patent sequence list with protools.database.patent.PatentSequenceList.from_file and print its sequence ids, the number of sequences, and the SequenceListElement tags used.",
+      "expected_output": "Console output listing sequence ids from the fixture, the sequence count, and recognized element tags.",
+      "files": [
+        "evals/files/sample_patent.txt"
+      ],
+      "expectations": [
+        "A script using protools.database.uniprot.fetch_uniprot_features with accession P01308 was produced",
+        "Either P01308_features.txt exists with more than 0 feature rows, or notes.md clearly explains a network failure (4xx/5xx/rate limit)",
+        "notes.md reports the number of feature rows when the fetch succeeded"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Write and run a script that fetches UniProt accession P01308 with protools.database.uniprot.fetch_uniprot_features into /tmp/protools-eval/db/, then prints the number of feature rows in the generated TSV. Treat network failures as expected integration flakiness.",
+      "expected_output": "A TSV at /tmp/protools-eval/db/P01308_features.txt with feature rows; console output with row count, or a clear network-failure explanation if the endpoint is unreachable.",
+      "files": []
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "skill_name": "protools-sequence",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Write and run a script that deduplicates data/test_protein.fasta with protools.seqfixer.deduplicated_seq, saving the result to /tmp/protools-eval/seq/dedup.fasta. Then print the number of input and unique sequences.",
+      "expected_output": "A runnable script using the protools library; a FASTA file at the requested path; console output with input vs unique counts.",
+      "files": [],
+      "expectations": [
+        "translated.fasta exists and every output record id ends with _translated",
+        "The input file data/test_dna.fasta was not modified (its md5 is unchanged from the original)",
+        "notes.md shows the first translated record's id and amino-acid sequence"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Use protools.seqconvert.translate to translate every DNA sequence in data/test_dna.fasta to protein with the Standard codon table. Save the translated FASTA to /tmp/protools-eval/seq/translated.fasta without modifying the input file, and print the first translated record.",
+      "expected_output": "A translated FASTA file; the input file byte-identical to the original; first translated sequence shown with a _translated id suffix.",
+      "files": [],
+      "expectations": [
+        "notes.md reports a numbering length equal to the length of the first sequence in data/vdomain.fasta",
+        "notes.md reports a percent identity value for the IMGT numbering",
+        "notes.md includes a non-empty HCDR3 sequence extracted via anno_cdr"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Use protools.seqanno.numbering_seq to number the first sequence in data/vdomain.fasta with the IMGT scheme as an antibody heavy chain, then use anno_cdr to extract the CDR regions. Print the numbering length, the sequence identity, and the HCDR3 sequence.",
+      "expected_output": "Console output with numbering length matching the sequence length, percent identity, and an HCDR3 sequence extracted via antpack.",
+      "files": []
+    }
+  ]
+}

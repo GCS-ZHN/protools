@@ -1,0 +1,38 @@
+{
+  "skill_name": "protools-structure",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Parse data/4ozi.pdb with protools.pdbio.get_structure, print the model's chain ids and each chain's amino-acid sequence via get_aa_sequence, then save the first chain alone to /tmp/protools-eval/struct/chain1.pdb with save_pdb.",
+      "expected_output": "A PDB file containing only the first chain, and console output listing chain ids and per-chain one-letter sequences.",
+      "files": [],
+      "expectations": [
+        "renumbered.pdb exists in the outputs and every chain's first residue number is 1",
+        "notes.md prints the first residue number of each chain from the output file",
+        "The output contains the same chain ids as the input 4zqk.cif (A and B)"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Renumber data/4zqk.cif with protools.pdbfixer.renumber_residue so residues restart at 1 for every chain, saving to /tmp/protools-eval/struct/renumbered.pdb. Then print the first residue number of each chain from the output file.",
+      "expected_output": "A renumbered PDB file whose chains each start at residue 1; console output confirming the start numbers.",
+      "files": [],
+      "expectations": [
+        "extracted.pdb exists in the outputs and contains chain A residue ids 1-20 only (21 residue objects because the native file has an insertion at 9A)",
+        "notes.md reports the number of residues remaining in the output (21, incl. insertion 9A)",
+        "The work used protools.pdbextract.extract with the selection string A1-20"
+      ],
+      "assertions": [
+        "extracted.pdb exists in the outputs and contains chain A residue ids 1-20 only (21 residue objects because the native file has an insertion at 9A)",
+        "notes.md reports the number of residues remaining in the output (21, incl. insertion 9A)",
+        "The work used protools.pdbextract.extract with the selection string A1-20"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "Use protools.pdbextract.extract on data/4ozi.pdb to keep only residues in the range 'A1-20', saving to /tmp/protools-eval/struct/extracted.pdb, and print how many residues remain in the output.",
+      "expected_output": "An extracted PDB with roughly 20 residues from chain A; console output with the remaining residue count.",
+      "files": []
+    }
+  ]
+}

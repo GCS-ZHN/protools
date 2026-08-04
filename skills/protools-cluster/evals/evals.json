@@ -1,0 +1,24 @@
+{
+  "skill_name": "protools-cluster",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Write a script that reads data/test_protein.fasta with protools.seqio.read_fasta and clusters it with protools.cluster.mmseqs.MMseqs2 at min_seq_id 0.9 and coverage 0.8, saving the result DataFrame to /tmp/protools-eval/cluster/clusters.csv. If the mmseqs binary is missing, print the install hint instead of crashing.",
+      "expected_output": "A script using the correct MMseqs2.cluster parameters; either a clusters.csv with cluster_id/sequence_id columns or a graceful CmdNotFoundError message with the install hint.",
+      "files": [],
+      "expectations": [
+        "notes.md reports the DataFrame columns cluster_id, sequence_id, sequence_length, representative, similarity",
+        "notes.md reports 2 clusters with representatives seq_alpha and seq_gamma",
+        "The work used protools.cluster.cdhit.parse_cluster on the sample.clstr fixture"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Parse the attached CD-HIT .clstr file with protools.cluster.cdhit.parse_cluster and print the DataFrame columns plus the number of clusters and the representative sequence ids.",
+      "expected_output": "Console output showing cluster_id, sequence_id, sequence_length, representative, similarity columns; cluster count and representative ids matching the fixture.",
+      "files": [
+        "evals/files/sample.clstr"
+      ]
+    }
+  ]
+}

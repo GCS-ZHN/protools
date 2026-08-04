@@ -22,6 +22,8 @@ protools/
 test/                  # mirrors protools/ structure; helper: test/tools.py
 data/                  # committed test fixtures: 4zqk.cif, 4ozi.pdb,
                        # vdomain.fasta, ab1218*.a3m, test_protein.fasta, ...
+skills/                # agent skills per module group (protools-sequence,
+                       # -structure, -cluster, -dataset, -database, -dock)
 ```
 
 ## Module groupings (public surface)
@@ -85,3 +87,13 @@ boundaries, and key entrypoints**. Update it whenever any of those
 change (new module, new external CLI, new subpackage, change to
 public surface). Do not duplicate this content in `AGENTS.md` or
 `README.md` — link here instead.
+
+## Agent skills
+
+`skills/` holds one SKILL.md per module group (Sequence, Structure,
+Cluster, Dataset, Database, Dock), each with `evals/evals.json` test
+prompts for skill-creator. `protools-dataset` covers the whole
+`protools.dataset` package (currently `split`; future modules join it).
+Skills are development aids for agents working on this repo; they are not
+part of the public library surface and must not be imported by `protools`
+code.

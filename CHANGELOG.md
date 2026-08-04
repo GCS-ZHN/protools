@@ -10,6 +10,8 @@ All notable changes to `protools4py` are recorded here. Format:
 Unreleased changes (will move under the next `v*` tag when cut).
 
 ### Added
+- `skills/` — agent skills per module group (sequence, structure, cluster,
+  dataset, database, dock), installable via `npx skills add GCS-ZHN/protools`.
 - `docs/architecture/overview.md` — single source of truth for project
   layout, module boundaries, and key entrypoints.
 - `AGENTS.md` — agent-facing notes: workflow, hard rules, build /
@@ -19,3 +21,5 @@ Unreleased changes (will move under the next `v*` tag when cut).
 ### Changed
 - `README.md` — slimmed to install + module index; defers layout
   details to `docs/architecture/overview.md`.
+- `README.md` — added skills installation instructions
+  (`npx skills add GCS-ZHN/protools`).

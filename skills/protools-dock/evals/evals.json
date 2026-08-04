@@ -1,0 +1,27 @@
+{
+  "skill_name": "protools-dock",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Using protools.pdbio to parse two PDB files, write a call to protools.dock.dockq_score that scores model.pdb against native.pdb, and explain what chain_map must contain for the score to be meaningful.",
+      "expected_output": "A script using HDock().dock and create_complex with correct parameter names; either a .dockout/complex PDB or a graceful missing-binary message with install help.",
+      "files": [],
+      "expectations": [
+        "notes.md contains a dockq_score call whose model/native arguments are Bio.PDB.Model objects and a chain_map argument",
+        "notes.md correctly explains that chain_map maps NATIVE chain ids (keys) to MODEL chain ids (values), and that dockq_score validates keys in native and values in model",
+        "The work used protools.pdbio to parse the structures"
+      ],
+      "assertions": [
+        "notes.md contains a dockq_score call whose model/native arguments are Bio.PDB.Model objects and a chain_map argument",
+        "notes.md correctly explains that chain_map maps NATIVE chain ids (keys) to MODEL chain ids (values), and that dockq_score validates keys in native and values in model",
+        "The work used protools.pdbio to parse the structures"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Using protools.pdbio to parse two PDB files, write a call to protools.dock.dockq_score that scores model.pdb against native.pdb, and explain what chain_map must contain for the score to be meaningful.",
+      "expected_output": "A correct dockq_score invocation with Bio.PDB.Model inputs and a clear explanation that chain_map maps model chain ids to native chain ids.",
+      "files": []
+    }
+  ]
+}

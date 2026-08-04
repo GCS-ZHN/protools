@@ -1,0 +1,22 @@
+{
+  "skill_name": "protools-dataset",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Run protools.dataset.split.grouped_split with group_sizes [350, 45, 180, 50, 155, 18] and lengths [400, 200, 198] in all three modes (partial_random, random, sorted) with seed 7, and print the per-mode group indices and resulting sizes.",
+      "expected_output": "Console output per mode with group index lists; sorted and random modes hit sizes 400/200/198 exactly; partial_random sizes sum to the total (798).",
+      "files": [],
+      "expectations": [
+        "notes.md reports per-mode group indices and resulting sizes for all three modes (partial_random, random, sorted)",
+        "For sorted and random modes the sizes equal [400, 200, 198] exactly; partial_random sizes sum to 798 (the documented greedy heuristic may deviate)",
+        "The work used protools.dataset.split.grouped_split with seed 7"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Run protools.dataset.split.grouped_split with group_sizes [120, 45, 210, 33, 90, 300] and lengths [400, 200, 198] in all three modes (partial_random, random, sorted) with seed 7, and print the per-mode group indices and resulting sizes.",
+      "expected_output": "Console output per mode with group index lists whose size totals match the requested lengths (400/200/198).",
+      "files": []
+    }
+  ]
+}

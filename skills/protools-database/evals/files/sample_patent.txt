@@ -1,0 +1,20 @@
+<110> Zhang H.N.
+<120> A protein sequence listing
+<130> PT-2026-001
+<160> 2
+<170> protools fixture
+<210> 1
+<211> 5
+<212> PRT
+<213> Homo sapiens
+<400> 1
+Ala Cys Asp Glu Phe
+
+<210> 2
+<211> 4
+<212> PRT
+<213> Mus musculus
+<400> 2
+Gly His Ile Lys
+<170> end of listing
+<160> 2

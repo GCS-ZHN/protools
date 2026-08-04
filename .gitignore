@@ -41,3 +41,7 @@ htmlcov/
 
 # project-local tool indexes
 .codegraph/
+
+# skill evaluation artifacts (generated, not committed)
+skills/*-workspace/
+skills/eval-reports/
